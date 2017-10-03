@@ -85,6 +85,14 @@ export function getNameURI(script) {
   return nameURI;
 }
 
+export function makeScriptId(script) {
+  const ns = script.meta.namespace || '';
+  const name = script.meta.name || '';
+  let scriptId = `${ns}/${name}`;
+  if (!ns && !name) scriptId = 'id:' + script.props.id || '';
+  return scriptId;
+}
+
 export function compareVersion(ver1, ver2) {
   const parts1 = (ver1 || '').split('.');
   const parts2 = (ver2 || '').split('.');

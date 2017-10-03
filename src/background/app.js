@@ -289,3 +289,46 @@ browser.tabs.onRemoved.addListener(id => {
     data: id,
   });
 });
+
+// request data from host legacy extension
+function getInstalledScripts() {
+  return new Promise((resolve, reject) => {
+    let installed = [];
+    getScripts().then(
+      scripts => {
+        scripts.forEach(script => {
+          installed.push(script.props.scriptId);
+        });
+        resolve(installed);
+      },
+      err => {
+        reject(err);
+      }
+    );
+  });
+}
+
+browser.runtime.sendMessage("get-all-userscripts").then((response) => {
+  if(!response) {
+    return;
+  }
+
+  const {scripts} = response;
+
+  getInstalledScripts().then(installed => {
+    if (process.env.DEBUG) console.log("bg:init: installed scripts", installed);
+
+    scripts.forEach(script => {
+      if(!installed.includes(script.id)) {
+        if (process.env.DEBUG) console.log("bg:init: install new script: id=" + script.id);
+        parseScript({
+          url: script.url,
+          code: script.code,
+        });
+      }
+      else {
+        if (process.env.DEBUG) console.log("bg:init: script already installed: id=" + script.id);
+      }
+    });
+  });
+});

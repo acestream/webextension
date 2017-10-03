@@ -1,6 +1,6 @@
 import { i18n, request, buffer2string, getFullUrl } from 'src/common';
 import { objectGet, objectSet } from 'src/common/object';
-import { getNameURI, isRemote, parseMeta, newScript } from './script';
+import { getNameURI, makeScriptId, isRemote, parseMeta, newScript } from './script';
 import { testScript, testBlacklist } from './tester';
 import { register } from './init';
 import patchDB from './patch-db';
@@ -376,6 +376,7 @@ function saveScript(script, code) {
     oldScript = store.scriptMap[props.id];
   }
   props.uri = getNameURI(script);
+  props.scriptId = makeScriptId(script);
   // Do not allow script with same name and namespace
   if (store.scripts.some(item => {
     const itemProps = item.props || {};
