@@ -4,6 +4,7 @@
   "scripts": {
     "dev": "gulp watch",
     "prebuild": "npm run lint && gulp clean",
+    "build:dev": "cross-env NODE_ENV=development gulp build",
     "build": "cross-env NODE_ENV=production gulp build",
     "build:min": "cross-env MINIFY=true npm run build",
     "analyze": "webpack --profile --json --config scripts/webpack.conf.js | webpack-bundle-size-analyzer",
@@ -24,6 +25,8 @@
     "babel-plugin-transform-export-extensions": "^6.22.0",
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.6.0",
+    "babel-preset-minify": "^0.2.0",
+    "babel-runtime": "^6.26.0",
     "cross-env": "^5.0.5",
     "css-loader": "^0.28.7",
     "del": "^3.0.0",
