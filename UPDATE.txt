@@ -1,0 +1,18 @@
+Repo structure:
+
+remotes:
+origin: https://github.com/violentmonkey/violentmonkey.git (our version)
+violentmonkey: https://github.com/violentmonkey/violentmonkey.git (original source)
+
+branches:
+master -> violentmonkey/master (original github branch, we only pull from it)
+ace -> origin/ace (our dev branch)
+release -> origin/release (our release branch)
+
+---
+
+Update code from original branch (violentmonkey):
+$ git checkout master
+$ git pull
+$ git checkout ace
+$ git merge master
