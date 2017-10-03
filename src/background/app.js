@@ -1,5 +1,5 @@
 import 'src/common/browser';
-import { i18n, defaultImage } from 'src/common';
+import { i18n, defaultImage, verbose } from 'src/common';
 import { objectGet } from 'src/common/object';
 import * as sync from './sync';
 import {
@@ -293,7 +293,7 @@ browser.tabs.onRemoved.addListener(id => {
 // request data from host legacy extension
 function getInstalledScripts() {
   return new Promise((resolve, reject) => {
-    let installed = [];
+    const installed = [];
     getScripts().then(
       scripts => {
         scripts.forEach(script => {
@@ -303,31 +303,30 @@ function getInstalledScripts() {
       },
       err => {
         reject(err);
-      }
+      },
     );
   });
 }
 
-browser.runtime.sendMessage("get-all-userscripts").then((response) => {
-  if(!response) {
+browser.runtime.sendMessage('get-all-userscripts').then(response => {
+  if (!response) {
     return;
   }
 
-  const {scripts} = response;
+  const { scripts } = response;
 
   getInstalledScripts().then(installed => {
-    if (process.env.DEBUG) console.log("bg:init: installed scripts", installed);
+    verbose('bg:init: installed scripts', installed);
 
     scripts.forEach(script => {
-      if(!installed.includes(script.id)) {
-        if (process.env.DEBUG) console.log("bg:init: install new script: id=" + script.id);
+      if (!installed.includes(script.id)) {
+        verbose(`bg:init: install new script: id=${script.id}`);
         parseScript({
           url: script.url,
           code: script.code,
         });
-      }
-      else {
-        if (process.env.DEBUG) console.log("bg:init: script already installed: id=" + script.id);
+      } else {
+        verbose(`bg:init: script already installed: id=${script.id}`);
       }
     });
   });

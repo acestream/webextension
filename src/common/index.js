@@ -180,3 +180,9 @@ export function getFullUrl(url, base) {
 export function isRemote(url) {
   return url && !(/^(file|data):/.test(url));
 }
+
+export function verbose(...params) {
+  if (process.env.DEBUG) {
+    console.info(...params);
+  }
+}

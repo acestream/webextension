@@ -89,7 +89,7 @@ export function makeScriptId(script) {
   const ns = script.meta.namespace || '';
   const name = script.meta.name || '';
   let scriptId = `${ns}/${name}`;
-  if (!ns && !name) scriptId = 'id:' + script.props.id || '';
+  if (!ns && !name) scriptId = `id:${script.props.id}` || '';
   return scriptId;
 }
 
