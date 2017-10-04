@@ -106,11 +106,11 @@ const handlers = {
       bridge.post({ cmd: 'ScriptChecked', data: { callback, result } });
     });
   },
-  GetEngineStatus({ requestId }) {
-    sendMessage({ cmd: 'GetEngineStatus'})
+  PostCommand({ cmd, requestId, data }) {
+    sendMessage({ cmd: cmd, data })
     .then(result => {
       bridge.post({
-        cmd: 'GotEngineStatus',
+        cmd: 'CommandResponse',
         data: { result, requestId },
       });
     });

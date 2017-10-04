@@ -47,6 +47,14 @@ function handleCallback(requestId, result) {
   }
 }
 
+function postCommandWithCallback(cmd, callback, data) {
+  let requestId = addCallback(callback);
+  bridge.post({
+    cmd: 'PostCommand',
+    data: { cmd, requestId, data },
+  });
+}
+
 const handlers = {
   LoadScripts: onLoadScripts,
   Command(data) {
@@ -67,8 +75,8 @@ const handlers = {
   ScriptChecked(data) {
     if (bridge.onScriptChecked) bridge.onScriptChecked(data);
   },
-  GotEngineStatus({ result, requestId }) {
-     verbose(`web:GotEngineStatus: requestId=${requestId} result`, result);
+  CommandResponse({ result, requestId }) {
+     verbose(`web:CommandResponse: requestId=${requestId} result`, result);
      handleCallback(requestId, result);
   },
 };
@@ -339,13 +347,44 @@ function wrapGM(script, code, cache) {
     },
     AWE_getEngineStatus: {
       value(callback) {
-        // all callbacks will be called on GotEngineStatus event
-        let requestId = addCallback(callback);
-        bridge.post({
-          cmd: 'GetEngineStatus',
-          data: { requestId },
-        });
-      }
+        postCommandWithCallback('GetEngineStatus', callback);
+      },
+    },
+    AWE_startJsPlayer: {
+      value(callback) {
+        throw "not implemented";
+      },
+    },
+    AWE_getAvailablePlayers: {
+      value(params, callback) {
+        postCommandWithCallback('GetAvailablePlayers', callback, { params });
+      },
+    },
+    AWE_openInPlayer: {
+      value(params, playerId, callback) {
+        postCommandWithCallback('OpenInPlayer', callback, { params, playerId });
+      },
+    },
+    AWE_getDeviceId: {
+      value(callback) {
+        postCommandWithCallback('GetDeviceId', callback);
+      },
+    },
+    AWE_registerContextMenuCommand: {
+      value(caption, commandFunc, accessKey, filterFunc) {
+        //TODO: implement
+        throw "not implemented";
+      },
+    },
+    AWE_getLocale: {
+      value(callback) {
+        postCommandWithCallback('GetLocale', callback);
+      },
+    },
+    AWE_getConfig: {
+      value(name, callback) {
+        postCommandWithCallback('GetConfig', callback, { name });
+      },
     },
   };
   forEach(grant, name => {

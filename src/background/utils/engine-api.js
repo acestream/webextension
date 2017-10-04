@@ -342,7 +342,7 @@ export function openInPlayer(details, playerId, callback) {
     });
 }
 
-export function getDeviceId(sandbox, callback) {
+export function getDeviceId(callback) {
     sendRequest({
         api: "service",
         method: "get_public_user_key",

@@ -18,7 +18,13 @@ import {
 } from './utils/db';
 import { resetBlacklist } from './utils/tester';
 import { setValueStore, updateValueStore } from './utils/values';
-import { getEngineStatus, ping } from './utils/engine-api';
+
+import {
+  getEngineStatus,
+  getAvailablePlayers,
+  openInPlayer,
+  getDeviceId,
+} from './utils/engine-api';
 
 const VM_VER = browser.runtime.getManifest().version;
 
@@ -213,10 +219,36 @@ const commands = {
   },
   GetEngineStatus() {
     return new Promise((resolve, reject) => {
-      getEngineStatus(function(engineStatus) {
-        resolve(engineStatus);
-      });
+      getEngineStatus(response => resolve(response));
     });
+  },
+  GetAvailablePlayers(data) {
+    return new Promise((resolve, reject) => {
+      getAvailablePlayers(data.params, response => resolve(response));
+    });
+  },
+  OpenInPlayer(data) {
+    return new Promise((resolve, reject) => {
+      openInPlayer(data.params, data.playerId, response => resolve(response));
+    });
+  },
+
+  GetDeviceId(data) {
+    return new Promise((resolve, reject) => {
+      getDeviceId(response => resolve(response));
+    });
+  },
+  GetLocale(data) {
+    return Promise.resolve(browser.i18n.getUILanguage());
+  },
+  GetConfig(data) {
+    const values = {
+      'remote-control-url': 'http://127.0.0.1:6878/remote-control',
+      '_a': null,
+      'mode': 0,
+    };
+
+    return Promise.resolve(values[data.name]);
   },
 };
 
