@@ -38,9 +38,9 @@ hookOptions(changes => {
 
 function onGlobalContextMenuClick(info, tab) {
   browser.tabs.sendMessage(tab.id, {
-    cmd: "WatchOnlineMenuClicked",
+    cmd: 'WatchOnlineMenuClicked',
     data: {
-      url: info.linkUrl
+      url: info.linkUrl,
     },
   });
 }
@@ -48,18 +48,21 @@ function onGlobalContextMenuClick(info, tab) {
 function createGlobalContextMenu() {
   verbose('bg:create context menu');
 
-  return new Promise((resolve, reject) => {
-    browser.contextMenus.create({
-        id: "awe-watch-online",
-        title: "Watch online",
-        contexts: ["link"],
-        onclick: onGlobalContextMenuClick
+  return new Promise(resolve => {
+    browser.contextMenus.create(
+      {
+        id: 'awe-watch-online',
+        title: 'Watch online',
+        contexts: ['link'],
+        onclick: onGlobalContextMenuClick,
       },
-      function() {
+      () => {
         // check lastError to suppress errors on console
+        // eslint-disable-next-line no-unused-expressions
         browser.runtime.lastError;
         resolve();
-    });
+      },
+    );
   });
 }
 
@@ -245,34 +248,33 @@ const commands = {
     return normalizePosition();
   },
   GetEngineStatus() {
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
       getEngineStatus(response => resolve(response));
     });
   },
   GetAvailablePlayers(data) {
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
       getAvailablePlayers(data.params, response => resolve(response));
     });
   },
   OpenInPlayer(data) {
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
       openInPlayer(data.params, data.playerId, response => resolve(response));
     });
   },
-
-  GetDeviceId(data) {
-    return new Promise((resolve, reject) => {
+  GetDeviceId() {
+    return new Promise(resolve => {
       getDeviceId(response => resolve(response));
     });
   },
-  GetLocale(data) {
+  GetLocale() {
     return Promise.resolve(browser.i18n.getUILanguage());
   },
   GetConfig(data) {
     const values = {
       'remote-control-url': 'http://127.0.0.1:6878/remote-control',
-      '_a': null,
-      'mode': 0,
+      _a: null,
+      mode: 0,
     };
 
     return Promise.resolve(values[data.name]);

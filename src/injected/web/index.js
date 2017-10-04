@@ -31,10 +31,10 @@ const store = {
 };
 
 function addCallback(callback) {
-  if(typeof callback !== 'function') {
+  if (typeof callback !== 'function') {
     return -1;
   }
-  let requestId = store.lastCallbackId+1;
+  const requestId = store.lastCallbackId + 1;
   store.lastCallbackId = requestId;
   store.callbacks[requestId] = callback;
   return requestId;
@@ -49,7 +49,7 @@ function handleCallback(requestId, result) {
 }
 
 function postCommandWithCallback(cmd, callback, data) {
-  let requestId = addCallback(callback);
+  const requestId = addCallback(callback);
   bridge.post({
     cmd: 'PostCommand',
     data: { cmd, requestId, data },
@@ -77,17 +77,17 @@ const handlers = {
     if (bridge.onScriptChecked) bridge.onScriptChecked(data);
   },
   CommandResponse({ result, requestId }) {
-     verbose(`web:CommandResponse: requestId=${requestId} result`, result);
-     handleCallback(requestId, result);
+    verbose(`web:CommandResponse: requestId=${requestId} result`, result);
+    handleCallback(requestId, result);
   },
   WatchOnlineMenuClicked(data) {
     verbose('web:WatchOnlineMenuClicked: data', data);
     store.contextMenuHandlers.forEach(handler => {
-      if(typeof handler === 'function') {
+      if (typeof handler === 'function') {
         handler(data.url);
       }
     });
-  }
+  },
 };
 
 function onHandle(obj) {
@@ -360,8 +360,8 @@ function wrapGM(script, code, cache) {
       },
     },
     AWE_startJsPlayer: {
-      value(callback) {
-        throw "not implemented";
+      value() {
+        throw new Error('not implemented');
       },
     },
     AWE_getAvailablePlayers: {
@@ -380,6 +380,7 @@ function wrapGM(script, code, cache) {
       },
     },
     AWE_registerContextMenuCommand: {
+      // eslint-disable-next-line no-unused-vars
       value(caption, commandFunc, accessKey, filterFunc) {
         postCommandWithCallback('RegisterContextMenuCommand', () => {
           store.contextMenuHandlers.push(commandFunc);
