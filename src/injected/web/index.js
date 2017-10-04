@@ -46,6 +46,9 @@ const handlers = {
   ScriptChecked(data) {
     if (bridge.onScriptChecked) bridge.onScriptChecked(data);
   },
+  GotEngineStatus(result) {
+    console.log(">>GotEngineStatus: result", result);
+  }
 };
 
 function onHandle(obj) {
@@ -311,6 +314,13 @@ function wrapGM(script, code, cache) {
           data: { type, data },
         });
       },
+    },
+    AWE_getEngineStatus: {
+      value(callback) {
+        bridge.post({
+          cmd: 'GetEngineStatus',
+        });
+      }
     },
   };
   forEach(grant, name => {

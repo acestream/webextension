@@ -106,6 +106,15 @@ const handlers = {
       bridge.post({ cmd: 'ScriptChecked', data: { callback, result } });
     });
   },
+  GetEngineStatus() {
+    sendMessage({ cmd: 'GetEngineStatus'})
+    .then(result => {
+      bridge.post({
+        cmd: 'GotEngineStatus',
+        data: { result },
+      });
+    });
+  }
 };
 
 function onHandle(req) {

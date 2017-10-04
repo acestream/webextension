@@ -18,6 +18,7 @@ import {
 } from './utils/db';
 import { resetBlacklist } from './utils/tester';
 import { setValueStore, updateValueStore } from './utils/values';
+import { getEngineStatus } from './utils/engine-api';
 
 const VM_VER = browser.runtime.getManifest().version;
 
@@ -209,6 +210,13 @@ const commands = {
   },
   CheckPosition() {
     return normalizePosition();
+  },
+  GetEngineStatus() {
+    return new Promise((resolve, reject) => {
+      getEngineStatus(function(engineStatus) {
+        resolve(engineStatus);
+      });
+    });
   },
 };
 
