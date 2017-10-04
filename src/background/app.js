@@ -36,6 +36,33 @@ hookOptions(changes => {
   });
 });
 
+function onGlobalContextMenuClick(info, tab) {
+  browser.tabs.sendMessage(tab.id, {
+    cmd: "WatchOnlineMenuClicked",
+    data: {
+      url: info.linkUrl
+    },
+  });
+}
+
+function createGlobalContextMenu() {
+  verbose('bg:create context menu');
+
+  return new Promise((resolve, reject) => {
+    browser.contextMenus.create({
+        id: "awe-watch-online",
+        title: "Watch online",
+        contexts: ["link"],
+        onclick: onGlobalContextMenuClick
+      },
+      function() {
+        // check lastError to suppress errors on console
+        browser.runtime.lastError;
+        resolve();
+    });
+  });
+}
+
 function checkUpdateAll() {
   setOption('lastUpdate', Date.now());
   getScripts()
@@ -249,6 +276,9 @@ const commands = {
     };
 
     return Promise.resolve(values[data.name]);
+  },
+  RegisterContextMenuCommand() {
+    return createGlobalContextMenu();
   },
 };
 

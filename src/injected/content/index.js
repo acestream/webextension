@@ -42,6 +42,9 @@ const bgHandlers = {
   },
   NotificationClick: onNotificationClick,
   NotificationClose: onNotificationClose,
+  WatchOnlineMenuClicked(data) {
+    bridge.post({ cmd: 'WatchOnlineMenuClicked', data });
+  }
 };
 
 export default function initialize(contentId, webId) {

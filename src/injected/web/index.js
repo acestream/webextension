@@ -27,6 +27,7 @@ const store = {
   values: {},
   callbacks: {},
   lastCallbackId: 0,
+  contextMenuHandlers: [],
 };
 
 function addCallback(callback) {
@@ -79,6 +80,14 @@ const handlers = {
      verbose(`web:CommandResponse: requestId=${requestId} result`, result);
      handleCallback(requestId, result);
   },
+  WatchOnlineMenuClicked(data) {
+    verbose('web:WatchOnlineMenuClicked: data', data);
+    store.contextMenuHandlers.forEach(handler => {
+      if(typeof handler === 'function') {
+        handler(data.url);
+      }
+    });
+  }
 };
 
 function onHandle(obj) {
@@ -372,8 +381,9 @@ function wrapGM(script, code, cache) {
     },
     AWE_registerContextMenuCommand: {
       value(caption, commandFunc, accessKey, filterFunc) {
-        //TODO: implement
-        throw "not implemented";
+        postCommandWithCallback('RegisterContextMenuCommand', () => {
+          store.contextMenuHandlers.push(commandFunc);
+        });
       },
     },
     AWE_getLocale: {
