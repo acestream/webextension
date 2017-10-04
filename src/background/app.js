@@ -18,7 +18,7 @@ import {
 } from './utils/db';
 import { resetBlacklist } from './utils/tester';
 import { setValueStore, updateValueStore } from './utils/values';
-import { getEngineStatus } from './utils/engine-api';
+import { getEngineStatus, ping } from './utils/engine-api';
 
 const VM_VER = browser.runtime.getManifest().version;
 

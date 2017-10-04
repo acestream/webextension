@@ -1,3 +1,4 @@
+import { verbose } from 'src/common';
 import { getUniqId, bindEvents, Promise, attachFunction, console } from '../utils';
 import { includes, forEach, map, utf8decode } from './helpers';
 import bridge from './bridge';
@@ -24,7 +25,27 @@ export default function initialize(webId, contentId, props) {
 const store = {
   commands: {},
   values: {},
+  callbacks: {},
+  lastCallbackId: 0,
 };
+
+function addCallback(callback) {
+  if(typeof callback !== 'function') {
+    return -1;
+  }
+  let requestId = store.lastCallbackId+1;
+  store.lastCallbackId = requestId;
+  store.callbacks[requestId] = callback;
+  return requestId;
+}
+
+function handleCallback(requestId, result) {
+  if (requestId && store.callbacks[requestId]) {
+    const callback = store.callbacks[requestId];
+    delete store.callbacks[requestId];
+    callback(result);
+  }
+}
 
 const handlers = {
   LoadScripts: onLoadScripts,
@@ -46,9 +67,10 @@ const handlers = {
   ScriptChecked(data) {
     if (bridge.onScriptChecked) bridge.onScriptChecked(data);
   },
-  GotEngineStatus(result) {
-    console.log(">>GotEngineStatus: result", result);
-  }
+  GotEngineStatus({ result, requestId }) {
+     verbose(`web:GotEngineStatus: requestId=${requestId} result`, result);
+     handleCallback(requestId, result);
+  },
 };
 
 function onHandle(obj) {
@@ -317,8 +339,11 @@ function wrapGM(script, code, cache) {
     },
     AWE_getEngineStatus: {
       value(callback) {
+        // all callbacks will be called on GotEngineStatus event
+        let requestId = addCallback(callback);
         bridge.post({
           cmd: 'GetEngineStatus',
+          data: { requestId },
         });
       }
     },
