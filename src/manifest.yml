@@ -39,6 +39,7 @@ permissions:
   - storage
   - unlimitedStorage
   - clipboardWrite
+  - nativeMessaging
 
 # applications:
 #   gecko:
