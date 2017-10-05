@@ -433,3 +433,9 @@ filterAlphabeticalOrder:
 labelFilterSort:
   description: Label for sort filter.
   message: Sort by $1
+show_more:
+  description: Default title on button (news notification)
+  message: Show more
+do_not_show_anymore:
+  description: Title on button (news notification)
+  message: Don't show anymore
