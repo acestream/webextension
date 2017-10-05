@@ -254,7 +254,7 @@ const commands = {
     return getScript({ meta: { name, namespace } })
     .then(script => (script ? script.meta.version : null));
   },
-  getInstalledScripts() {
+  GetInstalledScripts() {
     return getInstalledScripts();
   },
   CheckPosition() {

@@ -183,7 +183,7 @@ function exposeVersion() {
     return false;
   }
 
-  if (isDomainAllowed()) {
+  if (isDomainAllowed(window.location.host)) {
     el.setAttribute('data-vendor', 'firefox');
     el.setAttribute('data-version', browser.runtime.getManifest().version);
   }
@@ -198,10 +198,12 @@ function exposeInstalledScripts() {
     return false;
   }
 
-  if (isDomainAllowed()) {
+  if (isDomainAllowed(window.location.host)) {
     sendMessage({ cmd: 'GetInstalledScripts' })
     .then(response => {
-      el.setAttribute('data-scripts', JSON.stringify(Object.keys(response)));
+      if (response) {
+        el.setAttribute('data-scripts', JSON.stringify(response));
+      }
     });
   }
 
