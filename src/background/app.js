@@ -122,7 +122,7 @@ const commands = {
       return data;
     });
   },
-  GetInjected(url, src) {
+  GetInjected({ url, isTop }, src) {
     const data = {
       isApplied: getOption('isApplied'),
       version: VM_VER,
@@ -134,7 +134,7 @@ const commands = {
       }
     });
     return data.isApplied ? (
-      getScriptsByURL(url).then(res => Object.assign(data, res))
+      getScriptsByURL(url, isTop).then(res => Object.assign(data, res))
     ) : data;
   },
   UpdateScriptInfo({ id, config }) {

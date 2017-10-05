@@ -265,10 +265,22 @@ export function dumpValueStore(where, valueStore) {
 /**
  * @desc Get scripts to be injected to page with specific URL.
  */
-export function getScriptsByURL(url) {
+export function getScriptsByURL(url, isTop=true) {
   const scripts = testBlacklist(url)
     ? []
-    : store.scripts.filter(script => !script.config.removed && testScript(url, script));
+    : store.scripts.filter(script => {
+      if (script.config.removed) {
+        return false;
+      }
+      if (!testScript(url, script)) {
+        return false;
+      }
+      if ('noframes' in script.meta && !isTop) {
+        return false;
+      }
+      return true;
+    });
+
   const reqKeys = {};
   const cacheKeys = {};
   scripts.forEach(script => {

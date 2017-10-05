@@ -55,7 +55,7 @@ export default function initialize(contentId, webId) {
     if (handle) handle(req.data, src);
   });
 
-  sendMessage({ cmd: 'GetInjected', data: window.location.href })
+  sendMessage({ cmd: 'GetInjected', data: {url: window.location.href, isTop: IS_TOP } })
   .then(data => {
     if (data.scripts) {
       data.scripts.forEach(script => {
