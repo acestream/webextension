@@ -11,7 +11,7 @@ export * from './search';
 export { initialize } from './init';
 
 export function notify(options) {
-  browser.notifications.create(options.id || 'ViolentMonkey', {
+  browser.notifications.create(options.id || 'Ace Script', {
     type: 'basic',
     iconUrl: defaultImage,
     title: `${options.title} - ${i18n('extName')}`,

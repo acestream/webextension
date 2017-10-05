@@ -130,7 +130,7 @@ export const BaseService = serviceFactory({
   displayName: 'BaseService',
   delayTime: 1000,
   urlPrefix: '',
-  metaFile: 'Violentmonkey',
+  metaFile: 'AceScript',
   initialize() {
     this.progress = {
       finished: 0,
@@ -392,7 +392,7 @@ export const BaseService = serviceFactory({
             //   custom: script.custom,
             //   config: script.config,
             // };
-            // XXX use version 1 to be compatible with Violentmonkey on other platforms
+            // XXX use version 1 to be compatible with AceScript on other platforms
             const data = {
               version: 1,
               code,

@@ -56,7 +56,7 @@ export function newScript() {
   const code = `\
 // ==UserScript==
 // @name New Script
-// @namespace Violentmonkey Scripts
+// @namespace AceScript Scripts
 // @match *://*/*
 // @grant none
 // ==/UserScript==

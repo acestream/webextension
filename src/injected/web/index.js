@@ -204,7 +204,7 @@ function wrapGM(script, code, cache) {
         const obj = {
           scriptMetaStr: metaStr,
           scriptWillUpdate: !!script.config.shouldUpdate,
-          scriptHandler: 'Violentmonkey',
+          scriptHandler: 'AceScript',
           version: bridge.version,
           script: {
             description: script.meta.description || '',
@@ -307,7 +307,7 @@ function wrapGM(script, code, cache) {
     GM_log: {
       value(...args) {
         // eslint-disable-next-line no-console
-        console.log(`[Violentmonkey][${script.meta.name || 'No name'}]`, ...args);
+        console.log(`[AceScript][${script.meta.name || 'No name'}]`, ...args);
       },
     },
     GM_openInTab: {
@@ -403,7 +403,7 @@ function wrapGM(script, code, cache) {
     return store.values[script.props.id];
   }
   function propertyToString() {
-    return '[Violentmonkey property]';
+    return '[AceScript property]';
   }
   function addProperty(name, prop, obj) {
     if ('value' in prop) prop.writable = false;
