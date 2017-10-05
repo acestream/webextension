@@ -2,8 +2,8 @@ name: __MSG_extName__
 version: __VERSION__
 manifest_version: 2
 description: __MSG_extDescription__
-author: Gerald
-homepage_url: 'https://violentmonkey.github.io/'
+author: Ace Stream
+homepage_url: 'https://awe.acestream.me/'
 icons:
   '16': public/images/icon16.png
   '48': public/images/icon48.png
@@ -41,8 +41,3 @@ permissions:
   - clipboardWrite
   - contextMenus
   - nativeMessaging
-
-# applications:
-#   gecko:
-#     id: '{aecec67f-0d10-4fa7-b7c7-609a2db280cf}'
-#     update_url: https://violentmonkey.top/updates.json
