@@ -313,14 +313,14 @@ const commands = {
     }
 
     const newsList = news.getNewsForUrl(url);
-    for (let i = 0; i < newsList.length; i++) {
-      let url;
+    for (let i = 0; i < newsList.length; i += 1) {
+      let targetUrl;
       const newsId = newsList[i].id;
       const buttons = [];
       const notificationId = `awe-notification-${Math.ceil(Math.random() * 1000000)}`;
 
       if (newsList[i].btnUrl) {
-        url = newsList[i].btnUrl;
+        targetUrl = newsList[i].btnUrl;
 
         if (NOTIFICATIONS_BUTTONS_SUPPORTED) {
           buttons.push({ title: newsList[i].btnTitle || browser.i18n.getMessage('show_more') });
@@ -342,25 +342,25 @@ const commands = {
       browser.notifications.create(
         notificationId,
         options,
-      ).then(notificationId => {
-        registeredNotifications_[notificationId] = {
+      ).then(newNotificationId => {
+        registeredNotifications_[newNotificationId] = {
           onClicked: () => {
-            if (url) {
-              browser.tabs.create({ url });
+            if (targetUrl) {
+              browser.tabs.create({ targetUrl });
             }
             news.markAsRead(newsId);
-            browser.notifications.clear(notificationId, wasCleared => {});
+            browser.notifications.clear(newNotificationId, () => {});
           },
           onButtonClicked: index => {
             if (index === 0) {
-              if (url) {
-                browser.tabs.create({ url });
+              if (targetUrl) {
+                browser.tabs.create({ targetUrl });
               }
               news.markAsRead(newsId);
             } else if (index === 1) {
               news.markAsRead(newsId);
             }
-            browser.notifications.clear(notificationId, wasCleared => {});
+            browser.notifications.clear(newNotificationId, () => {});
           },
         };
       });
@@ -368,7 +368,7 @@ const commands = {
       news.updateLastShown(newsId);
 
       window.setTimeout(() => {
-        browser.notifications.clear(notificationId, wasCleared => {});
+        browser.notifications.clear(notificationId, () => {});
       }, 15000);
     }
 

@@ -73,8 +73,9 @@ function checkNews(engineStatus) {
       store.lastEngineVersion = engineStatus.version;
     }
 
-    const xhr = new XMLHttpRequest(),
-      url = `http://awe-api.acestream.me/news/get?locale=${getLocale()}&appVersion=${appVersion}&engineVersion=${store.lastEngineVersion}&_=${Math.random()}`;
+    const xhr = new XMLHttpRequest();
+    const url = `http://awe-api.acestream.me/news/get?locale=${getLocale()}&appVersion=${appVersion}&engineVersion=${store.lastEngineVersion}&_=${Math.random()}`;
+
     verbose(`news: request: url=${url}`);
     xhr.open('GET', url, true);
     xhr.timeout = 10000;
@@ -106,13 +107,13 @@ function checkNews(engineStatus) {
             saveConfig();
           }
         } catch (e) {
-          console.error('news:check: error: ${e}');
+          console.error(`news:check: error: ${e}`);
         }
       }
     };
     xhr.send();
   } catch (e) {
-    console.error('checkEngine: error: ${e}');
+    console.error(`checkEngine: error: ${e}`);
   }
   window.setTimeout(check, store.checkInterval);
 }
@@ -144,7 +145,7 @@ export function getNewsForUrl(url) {
     let gotMatch = false;
     if (store.news[id].includes && store.news[id].includes.length) {
       verbose(`getNewsForUrl: match against includes: url=${url}`);
-      for (let i = 0; i < store.news[id].includes.length; i++) {
+      for (let i = 0; i < store.news[id].includes.length; i += 1) {
         const re = new RegExp(store.news[id].includes[i]);
         if (re.test(url)) {
           verbose(`getNewsForUrl: got includes match: re=${store.news[id].includes[i]} url=${url}`);
@@ -155,7 +156,7 @@ export function getNewsForUrl(url) {
     } else if (store.news[id].excludes && store.news[id].excludes.length) {
       gotMatch = true;
       verbose(`getNewsForUrl: match against excludes: url=${url}`);
-      for (let i = 0; i < store.news[id].excludes.length; i++) {
+      for (let i = 0; i < store.news[id].excludes.length; i += 1) {
         const re = new RegExp(store.news[id].excludes[i]);
         if (re.test(url)) {
           verbose(`getNewsForUrl: got excludes match: re=${store.news[id].excludes[i]} url=${url}`);
@@ -170,7 +171,7 @@ export function getNewsForUrl(url) {
       if (store.news[id].excludeScripts && store.news[id].excludeScripts.length) {
         // check all installed scripts
         verbose('getNewsForUrl: installedScripts', store.installedScripts);
-        for (let i = 0; i < store.news[id].excludeScripts.length; i++) {
+        for (let i = 0; i < store.news[id].excludeScripts.length; i += 1) {
           if (store.installedScripts[store.news[id].excludeScripts[i]] === 1) {
             verbose(`getNewsForUrl: skip user notify, got installed script: ${store.news[id].excludeScripts[i]}`);
             notifyUser = false;

@@ -32,7 +32,7 @@ function checkEngine(callback, retryCount, retryInterval) {
             errmsg = 'malformed response from engine';
           } else {
             engineVersionCode = parseInt(response.result.code, 10);
-            if (isNaN(engineVersionCode)) {
+            if (isNaN(engineVersionCode)) { // eslint-disable-line no-restricted-globals
               engineVersionCode = 0;
             }
             engineVersionString = response.result.version;
@@ -48,13 +48,13 @@ function checkEngine(callback, retryCount, retryInterval) {
           errmsg = `engine returned error: ${xhr.status}`;
         }
         if (errmsg) {
-          console.log(`checkEngine: error: ${errmsg}`);
+          verbose(`checkEngine: error: ${errmsg}`);
         }
         engineRunning = !!engineVersionCode;
 
         if (typeof callback === 'function') {
           if (!engineRunning && retryCount !== undefined && retryCount > 0) {
-            console.log(`Ace Script: check engine failed (${retryCount}), next try in ${retryInterval}`);
+            verbose(`Ace Script: check engine failed (${retryCount}), next try in ${retryInterval}`);
             window.setTimeout(() => {
               checkEngine(callback, retryCount - 1, retryInterval);
             }, retryInterval);
@@ -70,7 +70,7 @@ function checkEngine(callback, retryCount, retryInterval) {
     };
     xhr.send();
   } catch (e) {
-    console.log(`checkEngine: error: ${e}`);
+    verbose(`checkEngine: error: ${e}`);
   }
 }
 
@@ -94,7 +94,7 @@ function sendRequest(details) {
   }
 
   function _failed(errmsg) {
-    console.log(`engineapi:request failed: ${errmsg}`);
+    verbose(`engineapi:request failed: ${errmsg}`);
     if (typeof details.onerror === 'function') {
       details.onerror.call(null, errmsg);
     }
@@ -156,7 +156,7 @@ export function getEngineStatus(callback) {
   if (typeof callback !== 'function') {
     throw new Error('missing callback in getEngineStatus()');
   }
-  checkEngine(response => {
+  checkEngine(checkEngineResponse => {
     function _sendResponse(running, versionCode) {
       callback.call(null, {
         running,
@@ -164,32 +164,32 @@ export function getEngineStatus(callback) {
       });
     }
 
-    if (response.running) {
-      _sendResponse(response.running, response.versionCode);
+    if (checkEngineResponse.running) {
+      _sendResponse(checkEngineResponse.running, checkEngineResponse.versionCode);
     } else {
       // engine is not running, check it's version by native messaging
       browser.runtime.sendNativeMessage(
         'org.acestream.engine',
         { method: 'get_version' },
-        response => {
-          if (typeof response === 'undefined') {
+        nativeResponse => {
+          if (typeof nativeResponse === 'undefined') {
             verbose(`Ace Script: engine messaging host failed: ${browser.runtime.lastError}`);
             _sendResponse(false, 0);
           } else {
-            console.log(`Ace Script: got response from engine messaging host: ${JSON.stringify(response)}`);
+            verbose(`Ace Script: got response from engine messaging host: ${JSON.stringify(nativeResponse)}`);
 
             // start engine
-            browser.runtime.sendNativeMessage('org.acestream.engine', { method: 'start_engine' }, response => {
-              if (typeof response === 'undefined') {
-                console.log('Ace Script: failed to start engine');
+            browser.runtime.sendNativeMessage('org.acestream.engine', { method: 'start_engine' }, nativeResponse2 => {
+              if (typeof nativeResponse2 === 'undefined') {
+                verbose('Ace Script: failed to start engine');
                 _sendResponse(false, 0);
               } else {
                 // wait until engine is started
                 const retryCount = 20;
                 const retryInterval = 1000;
-                checkEngine(response => {
-                  console.log(`Ace Script: engine status after starting: ${JSON.stringify(response)}`);
-                  _sendResponse(response.running, response.versionCode);
+                checkEngine(checkEngineResponse2 => {
+                  verbose(`Ace Script: engine status after starting: ${JSON.stringify(checkEngineResponse2)}`);
+                  _sendResponse(checkEngineResponse2.running, checkEngineResponse2.versionCode);
                 }, retryCount, retryInterval);
               }
             });
@@ -201,22 +201,22 @@ export function getEngineStatus(callback) {
 }
 
 export function startJsPlayer(callback) {
-  chrome.runtime.sendNativeMessage(
+  browser.runtime.sendNativeMessage(
     'org.acestream.engine',
     { method: 'get_version' },
-    response => {
-      if (typeof response === 'undefined') {
-        console.log('Ace Script:startJsPlayer: engine messaging host failed');
-        callback.call(null, false);
+    response1 => {
+      if (typeof response1 === 'undefined') {
+        verbose('Ace Script:startJsPlayer: engine messaging host failed');
+        callback(false);
       } else {
-        console.log(`Ace Script:startJsPlayer: got response from engine messaging host: ${JSON.stringify(response)}`);
+        verbose(`Ace Script:startJsPlayer: got response from engine messaging host: ${JSON.stringify(response1)}`);
         // start js player
-        chrome.runtime.sendNativeMessage('org.acestream.engine', { method: 'start_js_player' }, response => {
-          if (typeof response === 'undefined') {
-            console.log('Ace Script:startJsPlayer: failed to start js player');
-            callback.call(null, false);
+        browser.runtime.sendNativeMessage('org.acestream.engine', { method: 'start_js_player' }, response2 => {
+          if (typeof response2 === 'undefined') {
+            verbose('Ace Script:startJsPlayer: failed to start js player');
+            callback(false);
           } else {
-            callback.call(null, response);
+            callback(response2);
           }
         });
       }
@@ -237,17 +237,17 @@ export function getAvailablePlayers(details, callback) {
   } else if (details.infohash) {
     params.infohash = details.infohash;
   } else {
-    callback.call(null);
+    callback();
   }
 
   sendRequest({
     method: 'get_available_players',
     params,
     onsuccess: data => {
-      callback.call(null, data);
+      callback(data);
     },
-    onerror: errmsg => {
-      callback.call(null);
+    onerror: () => {
+      callback();
     },
   });
 }
@@ -264,7 +264,7 @@ export function openInPlayer(details, playerId, callback) {
   } else if (details.infohash) {
     params.infohash = details.infohash;
   } else {
-    callback.call(null);
+    callback();
   }
   if (playerId) {
     params.player_id = playerId;
@@ -275,12 +275,12 @@ export function openInPlayer(details, playerId, callback) {
     params,
     onsuccess: data => {
       if (typeof callback === 'function') {
-        callback.call(null, data);
+        callback(data);
       }
     },
-    onerror: errmsg => {
+    onerror: () => {
       if (typeof callback === 'function') {
-        callback.call(null);
+        callback();
       }
     },
   });
@@ -292,12 +292,12 @@ export function getDeviceId(callback) {
     method: 'get_public_user_key',
     onsuccess: data => {
       if (typeof callback === 'function') {
-        callback.call(null, data);
+        callback(data);
       }
     },
-    onerror: errmsg => {
+    onerror: () => {
       if (typeof callback === 'function') {
-        callback.call(null);
+        callback();
       }
     },
   });
