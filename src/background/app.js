@@ -330,7 +330,7 @@ const commands = {
 
       const options = {
         type: 'basic',
-        title: newsList[i].title || '-',
+        title: newsList[i].title || '',
         iconUrl: '/public/images/icon128.png',
         message: newsList[i].text,
       };
@@ -367,6 +367,8 @@ const commands = {
           };
         }
       );
+
+      news.updateLastShown(newsId);
 
       window.setTimeout(() => {
         browser.notifications.clear(notificationId, wasCleared => {});
