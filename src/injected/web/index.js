@@ -10,7 +10,6 @@ import {
 } from './notifications';
 import { onTabCreate, onTabClosed } from './tabs';
 
-const IS_TOP = window.top === window;
 let state = 0;
 
 export default function initialize(webId, contentId, props) {
