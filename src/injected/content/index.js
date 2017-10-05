@@ -56,7 +56,7 @@ export default function initialize(contentId, webId) {
     if (handle) handle(req.data, src);
   });
 
-  sendMessage({ cmd: 'GetInjected', data: {url: window.location.href, isTop: IS_TOP } })
+  sendMessage({ cmd: 'GetInjected', data: { url: window.location.href, isTop: IS_TOP } })
   .then(data => {
     if (data.scripts) {
       data.scripts.forEach(script => {
@@ -146,10 +146,10 @@ function injectScript(data) {
 }
 
 function watchDOM(func, retryCount, retryInterval) {
-  if(!func()) {
-    if(retryCount && retryCount > 0) {
-      setTimeout(function() {
-        watchDOM(func, retryCount-1, retryInterval);
+  if (!func()) {
+    if (retryCount && retryCount > 0) {
+      setTimeout(() => {
+        watchDOM(func, retryCount - 1, retryInterval);
       }, retryInterval);
     }
   }
@@ -157,36 +157,35 @@ function watchDOM(func, retryCount, retryInterval) {
 
 function checkStartEngineMarker() {
   // start engine if requested by this page
-  const el = document.getElementById("x-acestream-awe-start-engine");
-  if(!el) {
+  const el = document.getElementById('x-acestream-awe-start-engine');
+  if (!el) {
     return false;
   }
 
   // notify the marker owner that we have catched it
   sendMessage({ cmd: 'StartEngine' })
-    .then(response => {
-      verbose("Ace Script: start engine: response", response);
-      if(response) {
-        el.setAttribute("data-status", "started");
-      }
-      else {
-        el.setAttribute("data-status", "failed");
-      }
-    });
+  .then(response => {
+    verbose('Ace Script: start engine: response', response);
+    if (response) {
+      el.setAttribute('data-status', 'started');
+    } else {
+      el.setAttribute('data-status', 'failed');
+    }
+  });
 
   return true;
 }
 
 function exposeVersion() {
   // set version in special container
-  const el = document.getElementById("x-acestream-awe-version");
-  if(!el) {
+  const el = document.getElementById('x-acestream-awe-version');
+  if (!el) {
     return false;
   }
 
-  if(isDomainAllowed()) {
-    el.setAttribute("data-vendor", "firefox");
-    el.setAttribute("data-version", browser.runtime.getManifest().version);
+  if (isDomainAllowed()) {
+    el.setAttribute('data-vendor', 'firefox');
+    el.setAttribute('data-version', browser.runtime.getManifest().version);
   }
 
   return true;
@@ -194,16 +193,16 @@ function exposeVersion() {
 
 function exposeInstalledScripts() {
   // expose installed scripts to a limited set of domains
-  const el = document.getElementById("x-acestream-awe-installed-scripts");
-  if(!el) {
+  const el = document.getElementById('x-acestream-awe-installed-scripts');
+  if (!el) {
     return false;
   }
 
-  if(isDomainAllowed()) {
+  if (isDomainAllowed()) {
     sendMessage({ cmd: 'GetInstalledScripts' })
-      .then(response => {
-        el.setAttribute("data-scripts", JSON.stringify(Object.keys(response)));
-      });
+    .then(response => {
+      el.setAttribute('data-scripts', JSON.stringify(Object.keys(response)));
+    });
   }
 
   return true;
@@ -212,7 +211,7 @@ function exposeInstalledScripts() {
 function onDOMContentLoaded() {
   watchDOM(checkStartEngineMarker, 60, 500);
 
-  if(isDomainAllowed(window.location.host)) {
+  if (isDomainAllowed(window.location.host)) {
     watchDOM(exposeVersion, 240, 500);
     watchDOM(exposeInstalledScripts, 60, 500);
   }

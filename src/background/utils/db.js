@@ -265,7 +265,7 @@ export function dumpValueStore(where, valueStore) {
 /**
  * @desc Get scripts to be injected to page with specific URL.
  */
-export function getScriptsByURL(url, isTop=true) {
+export function getScriptsByURL(url, isTop = true) {
   const scripts = testBlacklist(url)
     ? []
     : store.scripts.filter(script => {

@@ -190,11 +190,11 @@ export function verbose(...params) {
 export function isDomainAllowed(host) {
   try {
     const allowedDomains = [
-      "acestream.org",
-      "acestream.net",
-      "acestream.me"
+      'acestream.org',
+      'acestream.net',
+      'acestream.me',
     ];
-    const targetHost = host.split(".").slice(-2).join(".");
+    const targetHost = host.split('.').slice(-2).join('.');
 
     return allowedDomains.includes(targetHost);
   } catch (e) {

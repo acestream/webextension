@@ -305,7 +305,7 @@ const commands = {
           const err = browser.runtime.lastError;
           if (err) {
             verbose(`bg: start engine failed: err=${err}`);
-            resolve(null)
+            resolve(null);
           } else {
             verbose('bg: start engine response', response);
             resolve(response);

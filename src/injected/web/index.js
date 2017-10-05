@@ -540,7 +540,7 @@ function exposeAceScript() {
 
   // public methods (for all domains)
   Object.defineProperty(AceScript, 'startEngine', {
-    value: (callback) => {
+    value: callback => {
       postCommandWithCallback('StartEngine', callback);
     },
   });
