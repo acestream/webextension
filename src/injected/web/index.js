@@ -56,10 +56,6 @@ function postCommandWithCallback(cmd, callback, data) {
   });
 }
 
-function startEngine(callback) {
-  postCommandWithCallback('StartEngine', callback);
-}
-
 function isDomainAllowed() {
   try {
     const allowedDomains = [
@@ -119,9 +115,7 @@ function onLoadScripts(data) {
   const idle = [];
   const end = [];
   bridge.version = data.version;
-  if(isDomainAllowed()) {
-    exposeAceScript();
-  }
+  exposeAceScript();
   // reset load and checkLoad
   bridge.load = () => {
     run(end);
@@ -557,19 +551,31 @@ function runCode(name, func, args, thisObj) {
 }
 
 function exposeAceScript() {
-  verbose(`expose AceScript to ${window.location.href}`);
-
   const AceScript = {};
-  Object.defineProperty(AceScript, 'getVersion', {
-    value: () => Promise.resolve({
-      version: bridge.version,
-    }),
+
+  // public methods (for all domains)
+  Object.defineProperty(AceScript, 'startEngine', {
+    value: (callback) => {
+      postCommandWithCallback('StartEngine', callback);
+    },
   });
-  Object.defineProperty(AceScript, 'isInstalled', {
-    value: (name, namespace) => new Promise(resolve => {
-      postCommandWithCallback('CheckScript', resolve, { name, namespace });
-    }),
-  });
+
+  // protected methods (exposed only to allowed domains)
+  if (isDomainAllowed()) {
+    verbose(`expose AceScript to ${window.location.href}`);
+
+    Object.defineProperty(AceScript, 'getVersion', {
+      value: () => Promise.resolve({
+        version: bridge.version,
+      }),
+    });
+    Object.defineProperty(AceScript, 'isInstalled', {
+      value: (name, namespace) => new Promise(resolve => {
+        postCommandWithCallback('CheckScript', resolve, { name, namespace });
+      }),
+    });
+  }
+
   Object.defineProperty(window.external, 'AceScript', {
     value: AceScript,
   });

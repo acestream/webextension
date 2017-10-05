@@ -299,8 +299,14 @@ const commands = {
         'org.acestream.engine',
         { method: 'start_engine' },
         response => {
-          verbose('bg: start_engine response', response);
-          resolve(response);
+          const err = browser.runtime.lastError;
+          if (err) {
+            verbose(`bg: start engine failed: err=${err}`);
+            resolve(null)
+          } else {
+            verbose('bg: start engine response', response);
+            resolve(response);
+          }
         },
       );
     });
