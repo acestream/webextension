@@ -354,7 +354,7 @@ function wrapGM(script, code, cache) {
         });
       },
     },
-    AWE_getEngineStatus: {
+    AWE_engineStatus: {
       value(callback) {
         postCommandWithCallback('GetEngineStatus', callback);
       },
