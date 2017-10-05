@@ -4,6 +4,9 @@ import { getNameURI, makeScriptId, isRemote, parseMeta, newScript } from './scri
 import { testScript, testBlacklist } from './tester';
 import { register } from './init';
 import patchDB from './patch-db';
+import getEventEmitter from './events';
+
+export const eventEmitter = getEventEmitter();
 
 function cacheOrFetch(handle) {
   const requests = {};
@@ -210,6 +213,20 @@ export function getScripts() {
   return Promise.resolve(store.scripts);
 }
 
+export function getInstalledScripts() {
+  return new Promise(resolve => {
+    const installed = [];
+    getScripts().then(
+      scripts => {
+        scripts.forEach(script => {
+          installed.push(script.props.scriptId);
+        });
+        resolve(installed);
+      },
+    );
+  });
+}
+
 export function getScriptByIds(ids) {
   return Promise.all(ids.map(id => getScript({ id })))
   .then(scripts => scripts.filter(Boolean));
@@ -329,13 +346,20 @@ export function checkRemove() {
 }
 
 export function removeScript(id) {
+  let scriptId = null;
   const i = store.scripts.findIndex(item => id === objectGet(item, 'props.id'));
   if (i >= 0) {
+    scriptId = store.scripts[i].props.scriptId;
     store.scripts.splice(i, 1);
     storage.script.remove(id);
     storage.code.remove(id);
     storage.value.remove(id);
   }
+
+  if (scriptId) {
+    eventEmitter.fire('scriptRemoved', scriptId);
+  }
+
   return browser.runtime.sendMessage({
     cmd: 'RemoveScript',
     data: id,
@@ -399,7 +423,9 @@ function saveScript(script, code) {
   return Promise.all([
     storage.script.dump(script),
     storage.code.set(props.id, code),
-  ]);
+  ]).then(() => {
+    eventEmitter.fire('scriptSaved', props.scriptId);
+  });
 }
 
 export function updateScriptInfo(id, data) {

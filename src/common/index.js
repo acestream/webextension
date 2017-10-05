@@ -37,7 +37,7 @@ export function sendMessage(payload) {
     return data;
   });
   promise.catch(err => {
-    if (process.env.DEBUG) console.warn(err);
+    if (process.env.DEBUG) console.warn(err, payload);
   });
   return promise;
 }

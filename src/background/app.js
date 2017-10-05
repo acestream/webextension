@@ -2,6 +2,7 @@ import 'src/common/browser';
 import { i18n, defaultImage, verbose } from 'src/common';
 import { objectGet } from 'src/common/object';
 import * as sync from './sync';
+import * as news from './utils/news';
 import {
   cache,
   getRequestId, httpRequest, abortRequest, confirmInstall,
@@ -14,7 +15,7 @@ import {
   getScripts, removeScript, getData, checkRemove, getScriptsByURL,
   updateScriptInfo, getExportData, getScriptCode,
   getScriptByIds, moveScript, vacuum, parseScript, getScript,
-  normalizePosition,
+  normalizePosition, getInstalledScripts,
 } from './utils/db';
 import { resetBlacklist } from './utils/tester';
 import { setValueStore, updateValueStore } from './utils/values';
@@ -27,6 +28,11 @@ import {
 } from './utils/engine-api';
 
 const VM_VER = browser.runtime.getManifest().version;
+
+// not supported by Firefox yet
+const NOTIFICATIONS_BUTTONS_SUPPORTED = false;
+const registeredNotifications_ = {};
+let contextMenuCreated = false;
 
 hookOptions(changes => {
   if ('isApplied' in changes) setIcon(changes.isApplied);
@@ -46,6 +52,11 @@ function onGlobalContextMenuClick(info, tab) {
 }
 
 function createGlobalContextMenu() {
+  if (contextMenuCreated) {
+    return;
+  }
+
+  contextMenuCreated = true;
   verbose('bg:create context menu');
 
   return new Promise(resolve => {
@@ -58,8 +69,7 @@ function createGlobalContextMenu() {
       },
       () => {
         // check lastError to suppress errors on console
-        // eslint-disable-next-line no-unused-expressions
-        browser.runtime.lastError;
+        browser.runtime.lastError; // eslint-disable-line no-unused-expressions
         resolve();
       },
     );
@@ -169,7 +179,7 @@ const commands = {
   Vacuum: vacuum,
   ParseScript(data) {
     return parseScript(data).then(res => {
-      browser.runtime.sendMessage(res);
+      browser.runtime.sendMessage(res).catch(() => {});
       sync.sync();
       return res.data;
     });
@@ -282,6 +292,89 @@ const commands = {
   RegisterContextMenuCommand() {
     return createGlobalContextMenu();
   },
+  StartEngine() {
+    verbose('bg: start engine');
+    return new Promise(resolve => {
+      browser.runtime.sendNativeMessage(
+        'org.acestream.engine',
+        { method: "start_engine" },
+        response => {
+          verbose('bg: start_engine response', response);
+          resolve(response);
+        }
+      );
+    });
+  },
+  CheckNews({ url }) {
+    verbose(`bg: check news: url=${url}`);
+
+    if (!url) {
+      return Promise.reject('missing url');
+    }
+
+    const newsList = news.getNewsForUrl(url);
+    for(var i = 0; i < newsList.length; i++) {
+      let url;
+      const newsId = newsList[i].id;
+      const buttons = [];
+      const notificationId = `awe-notification-${Math.ceil(Math.random() * 1000000)}`;
+
+      if (newsList[i].btnUrl) {
+        url = newsList[i].btnUrl;
+
+        if (NOTIFICATIONS_BUTTONS_SUPPORTED) {
+          buttons.push({ title: newsList[i].btnTitle || browser.i18n.getMessage('show_more') });
+          buttons.push({ title: browser.i18n.getMessage('do_not_show_anymore') });
+        }
+      }
+
+      const options = {
+        type: 'basic',
+        title: newsList[i].title || '-',
+        iconUrl: '/public/images/icon128.png',
+        message: newsList[i].text,
+      };
+
+      if (NOTIFICATIONS_BUTTONS_SUPPORTED) {
+        options.buttons = buttons;
+      }
+
+      browser.notifications.create(
+        notificationId,
+        options
+      ).then(
+        notificationId => {
+          registeredNotifications_[notificationId] = {
+              onClicked: () => {
+                  if (url) {
+                    browser.tabs.create({url: url});
+                  }
+                  news.markAsRead(newsId);
+                  browser.notifications.clear(notificationId, wasCleared => {});
+              },
+              onButtonClicked: index => {
+                  if (index === 0) {
+                    if (url) {
+                      browser.tabs.create({url: url});
+                    }
+                    news.markAsRead(newsId);
+                  }
+                  else if (index === 1) {
+                    news.markAsRead(newsId);
+                  }
+                  browser.notifications.clear(notificationId, wasCleared => {});
+              }
+          };
+        }
+      );
+
+      window.setTimeout(() => {
+        browser.notifications.clear(notificationId, wasCleared => {});
+      }, 15000);
+    }
+
+    return Promise.resolve();
+  },
 };
 
 initialize()
@@ -306,6 +399,7 @@ initialize()
   sync.initialize();
   resetBlacklist();
   checkRemove();
+  news.initialize();
 });
 
 // Common functions
@@ -346,6 +440,10 @@ browser.notifications.onClicked.addListener(id => {
     cmd: 'NotificationClick',
     data: id,
   });
+
+  if(registeredNotifications_[id] && typeof registeredNotifications_[id].onClicked === 'function') {
+    registeredNotifications_[id].onClicked();
+  }
 });
 
 browser.notifications.onClosed.addListener(id => {
@@ -353,7 +451,19 @@ browser.notifications.onClosed.addListener(id => {
     cmd: 'NotificationClose',
     data: id,
   });
+
+  if(registeredNotifications_[id]) {
+    delete registeredNotifications_[id];
+  }
 });
+
+if (NOTIFICATIONS_BUTTONS_SUPPORTED) {
+  browser.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {
+    if(registeredNotifications_[notificationId] && typeof registeredNotifications_[notificationId].onButtonClicked === 'function') {
+      registeredNotifications_[notificationId].onButtonClicked(buttonIndex);
+    }
+  });
+}
 
 browser.tabs.onRemoved.addListener(id => {
   broadcast({
@@ -363,43 +473,28 @@ browser.tabs.onRemoved.addListener(id => {
 });
 
 // request data from host legacy extension
-function getInstalledScripts() {
-  return new Promise((resolve, reject) => {
-    const installed = [];
-    getScripts().then(
-      scripts => {
-        scripts.forEach(script => {
-          installed.push(script.props.scriptId);
-        });
-        resolve(installed);
-      },
-      err => {
-        reject(err);
-      },
-    );
-  });
-}
+browser.runtime.sendMessage('get-all-userscripts')
+  .then(response => {
+    if (!response) {
+      return;
+    }
 
-browser.runtime.sendMessage('get-all-userscripts').then(response => {
-  if (!response) {
-    return;
-  }
+    const { scripts } = response;
 
-  const { scripts } = response;
+    getInstalledScripts().then(installed => {
+      verbose('bg:init: installed scripts', installed);
 
-  getInstalledScripts().then(installed => {
-    verbose('bg:init: installed scripts', installed);
-
-    scripts.forEach(script => {
-      if (!installed.includes(script.id)) {
-        verbose(`bg:init: install new script: id=${script.id}`);
-        parseScript({
-          url: script.url,
-          code: script.code,
-        });
-      } else {
-        verbose(`bg:init: script already installed: id=${script.id}`);
-      }
+      scripts.forEach(script => {
+        if (!installed.includes(script.id)) {
+          verbose(`bg:init: install new script: id=${script.id}`);
+          parseScript({
+            url: script.url,
+            code: script.code,
+          });
+        } else {
+          verbose(`bg:init: script already installed: id=${script.id}`);
+        }
+      });
     });
-  });
-});
+  })
+  .catch(() => {});

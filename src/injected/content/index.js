@@ -150,3 +150,12 @@ function injectScript(data) {
   ];
   inject(`!${func.toString()}(${args.join(',')})`);
 }
+
+function onDOMContentLoaded() {
+  if (IS_TOP) {
+    // check news for this site
+    sendMessage({ cmd: 'CheckNews', data: { url: window.location.href } });
+  }
+}
+
+document.addEventListener('DOMContentLoaded', onDOMContentLoaded, false);

@@ -1,3 +1,5 @@
+import { verbose } from 'src/common';
+
 // TODO: register initiator before each play (engine can restart)
 let gDeviceId = null;
 let gInitiatorId = null;
@@ -171,7 +173,7 @@ export function getEngineStatus(callback) {
         { method: 'get_version' },
         response => {
           if(typeof response === 'undefined') {
-            console.log('Ace Script: engine messaging host failed');
+            verbose(`Ace Script: engine messaging host failed: ${browser.runtime.lastError}`);
             _sendResponse(false, 0)
           }
           else {

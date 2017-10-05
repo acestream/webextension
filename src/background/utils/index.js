@@ -24,7 +24,9 @@ export function broadcast(data) {
   browser.tabs.query({})
   .then(tabs => {
     tabs.forEach(tab => {
-      browser.tabs.sendMessage(tab.id, data);
+      browser.tabs.sendMessage(tab.id, data)
+        // suppress errors like 'receiving end does not exist'
+        .catch(err => {});
     });
   });
 }
