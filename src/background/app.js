@@ -346,7 +346,7 @@ const commands = {
         registeredNotifications_[newNotificationId] = {
           onClicked: () => {
             if (targetUrl) {
-              browser.tabs.create({ targetUrl });
+              browser.tabs.create({ url: targetUrl });
             }
             news.markAsRead(newsId);
             browser.notifications.clear(newNotificationId, () => {});
@@ -354,7 +354,7 @@ const commands = {
           onButtonClicked: index => {
             if (index === 0) {
               if (targetUrl) {
-                browser.tabs.create({ targetUrl });
+                browser.tabs.create({ url: targetUrl });
               }
               news.markAsRead(newsId);
             } else if (index === 1) {
