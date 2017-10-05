@@ -186,3 +186,18 @@ export function verbose(...params) {
     console.info(...params);
   }
 }
+
+export function isDomainAllowed(host) {
+  try {
+    const allowedDomains = [
+      "acestream.org",
+      "acestream.net",
+      "acestream.me"
+    ];
+    const targetHost = host.split(".").slice(-2).join(".");
+
+    return allowedDomains.includes(targetHost);
+  } catch (e) {
+    verbose(`isDomainAllowed: error: ${e}`);
+  }
+}

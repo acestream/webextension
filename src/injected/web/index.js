@@ -1,4 +1,4 @@
-import { verbose } from 'src/common';
+import { verbose, isDomainAllowed } from 'src/common';
 import { getUniqId, bindEvents, Promise, attachFunction, console } from '../utils';
 import { includes, forEach, map, utf8decode } from './helpers';
 import bridge from './bridge';
@@ -54,21 +54,6 @@ function postCommandWithCallback(cmd, callback, data) {
     cmd: 'PostCommand',
     data: { cmd, requestId, data },
   });
-}
-
-function isDomainAllowed() {
-  try {
-    const allowedDomains = [
-      "acestream.org",
-      "acestream.net",
-      "acestream.me"
-    ];
-    const host = window.location.host.split(".").slice(-2).join(".");
-
-    return allowedDomains.includes(host);
-  } catch (e) {
-    verbose(`isDomainAllowed: error: ${e}`);
-  }
 }
 
 const handlers = {
@@ -561,7 +546,7 @@ function exposeAceScript() {
   });
 
   // protected methods (exposed only to allowed domains)
-  if (isDomainAllowed()) {
+  if (isDomainAllowed(window.location.host)) {
     verbose(`expose AceScript to ${window.location.href}`);
 
     Object.defineProperty(AceScript, 'getVersion', {
