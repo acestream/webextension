@@ -25,8 +25,8 @@ export function broadcast(data) {
   .then(tabs => {
     tabs.forEach(tab => {
       browser.tabs.sendMessage(tab.id, data)
-        // suppress errors like 'receiving end does not exist'
-        .catch(err => {});
+      // suppress errors like 'receiving end does not exist'
+      .catch(err => {});
     });
   });
 }

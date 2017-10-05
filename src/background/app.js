@@ -297,11 +297,11 @@ const commands = {
     return new Promise(resolve => {
       browser.runtime.sendNativeMessage(
         'org.acestream.engine',
-        { method: "start_engine" },
+        { method: 'start_engine' },
         response => {
           verbose('bg: start_engine response', response);
           resolve(response);
-        }
+        },
       );
     });
   },
@@ -313,7 +313,7 @@ const commands = {
     }
 
     const newsList = news.getNewsForUrl(url);
-    for(var i = 0; i < newsList.length; i++) {
+    for (let i = 0; i < newsList.length; i++) {
       let url;
       const newsId = newsList[i].id;
       const buttons = [];
@@ -341,32 +341,29 @@ const commands = {
 
       browser.notifications.create(
         notificationId,
-        options
-      ).then(
-        notificationId => {
-          registeredNotifications_[notificationId] = {
-              onClicked: () => {
-                  if (url) {
-                    browser.tabs.create({url: url});
-                  }
-                  news.markAsRead(newsId);
-                  browser.notifications.clear(notificationId, wasCleared => {});
-              },
-              onButtonClicked: index => {
-                  if (index === 0) {
-                    if (url) {
-                      browser.tabs.create({url: url});
-                    }
-                    news.markAsRead(newsId);
-                  }
-                  else if (index === 1) {
-                    news.markAsRead(newsId);
-                  }
-                  browser.notifications.clear(notificationId, wasCleared => {});
+        options,
+      ).then(notificationId => {
+        registeredNotifications_[notificationId] = {
+          onClicked: () => {
+            if (url) {
+              browser.tabs.create({ url });
+            }
+            news.markAsRead(newsId);
+            browser.notifications.clear(notificationId, wasCleared => {});
+          },
+          onButtonClicked: index => {
+            if (index === 0) {
+              if (url) {
+                browser.tabs.create({ url });
               }
-          };
-        }
-      );
+              news.markAsRead(newsId);
+            } else if (index === 1) {
+              news.markAsRead(newsId);
+            }
+            browser.notifications.clear(notificationId, wasCleared => {});
+          },
+        };
+      });
 
       news.updateLastShown(newsId);
 
@@ -443,7 +440,7 @@ browser.notifications.onClicked.addListener(id => {
     data: id,
   });
 
-  if(registeredNotifications_[id] && typeof registeredNotifications_[id].onClicked === 'function') {
+  if (registeredNotifications_[id] && typeof registeredNotifications_[id].onClicked === 'function') {
     registeredNotifications_[id].onClicked();
   }
 });
@@ -454,14 +451,14 @@ browser.notifications.onClosed.addListener(id => {
     data: id,
   });
 
-  if(registeredNotifications_[id]) {
+  if (registeredNotifications_[id]) {
     delete registeredNotifications_[id];
   }
 });
 
 if (NOTIFICATIONS_BUTTONS_SUPPORTED) {
   browser.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {
-    if(registeredNotifications_[notificationId] && typeof registeredNotifications_[notificationId].onButtonClicked === 'function') {
+    if (registeredNotifications_[notificationId] && typeof registeredNotifications_[notificationId].onButtonClicked === 'function') {
       registeredNotifications_[notificationId].onButtonClicked(buttonIndex);
     }
   });
@@ -476,27 +473,27 @@ browser.tabs.onRemoved.addListener(id => {
 
 // request data from host legacy extension
 browser.runtime.sendMessage('get-all-userscripts')
-  .then(response => {
-    if (!response) {
-      return;
-    }
+.then(response => {
+  if (!response) {
+    return;
+  }
 
-    const { scripts } = response;
+  const { scripts } = response;
 
-    getInstalledScripts().then(installed => {
-      verbose('bg:init: installed scripts', installed);
+  getInstalledScripts().then(installed => {
+    verbose('bg:init: installed scripts', installed);
 
-      scripts.forEach(script => {
-        if (!installed.includes(script.id)) {
-          verbose(`bg:init: install new script: id=${script.id}`);
-          parseScript({
-            url: script.url,
-            code: script.code,
-          });
-        } else {
-          verbose(`bg:init: script already installed: id=${script.id}`);
-        }
-      });
+    scripts.forEach(script => {
+      if (!installed.includes(script.id)) {
+        verbose(`bg:init: install new script: id=${script.id}`);
+        parseScript({
+          url: script.url,
+          code: script.code,
+        });
+      } else {
+        verbose(`bg:init: script already installed: id=${script.id}`);
+      }
     });
-  })
-  .catch(() => {});
+  });
+})
+.catch(() => {});

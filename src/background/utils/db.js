@@ -216,14 +216,12 @@ export function getScripts() {
 export function getInstalledScripts() {
   return new Promise(resolve => {
     const installed = [];
-    getScripts().then(
-      scripts => {
-        scripts.forEach(script => {
-          installed.push(script.props.scriptId);
-        });
-        resolve(installed);
-      },
-    );
+    getScripts().then(scripts => {
+      scripts.forEach(script => {
+        installed.push(script.props.scriptId);
+      });
+      resolve(installed);
+    });
   });
 }
 

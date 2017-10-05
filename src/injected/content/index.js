@@ -44,7 +44,7 @@ const bgHandlers = {
   NotificationClose: onNotificationClose,
   WatchOnlineMenuClicked(data) {
     bridge.post({ cmd: 'WatchOnlineMenuClicked', data });
-  }
+  },
 };
 
 export default function initialize(contentId, webId) {
@@ -110,7 +110,7 @@ const handlers = {
     });
   },
   PostCommand({ cmd, requestId, data }) {
-    sendMessage({ cmd: cmd, data })
+    sendMessage({ cmd, data })
     .then(result => {
       bridge.post({
         cmd: 'CommandResponse',

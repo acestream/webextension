@@ -41,16 +41,16 @@ function loadConfig() {
   browser.storage.local.get(
     'news',
     response => {
-      if(response && response.news) {
+      if (response && response.news) {
         store.news = JSON.parse(response.news);
       }
-    }
+    },
   );
 }
 
 function saveConfig() {
   browser.storage.local.set({
-    news: JSON.stringify(store.news)
+    news: JSON.stringify(store.news),
   });
 }
 
@@ -69,12 +69,12 @@ function checkNews(engineStatus) {
     verbose('checkNews: engineStatus', engineStatus);
 
     const appVersion = browser.runtime.getManifest().version;
-    if(engineStatus && engineStatus.version > 0) {
+    if (engineStatus && engineStatus.version > 0) {
       store.lastEngineVersion = engineStatus.version;
     }
 
     const xhr = new XMLHttpRequest(),
-    url = `http://awe-api.acestream.me/news/get?locale=${getLocale()}&appVersion=${appVersion}&engineVersion=${store.lastEngineVersion}&_=${Math.random()}`;
+      url = `http://awe-api.acestream.me/news/get?locale=${getLocale()}&appVersion=${appVersion}&engineVersion=${store.lastEngineVersion}&_=${Math.random()}`;
     verbose(`news: request: url=${url}`);
     xhr.open('GET', url, true);
     xhr.timeout = 10000;
@@ -88,7 +88,7 @@ function checkNews(engineStatus) {
           verbose(`news: loaded ${keys.length} news`);
 
           keys.forEach(id => {
-            if(!store.news[id]) {
+            if (!store.news[id]) {
               store.news[id] = remote[id];
               store.news[id].read = false;
               updated = true;
@@ -96,13 +96,13 @@ function checkNews(engineStatus) {
           });
 
           Object.keys(store.news).forEach(id => {
-            if(!remote[id]) {
+            if (!remote[id]) {
               delete store.news[id];
               updated = true;
             }
           });
 
-          if(updated) {
+          if (updated) {
             saveConfig();
           }
         } catch (e) {
@@ -118,7 +118,7 @@ function checkNews(engineStatus) {
 }
 
 export function initialize() {
-  if(!store.initDone_) {
+  if (!store.initDone_) {
     store.initDone_ = true;
     loadConfig();
     updateInstalledScripts();
@@ -130,7 +130,7 @@ export function getNewsForUrl(url) {
   const result = [];
 
   Object.keys(store.news).forEach(id => {
-    if(store.news[id].read) {
+    if (store.news[id].read) {
       return;
     }
 
@@ -142,33 +142,32 @@ export function getNewsForUrl(url) {
     }
 
     let gotMatch = false;
-    if(store.news[id].includes && store.news[id].includes.length) {
+    if (store.news[id].includes && store.news[id].includes.length) {
       verbose(`getNewsForUrl: match against includes: url=${url}`);
-      for(let i=0; i < store.news[id].includes.length; i++) {
+      for (let i = 0; i < store.news[id].includes.length; i++) {
         const re = new RegExp(store.news[id].includes[i]);
-        if(re.test(url)) {
-          verbose('getNewsForUrl: got includes match: re=' + store.news[id].includes[i] + ' url=' + url);
+        if (re.test(url)) {
+          verbose(`getNewsForUrl: got includes match: re=${store.news[id].includes[i]} url=${url}`);
           gotMatch = true;
           break;
         }
       }
-    }
-    else if(store.news[id].excludes && store.news[id].excludes.length) {
+    } else if (store.news[id].excludes && store.news[id].excludes.length) {
       gotMatch = true;
-      verbose('getNewsForUrl: match against excludes: url=' + url);
-      for(let i=0; i < store.news[id].excludes.length; i++) {
+      verbose(`getNewsForUrl: match against excludes: url=${url}`);
+      for (let i = 0; i < store.news[id].excludes.length; i++) {
         const re = new RegExp(store.news[id].excludes[i]);
-        if(re.test(url)) {
-          verbose('getNewsForUrl: got excludes match: re=' + store.news[id].excludes[i] + ' url=' + url);
+        if (re.test(url)) {
+          verbose(`getNewsForUrl: got excludes match: re=${store.news[id].excludes[i]} url=${url}`);
           gotMatch = false;
           break;
         }
       }
     }
 
-    if(gotMatch) {
+    if (gotMatch) {
       let notifyUser = true;
-      if(store.news[id].excludeScripts && store.news[id].excludeScripts.length) {
+      if (store.news[id].excludeScripts && store.news[id].excludeScripts.length) {
         // check all installed scripts
         verbose('getNewsForUrl: installedScripts', store.installedScripts);
         for (let i = 0; i < store.news[id].excludeScripts.length; i++) {
@@ -181,15 +180,13 @@ export function getNewsForUrl(url) {
       }
 
       if (notifyUser) {
-        result.push(
-          {
-            id: id,
-            title: store.news[id].title,
-            text: store.news[id].text,
-            btnUrl: store.news[id].btnUrl,
-            btnTitle: store.news[id].btnTitle
-          }
-        );
+        result.push({
+          id,
+          title: store.news[id].title,
+          text: store.news[id].text,
+          btnUrl: store.news[id].btnUrl,
+          btnTitle: store.news[id].btnTitle,
+        });
       }
     }
   });
@@ -197,14 +194,14 @@ export function getNewsForUrl(url) {
 }
 
 export function markAsRead(id) {
-  if(store.news[id] && !store.news[id].read) {
+  if (store.news[id] && !store.news[id].read) {
     store.news[id].read = true;
     saveConfig();
   }
 }
 
 export function updateLastShown(id) {
-  if(store.news[id]) {
+  if (store.news[id]) {
     store.news[id].lastShown = Date.now();
     saveConfig();
   }

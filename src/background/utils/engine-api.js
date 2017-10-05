@@ -2,13 +2,13 @@ import { verbose } from 'src/common';
 
 // TODO: register initiator before each play (engine can restart)
 let gDeviceId = null;
-let gInitiatorId = null;
+const gInitiatorId = null;
 
 function checkEngine(callback, retryCount, retryInterval) {
   try {
     const xhr = new XMLHttpRequest();
     let url = 'http://127.0.0.1:6878/webui/api/service?method=get_version';
-    if(gDeviceId === null) {
+    if (gDeviceId === null) {
       url += '&params=device-id';
     }
     xhr.open('GET', url, true);
@@ -172,36 +172,32 @@ export function getEngineStatus(callback) {
         'org.acestream.engine',
         { method: 'get_version' },
         response => {
-          if(typeof response === 'undefined') {
+          if (typeof response === 'undefined') {
             verbose(`Ace Script: engine messaging host failed: ${browser.runtime.lastError}`);
-            _sendResponse(false, 0)
-          }
-          else {
-            console.log('Ace Script: got response from engine messaging host: ' + JSON.stringify(response));
+            _sendResponse(false, 0);
+          } else {
+            console.log(`Ace Script: got response from engine messaging host: ${JSON.stringify(response)}`);
 
             // start engine
-            browser.runtime.sendNativeMessage('org.acestream.engine', { method: 'start_engine' }, function(response) {
-              if(typeof response === 'undefined') {
+            browser.runtime.sendNativeMessage('org.acestream.engine', { method: 'start_engine' }, response => {
+              if (typeof response === 'undefined') {
                 console.log('Ace Script: failed to start engine');
                 _sendResponse(false, 0);
-              }
-              else {
+              } else {
                 // wait until engine is started
                 const retryCount = 20;
                 const retryInterval = 1000;
                 checkEngine(response => {
-                  console.log('Ace Script: engine status after starting: ' + JSON.stringify(response));
+                  console.log(`Ace Script: engine status after starting: ${JSON.stringify(response)}`);
                   _sendResponse(response.running, response.versionCode);
                 }, retryCount, retryInterval);
               }
-            }
-            );
+            });
           }
-        }
-        );
+        },
+      );
     }
-  }
-  );
+  });
 }
 
 export function startJsPlayer(callback) {
@@ -213,9 +209,9 @@ export function startJsPlayer(callback) {
         console.log('Ace Script:startJsPlayer: engine messaging host failed');
         callback.call(null, false);
       } else {
-        console.log('Ace Script:startJsPlayer: got response from engine messaging host: ' + JSON.stringify(response));
+        console.log(`Ace Script:startJsPlayer: got response from engine messaging host: ${JSON.stringify(response)}`);
         // start js player
-        chrome.runtime.sendNativeMessage('org.acestream.engine', {method: 'start_js_player'}, function(response) {
+        chrome.runtime.sendNativeMessage('org.acestream.engine', { method: 'start_js_player' }, response => {
           if (typeof response === 'undefined') {
             console.log('Ace Script:startJsPlayer: failed to start js player');
             callback.call(null, false);
@@ -224,7 +220,7 @@ export function startJsPlayer(callback) {
           }
         });
       }
-  }
+    },
   );
 }
 
@@ -233,13 +229,13 @@ export function getAvailablePlayers(details, callback) {
     return;
   }
 
-  let params = {};
+  const params = {};
   if (details.content_id) {
-    params['content_id'] = details.content_id;
+    params.content_id = details.content_id;
   } else if (details.transport_file_url) {
-    params['url'] = details.transport_file_url;
+    params.url = details.transport_file_url;
   } else if (details.infohash) {
-    params['infohash'] = details.infohash;
+    params.infohash = details.infohash;
   } else {
     callback.call(null);
   }
@@ -252,41 +248,41 @@ export function getAvailablePlayers(details, callback) {
     },
     onerror: errmsg => {
       callback.call(null);
-    }
+    },
   });
 }
 
 export function openInPlayer(details, playerId, callback) {
-  let params = {};
+  const params = {};
   if (gInitiatorId) {
-    params['a'] = gInitiatorId;
+    params.a = gInitiatorId;
   }
   if (details.content_id) {
-    params['content_id'] = details.content_id;
+    params.content_id = details.content_id;
   } else if (details.transport_file_url) {
-    params['url'] = details.transport_file_url;
+    params.url = details.transport_file_url;
   } else if (details.infohash) {
-    params['infohash'] = details.infohash;
+    params.infohash = details.infohash;
   } else {
     callback.call(null);
   }
   if (playerId) {
-    params['player_id'] = playerId;
+    params.player_id = playerId;
   }
 
   sendRequest({
     method: 'open_in_player',
     params,
     onsuccess: data => {
-      if(typeof callback === 'function') {
+      if (typeof callback === 'function') {
         callback.call(null, data);
       }
     },
     onerror: errmsg => {
-      if(typeof callback === 'function') {
+      if (typeof callback === 'function') {
         callback.call(null);
       }
-    }
+    },
   });
 }
 
@@ -295,7 +291,7 @@ export function getDeviceId(callback) {
     api: 'service',
     method: 'get_public_user_key',
     onsuccess: data => {
-      if(typeof callback === 'function') {
+      if (typeof callback === 'function') {
         callback.call(null, data);
       }
     },
@@ -303,6 +299,6 @@ export function getDeviceId(callback) {
       if (typeof callback === 'function') {
         callback.call(null);
       }
-    }
+    },
   });
 }
