@@ -8,7 +8,7 @@ msgUpdated:
   description: Message shown when a script is updated/reinstalled.
   message: 脚本已更新。
 msgErrorFetchingScript:
-  description: Message shown when Violentmonkey fails fetching a new version of the script.
+  description: Message shown when Ace Script fails fetching a new version of the script.
   message: 获取脚本发生错误！
 msgInstalled:
   description: Message shown when a script is installed.
@@ -36,7 +36,7 @@ msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
   message: 正在检查更新...
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Violentmonkey fails fetching version data of the script.
+  description: Message shown when Ace Script fails fetching version data of the script.
   message: 获取更新信息失败。
 msgNoUpdate:
   description: Message shown when there is no new version of a script.
@@ -244,10 +244,10 @@ menuFindScripts:
   description: Menu item to find scripts for a site.
   message: 为此站点查找脚本
 menuScriptEnabled:
-  description: 'Menu item showing the status of Violentmonkey, when enabled.'
+  description: 'Menu item showing the status of Ace Script, when enabled.'
   message: 脚本已启用
 menuScriptDisabled:
-  description: 'Menu item showing the status of Violentmonkey, when disabled.'
+  description: 'Menu item showing the status of Ace Script, when disabled.'
   message: 脚本已禁用
 menuCommands:
   description: Menu item to list script commands.

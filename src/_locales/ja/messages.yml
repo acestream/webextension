@@ -1,6 +1,6 @@
 extName:
   description: Name of this extension.
-  message: Violentmonkey
+  message: Ace Script
 extDescription:
   description: Description for this extension.
   message: ブラウザでユーザースクリプトを利用できるようにします。
@@ -8,7 +8,7 @@ msgUpdated:
   description: Message shown when a script is updated/reinstalled.
   message: スクリプトが更新されました。
 msgErrorFetchingScript:
-  description: Message shown when Violentmonkey fails fetching a new version of the script.
+  description: Message shown when Ace Script fails fetching a new version of the script.
   message: スクリプトの取得中にエラーが発生しました!
 msgInstalled:
   description: Message shown when a script is installed.
@@ -36,7 +36,7 @@ msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
   message: 更新を確認中…
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Violentmonkey fails fetching version data of the script.
+  description: Message shown when Ace Script fails fetching version data of the script.
   message: 更新情報の取得に失敗しました。
 msgNoUpdate:
   description: Message shown when there is no new version of a script.
@@ -86,7 +86,7 @@ sideMenuSettings:
   message: 設定
 sideMenuAbout:
   description: 'Side menu: About'
-  message: Violentmonkey について
+  message: Ace Script について
 buttonNew:
   description: Button to create a new script.
   message: 新規作成
@@ -133,7 +133,7 @@ buttonExportData:
   message: ZIPファイルにエクスポート
 labelAbout:
   description: Label shown on top of the about page.
-  message: Violentmonkey について
+  message: Ace Script について
 labelRelated:
   description: Label of related links.
   message: '関連リンク: '
@@ -246,10 +246,10 @@ menuFindScripts:
   description: Menu item to find scripts for a site.
   message: 表示しているサイト用のスクリプトを探す
 menuScriptEnabled:
-  description: 'Menu item showing the status of Violentmonkey, when enabled.'
+  description: 'Menu item showing the status of Ace Script, when enabled.'
   message: スクリプトは有効
 menuScriptDisabled:
-  description: 'Menu item showing the status of Violentmonkey, when disabled.'
+  description: 'Menu item showing the status of Ace Script, when disabled.'
   message: スクリプトは無効
 menuCommands:
   description: Menu item to list script commands.
@@ -369,7 +369,7 @@ buttonCancel:
   message: キャンセル
 labelImportSettings:
   description: Label for option to import settings from zip file.
-  message: Violentmonkey の設定もインポートする
+  message: Ace Script の設定もインポートする
 learnBlacklist:
   description: Refers to a link to introduce blacklist patterns.
   message: パターンの詳細

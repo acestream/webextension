@@ -1,6 +1,6 @@
 extName:
   description: Name of this extension.
-  message: Violentmonkey
+  message: Ace Script
 extDescription:
   description: Description for this extension.
   message: Tarjoaa selaimiin tuen käyttäjäskripteille.
@@ -8,7 +8,7 @@ msgUpdated:
   description: Message shown when a script is updated/reinstalled.
   message: Skripti päivitetty.
 msgErrorFetchingScript:
-  description: Message shown when Violentmonkey fails fetching a new version of the script.
+  description: Message shown when Ace Script fails fetching a new version of the script.
   message: Virhe noudettaessa skriptiä!
 msgInstalled:
   description: Message shown when a script is installed.
@@ -38,7 +38,7 @@ msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
   message: Tarkistetaan päivityksiä...
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Violentmonkey fails fetching version data of the script.
+  description: Message shown when Ace Script fails fetching version data of the script.
   message: Päivitystietojen noutaminen epäonnistui.
 msgNoUpdate:
   description: Message shown when there is no new version of a script.
@@ -135,7 +135,7 @@ buttonExportData:
   message: Vie zip-tiedostoon
 labelAbout:
   description: Label shown on top of the about page.
-  message: Tietoja Violentmonkeystä
+  message: Tietoja Ace Scriptstä
 labelRelated:
   description: Label of related links.
   message: 'Linkkejä aiheesta: '
@@ -246,10 +246,10 @@ menuFindScripts:
   description: Menu item to find scripts for a site.
   message: Etsi skriptejä tälle sivustolle
 menuScriptEnabled:
-  description: 'Menu item showing the status of Violentmonkey, when enabled.'
+  description: 'Menu item showing the status of Ace Script, when enabled.'
   message: Skriptit käytössä
 menuScriptDisabled:
-  description: 'Menu item showing the status of Violentmonkey, when disabled.'
+  description: 'Menu item showing the status of Ace Script, when disabled.'
   message: Skriptit poissa käytöstä
 menuCommands:
   description: Menu item to list script commands.

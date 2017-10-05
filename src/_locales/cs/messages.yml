@@ -1,6 +1,6 @@
 extName:
   description: Name of this extension.
-  message: Violentmonkey
+  message: Ace Script
 extDescription:
   description: Description for this extension.
   message: ''
@@ -8,7 +8,7 @@ msgUpdated:
   description: Message shown when a script is updated/reinstalled.
   message: Skript aktualizován.
 msgErrorFetchingScript:
-  description: Message shown when Violentmonkey fails fetching a new version of the script.
+  description: Message shown when Ace Script fails fetching a new version of the script.
   message: Chyba při načítání skritpu!
 msgInstalled:
   description: Message shown when a script is installed.
@@ -36,7 +36,7 @@ msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
   message: Kontroluji aktualizace...
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Violentmonkey fails fetching version data of the script.
+  description: Message shown when Ace Script fails fetching version data of the script.
   message: Načtení informací o aktualizaci se nezdařilo.
 msgNoUpdate:
   description: Message shown when there is no new version of a script.
@@ -133,7 +133,7 @@ buttonExportData:
   message: Zálohovat do souboru ZIP
 labelAbout:
   description: Label shown on top of the about page.
-  message: O Violentmonkey
+  message: O Ace Script
 labelRelated:
   description: Label of related links.
   message: 'Související odkazy: '
@@ -246,10 +246,10 @@ menuFindScripts:
   description: Menu item to find scripts for a site.
   message: Najdi skripty pro tuto stránku
 menuScriptEnabled:
-  description: 'Menu item showing the status of Violentmonkey, when enabled.'
+  description: 'Menu item showing the status of Ace Script, when enabled.'
   message: Skripty zapnuty
 menuScriptDisabled:
-  description: 'Menu item showing the status of Violentmonkey, when disabled.'
+  description: 'Menu item showing the status of Ace Script, when disabled.'
   message: ''
 menuCommands:
   description: Menu item to list script commands.

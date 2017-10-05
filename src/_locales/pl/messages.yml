@@ -1,6 +1,6 @@
 extName:
   description: Name of this extension.
-  message: Violentmonkey
+  message: Ace Script
 extDescription:
   description: Description for this extension.
   message: Zapewnia obsługę skryptów użytkownika dla przeglądarek.
@@ -8,7 +8,7 @@ msgUpdated:
   description: Message shown when a script is updated/reinstalled.
   message: Skrypt zaktualizowany.
 msgErrorFetchingScript:
-  description: Message shown when Violentmonkey fails fetching a new version of the script.
+  description: Message shown when Ace Script fails fetching a new version of the script.
   message: Błąd przy pobieraniu skryptu!
 msgInstalled:
   description: Message shown when a script is installed.
@@ -36,7 +36,7 @@ msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
   message: Sprawdzanie aktualizacji...
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Violentmonkey fails fetching version data of the script.
+  description: Message shown when Ace Script fails fetching version data of the script.
   message: Błąd podczas pobierania informacji o aktualizacjach.
 msgNoUpdate:
   description: Message shown when there is no new version of a script.
@@ -133,7 +133,7 @@ buttonExportData:
   message: Eksportuj do pliku ".zip"
 labelAbout:
   description: Label shown on top of the about page.
-  message: O rozszerzeniu Violentmonkey
+  message: O rozszerzeniu Ace Script
 labelRelated:
   description: Label of related links.
   message: 'Powiązane linki: '
@@ -249,10 +249,10 @@ menuFindScripts:
   description: Menu item to find scripts for a site.
   message: Znajdź skrypty dla tej strony
 menuScriptEnabled:
-  description: 'Menu item showing the status of Violentmonkey, when enabled.'
+  description: 'Menu item showing the status of Ace Script, when enabled.'
   message: Skrypty włączone
 menuScriptDisabled:
-  description: 'Menu item showing the status of Violentmonkey, when disabled.'
+  description: 'Menu item showing the status of Ace Script, when disabled.'
   message: Skrypty wyłączone
 menuCommands:
   description: Menu item to list script commands.

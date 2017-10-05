@@ -1,6 +1,6 @@
 extName:
   description: Name of this extension.
-  message: Violentmonkey
+  message: Ace Script
 extDescription:
   description: Description for this extension.
   message: Provide userscript support for browsers.
@@ -8,7 +8,7 @@ msgUpdated:
   description: Message shown when a script is updated/reinstalled.
   message: Script updated.
 msgErrorFetchingScript:
-  description: Message shown when Violentmonkey fails fetching a new version of the script.
+  description: Message shown when Ace Script fails fetching a new version of the script.
   message: Error fetching script!
 msgInstalled:
   description: Message shown when a script is installed.
@@ -36,7 +36,7 @@ msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
   message: Checking for updates...
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Violentmonkey fails fetching version data of the script.
+  description: Message shown when Ace Script fails fetching version data of the script.
   message: Failed fetching update information.
 msgNoUpdate:
   description: Message shown when there is no new version of a script.
@@ -133,7 +133,7 @@ buttonExportData:
   message: Export to zip
 labelAbout:
   description: Label shown on top of the about page.
-  message: About Violentmonkey
+  message: About Ace Script
 labelRelated:
   description: Label of related links.
   message: 'Related links: '
@@ -244,10 +244,10 @@ menuFindScripts:
   description: Menu item to find scripts for a site.
   message: Find scripts for this site
 menuScriptEnabled:
-  description: 'Menu item showing the status of Violentmonkey, when enabled.'
+  description: 'Menu item showing the status of Ace Script, when enabled.'
   message: Scripts enabled
 menuScriptDisabled:
-  description: 'Menu item showing the status of Violentmonkey, when disabled.'
+  description: 'Menu item showing the status of Ace Script, when disabled.'
   message: Scripts disabled
 menuCommands:
   description: Menu item to list script commands.

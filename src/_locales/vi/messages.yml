@@ -1,6 +1,6 @@
 extName:
   description: Name of this extension.
-  message: Violentmonkey
+  message: Ace Script
 extDescription:
   description: Description for this extension.
   message: Hỗ trợ chạy userscript trên trình duyệt.
@@ -8,7 +8,7 @@ msgUpdated:
   description: Message shown when a script is updated/reinstalled.
   message: Đã cập nhật script.
 msgErrorFetchingScript:
-  description: Message shown when Violentmonkey fails fetching a new version of the script.
+  description: Message shown when Ace Script fails fetching a new version of the script.
   message: Có lỗi khi tìm phiên bản mới!
 msgInstalled:
   description: Message shown when a script is installed.
@@ -36,7 +36,7 @@ msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
   message: Đang kiểm tra cập nhật...
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Violentmonkey fails fetching version data of the script.
+  description: Message shown when Ace Script fails fetching version data of the script.
   message: Tìm kiếm thông tin cập nhật thất bại.
 msgNoUpdate:
   description: Message shown when there is no new version of a script.
@@ -133,7 +133,7 @@ buttonExportData:
   message: Xuất ra tập tin zip
 labelAbout:
   description: Label shown on top of the about page.
-  message: Thông tin Violentmonkey
+  message: Thông tin Ace Script
 labelRelated:
   description: Label of related links.
   message: 'Liên kết gợi ý: '
@@ -244,10 +244,10 @@ menuFindScripts:
   description: Menu item to find scripts for a site.
   message: Tìm script cho trang này
 menuScriptEnabled:
-  description: 'Menu item showing the status of Violentmonkey, when enabled.'
+  description: 'Menu item showing the status of Ace Script, when enabled.'
   message: Đã kích hoạt script
 menuScriptDisabled:
-  description: 'Menu item showing the status of Violentmonkey, when disabled.'
+  description: 'Menu item showing the status of Ace Script, when disabled.'
   message: Đã vô hiệu hoá script
 menuCommands:
   description: Menu item to list script commands.

@@ -1,6 +1,6 @@
 extName:
   description: Name of this extension.
-  message: Violentmonkey
+  message: Ace Script
 extDescription:
   description: Description for this extension.
   message: Menyediakan dukungan skrip pengguna untuk peramban.
@@ -8,7 +8,7 @@ msgUpdated:
   description: Message shown when a script is updated/reinstalled.
   message: Skrip telah diperbarui.
 msgErrorFetchingScript:
-  description: Message shown when Violentmonkey fails fetching a new version of the script.
+  description: Message shown when Ace Script fails fetching a new version of the script.
   message: Kesalahan saat mengambil skrip!
 msgInstalled:
   description: Message shown when a script is installed.
@@ -36,7 +36,7 @@ msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
   message: Memeriksa pembaruan...
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Violentmonkey fails fetching version data of the script.
+  description: Message shown when Ace Script fails fetching version data of the script.
   message: Gagal mengambil informasi pembaruan.
 msgNoUpdate:
   description: Message shown when there is no new version of a script.
@@ -133,7 +133,7 @@ buttonExportData:
   message: Ekspor ke zip
 labelAbout:
   description: Label shown on top of the about page.
-  message: Tentang Violentmonkey
+  message: Tentang Ace Script
 labelRelated:
   description: Label of related links.
   message: 'Tautan terkait: '
@@ -246,10 +246,10 @@ menuFindScripts:
   description: Menu item to find scripts for a site.
   message: Temukan skrip untuk situs ini
 menuScriptEnabled:
-  description: 'Menu item showing the status of Violentmonkey, when enabled.'
+  description: 'Menu item showing the status of Ace Script, when enabled.'
   message: Skrip diaktifkan
 menuScriptDisabled:
-  description: 'Menu item showing the status of Violentmonkey, when disabled.'
+  description: 'Menu item showing the status of Ace Script, when disabled.'
   message: Skrip dinonaktifkan
 menuCommands:
   description: Menu item to list script commands.

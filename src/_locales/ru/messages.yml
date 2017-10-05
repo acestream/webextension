@@ -1,16 +1,16 @@
 extName:
   description: Name of this extension.
-  message: Violentmonkey
+  message: Ace Script
 extDescription:
   description: Description for this extension.
   message: >-
-    Violentmonkey позволяет пользователю автоматически вводить скрипты в
+    Ace Script позволяет пользователю автоматически вводить скрипты в
     страницы чтобы изменять их вид или поведение.
 msgUpdated:
   description: Message shown when a script is updated/reinstalled.
   message: Скрипт обновлен.
 msgErrorFetchingScript:
-  description: Message shown when Violentmonkey fails fetching a new version of the script.
+  description: Message shown when Ace Script fails fetching a new version of the script.
   message: Ошибка загрузки скрипта!
 msgInstalled:
   description: Message shown when a script is installed.
@@ -38,7 +38,7 @@ msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
   message: Проверка наличия обновлений...
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Violentmonkey fails fetching version data of the script.
+  description: Message shown when Ace Script fails fetching version data of the script.
   message: Не удается проверить наличие обновлений.
 msgNoUpdate:
   description: Message shown when there is no new version of a script.
@@ -135,7 +135,7 @@ buttonExportData:
   message: Экспорт в zip-файл
 labelAbout:
   description: Label shown on top of the about page.
-  message: О расширении Violentmonkey
+  message: О расширении Ace Script
 labelRelated:
   description: Label of related links.
   message: 'Связанные ссылки: '
@@ -248,10 +248,10 @@ menuFindScripts:
   description: Menu item to find scripts for a site.
   message: Найти скрипты для сайта
 menuScriptEnabled:
-  description: 'Menu item showing the status of Violentmonkey, when enabled.'
+  description: 'Menu item showing the status of Ace Script, when enabled.'
   message: Скрипты включены
 menuScriptDisabled:
-  description: 'Menu item showing the status of Violentmonkey, when disabled.'
+  description: 'Menu item showing the status of Ace Script, when disabled.'
   message: Скрипты отключены
 menuCommands:
   description: Menu item to list script commands.
