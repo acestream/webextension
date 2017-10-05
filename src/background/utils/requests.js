@@ -243,7 +243,7 @@ export function confirmInstall(info) {
   });
 }
 
-const reUserScript = /\.user\.js([?#]|$)/;
+const reUserScript = /\.(user|acestream)\.js([?#]|$)/;
 const whitelist = [
   '^https://greasyfork.org/scripts/[^/]*/code/[^/]*?\\.user\\.js([?#]|$)',
   '^https://openuserjs.org/install/[^/]*/[^/]*?\\.user\\.js([?#]|$)',
