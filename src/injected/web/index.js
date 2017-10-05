@@ -10,6 +10,7 @@ import {
 } from './notifications';
 import { onTabCreate, onTabClosed } from './tabs';
 
+const IS_TOP = window.top === window;
 let state = 0;
 
 export default function initialize(webId, contentId, props) {
@@ -56,6 +57,25 @@ function postCommandWithCallback(cmd, callback, data) {
   });
 }
 
+function startEngine(callback) {
+  postCommandWithCallback('StartEngine', callback);
+}
+
+function isDomainAllowed() {
+  try {
+    const allowedDomains = [
+      "acestream.org",
+      "acestream.net",
+      "acestream.me"
+    ];
+    const host = window.location.host.split(".").slice(-2).join(".");
+
+    return allowedDomains.includes(host);
+  } catch (e) {
+    verbose(`isDomainAllowed: error: ${e}`);
+  }
+}
+
 const handlers = {
   LoadScripts: onLoadScripts,
   Command(data) {
@@ -100,10 +120,8 @@ function onLoadScripts(data) {
   const idle = [];
   const end = [];
   bridge.version = data.version;
-  if (includes([
-    'greasyfork.org',
-  ], window.location.host)) {
-    exposeVM();
+  if(isDomainAllowed()) {
+    exposeAceScript();
   }
   // reset load and checkLoad
   bridge.load = () => {
@@ -539,38 +557,21 @@ function runCode(name, func, args, thisObj) {
   }
 }
 
-function exposeVM() {
-  const Violentmonkey = {};
-  const checking = {};
-  let key = 0;
-  bridge.onScriptChecked = ({ callback, result }) => {
-    const cb = checking[callback];
-    if (cb) {
-      cb(result);
-      delete checking[callback];
-    }
-  };
-  Object.defineProperty(Violentmonkey, 'getVersion', {
+function exposeAceScript() {
+  verbose(`expose AceScript to ${window.location.href}`);
+
+  const AceScript = {};
+  Object.defineProperty(AceScript, 'getVersion', {
     value: () => Promise.resolve({
       version: bridge.version,
     }),
   });
-  Object.defineProperty(Violentmonkey, 'isInstalled', {
+  Object.defineProperty(AceScript, 'isInstalled', {
     value: (name, namespace) => new Promise(resolve => {
-      key += 1;
-      const callback = checking[key];
-      checking[callback] = resolve;
-      bridge.post({
-        cmd: 'CheckScript',
-        data: {
-          name,
-          namespace,
-          callback,
-        },
-      });
+      postCommandWithCallback('CheckScript', resolve, { name, namespace });
     }),
   });
-  Object.defineProperty(window.external, 'Violentmonkey', {
-    value: Violentmonkey,
+  Object.defineProperty(window.external, 'AceScript', {
+    value: AceScript,
   });
 }

@@ -24,8 +24,7 @@ function getBadge() {
 
 function setBadge() {
   if (badge.ready && badge.willSet) {
-    // XXX: only scripts run in top level window are counted
-    if (IS_TOP) sendMessage({ cmd: 'SetBadge', data: badge.number });
+    sendMessage({ cmd: 'SetBadge', data: badge.number });
   }
 }
 
@@ -102,12 +101,6 @@ const handlers = {
     } else {
       sendMessage({ cmd: 'SetClipboard', data });
     }
-  },
-  CheckScript({ name, namespace, callback }) {
-    sendMessage({ cmd: 'CheckScript', data: { name, namespace } })
-    .then(result => {
-      bridge.post({ cmd: 'ScriptChecked', data: { callback, result } });
-    });
   },
   PostCommand({ cmd, requestId, data }) {
     sendMessage({ cmd, data })
