@@ -26,6 +26,7 @@ import {
   openInPlayer,
   getDeviceId,
 } from './utils/engine-api';
+import { register } from './utils/init';
 
 const VM_VER = browser.runtime.getManifest().version;
 
@@ -385,6 +386,50 @@ const commands = {
   },
 };
 
+// request data from host legacy extension
+function importScripts() {
+  return browser.runtime.sendMessage('get-all-userscripts')
+  .then(response => {
+    if (!response) {
+      return;
+    }
+
+    const { scripts } = response;
+
+    getInstalledScripts().then(installed => {
+      verbose('bg:init: installed scripts', installed);
+
+      scripts.forEach(script => {
+        if (!installed.includes(script.id)) {
+          verbose(`bg:init: install new script: id=${script.id}`);
+          parseScript({
+            url: script.url,
+            code: script.code,
+          });
+        } else {
+          verbose(`bg:init: script already installed: id=${script.id}`);
+        }
+      });
+    });
+  });
+}
+
+// request news
+function importNews() {
+  browser.runtime.sendMessage('get-news')
+  .then(response => {
+    if (!response) {
+      return;
+    }
+
+    if (!response.news) {
+      return;
+    }
+
+    news.importData(response.news);
+  });
+}
+
 initialize()
 .then(() => {
   browser.runtime.onMessage.addListener((req, src) => {
@@ -407,7 +452,10 @@ initialize()
   sync.initialize();
   resetBlacklist();
   checkRemove();
-  news.initialize();
+
+  importScripts()
+    .then(() => importNews())
+    .then(() => news.initialize());
 });
 
 // Common functions
@@ -479,45 +527,3 @@ browser.tabs.onRemoved.addListener(id => {
     data: id,
   });
 });
-
-// request data from host legacy extension
-browser.runtime.sendMessage('get-all-userscripts')
-.then(response => {
-  if (!response) {
-    return;
-  }
-
-  const { scripts } = response;
-
-  getInstalledScripts().then(installed => {
-    verbose('bg:init: installed scripts', installed);
-
-    scripts.forEach(script => {
-      if (!installed.includes(script.id)) {
-        verbose(`bg:init: install new script: id=${script.id}`);
-        parseScript({
-          url: script.url,
-          code: script.code,
-        });
-      } else {
-        verbose(`bg:init: script already installed: id=${script.id}`);
-      }
-    });
-  });
-})
-.catch(() => {});
-
-// request news
-browser.runtime.sendMessage('get-news')
-.then(response => {
-  if (!response) {
-    return;
-  }
-
-  if (!response.news) {
-    return;
-  }
-
-  news.importData(response.news);
-})
-.catch(() => {});
