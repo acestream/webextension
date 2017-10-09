@@ -149,7 +149,7 @@ export function getNewsForUrl(url) {
     }
     const impressionUpdatedAt = store.news[id].impressionUpdatedAt || 0;
     const age = Date.now() - impressionUpdatedAt;
-    const minAge = NOTIFICATION_BASE_INTERVAL + impressionCount * NOTIFICATION_INTERVAL_ADJUST;
+    const minAge = NOTIFICATION_BASE_INTERVAL + (impressionCount * NOTIFICATION_INTERVAL_ADJUST);
 
     if (age < minAge) {
       return;
