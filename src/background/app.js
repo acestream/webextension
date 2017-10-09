@@ -26,7 +26,6 @@ import {
   openInPlayer,
   getDeviceId,
 } from './utils/engine-api';
-import { register } from './utils/init';
 
 const VM_VER = browser.runtime.getManifest().version;
 
@@ -454,8 +453,8 @@ initialize()
   checkRemove();
 
   importScripts()
-    .then(() => importNews())
-    .then(() => news.initialize());
+  .then(() => importNews())
+  .then(() => news.initialize());
 });
 
 // Common functions
