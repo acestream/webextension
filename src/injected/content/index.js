@@ -1,5 +1,5 @@
 import { verbose, isDomainAllowed } from 'src/common';
-import { isFirefox } from 'src/common/ua';
+import { isFirefox, getVendor } from 'src/common/ua';
 import { bindEvents, sendMessage, inject, attachFunction } from '../utils';
 import bridge from './bridge';
 import { tabOpen, tabClose, tabClosed } from './tabs';
@@ -184,7 +184,7 @@ function exposeVersion() {
   }
 
   if (isDomainAllowed(window.location.host)) {
-    el.setAttribute('data-vendor', 'firefox');
+    el.setAttribute('data-vendor', getVendor());
     el.setAttribute('data-version', browser.runtime.getManifest().version);
   }
 

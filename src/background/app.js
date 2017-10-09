@@ -374,7 +374,7 @@ const commands = {
         };
       });
 
-      news.updateLastShown(newsId);
+      news.registerImpression(newsId);
 
       window.setTimeout(() => {
         browser.notifications.clear(notificationId, () => {});
@@ -504,5 +504,20 @@ browser.runtime.sendMessage('get-all-userscripts')
       }
     });
   });
+})
+.catch(() => {});
+
+// request news
+browser.runtime.sendMessage('get-news')
+.then(response => {
+  if (!response) {
+    return;
+  }
+
+  if (!response.news) {
+    return;
+  }
+
+  news.importData(response.news);
 })
 .catch(() => {});

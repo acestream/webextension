@@ -217,9 +217,11 @@ export function getInstalledScripts() {
   return new Promise(resolve => {
     const installed = [];
     getScripts().then(scripts => {
-      scripts.forEach(script => {
-        installed.push(script.props.scriptId);
-      });
+      if (scripts) {
+        scripts.forEach(script => {
+          installed.push(script.props.scriptId);
+        });
+      }
       resolve(installed);
     });
   });

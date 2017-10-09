@@ -1,9 +1,12 @@
 import { verbose } from 'src/common';
+import { getVendor } from 'src/common/ua';
 import { getEngineStatus } from './engine-api';
 import { getInstalledScripts, eventEmitter } from './db';
 
 // minimum interval between showing same news
-const NEWS_MIN_FREQUENCY = 3600000;
+const NOTIFICATION_BASE_INTERVAL = 3600000;
+const NOTIFICATION_INTERVAL_ADJUST = 3600000;
+const NOTIFICATION_MAX_IMPRESSIONS = 10;
 
 eventEmitter.on('scriptSaved', data => {
   verbose('news:scriptSaved: data', data);
@@ -74,7 +77,7 @@ function checkNews(engineStatus) {
     }
 
     const xhr = new XMLHttpRequest();
-    const url = `http://awe-api.acestream.me/news/get?locale=${getLocale()}&appVersion=${appVersion}&engineVersion=${store.lastEngineVersion}&_=${Math.random()}`;
+    const url = `http://awe-api.acestream.me/news/get?vendor=${getVendor()}&locale=${getLocale()}&appVersion=${appVersion}&engineVersion=${store.lastEngineVersion}&_=${Math.random()}`;
 
     verbose(`news: request: url=${url}`);
     xhr.open('GET', url, true);
@@ -126,6 +129,11 @@ export function initialize() {
     check();
   }
 }
+export function importData(news) {
+  verbose(`import news: count=${Object.keys(news).length}`);
+  store.news = news;
+  saveConfig();
+}
 
 export function getNewsForUrl(url) {
   const result = [];
@@ -135,10 +143,15 @@ export function getNewsForUrl(url) {
       return;
     }
 
-    const lastShown = store.news[id].lastShown || 0;
-    const age = Date.now() - lastShown;
+    const impressionCount = store.news[id].impressionCount || 0;
+    if (impressionCount >= NOTIFICATION_MAX_IMPRESSIONS) {
+      return;
+    }
+    const impressionUpdatedAt = store.news[id].impressionUpdatedAt || 0;
+    const age = Date.now() - impressionUpdatedAt;
+    const minAge = NOTIFICATION_BASE_INTERVAL + impressionCount * NOTIFICATION_INTERVAL_ADJUST;
 
-    if (age < NEWS_MIN_FREQUENCY) {
+    if (age < minAge) {
       return;
     }
 
@@ -201,9 +214,13 @@ export function markAsRead(id) {
   }
 }
 
-export function updateLastShown(id) {
+export function registerImpression(id) {
   if (store.news[id]) {
-    store.news[id].lastShown = Date.now();
+    if (typeof store.news[id].impressionCount === 'undefined') {
+      store.news[id].impressionCount = 0;
+    }
+    store.news[id].impressionUpdatedAt = Date.now();
+    store.news[id].impressionCount += 1;
     saveConfig();
   }
 }
