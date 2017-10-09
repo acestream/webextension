@@ -24,6 +24,7 @@ const store = {
   lastEngineVersion: 0,
   news: {},
   installedScripts: {},
+  excludeByScript: {},
 };
 
 function updateInstalledScripts() {
@@ -51,7 +52,35 @@ function loadConfig() {
   );
 }
 
+function updateExcludes() {
+  const excludeByScript = {};
+  Object.keys(store.news).forEach(id => {
+    if (store.news[id].excludeScripts) {
+      store.news[id].excludeScripts.forEach(scriptId => {
+        if (typeof excludeByScript[scriptId] === 'undefined') {
+          excludeByScript[scriptId] = {};
+        }
+
+        if (store.news[id].read) {
+          excludeByScript[scriptId].read = true;
+        }
+
+        if (store.news[id].impressionCount) {
+          excludeByScript[scriptId].impressionCount = store.news[id].impressionCount;
+        }
+
+        if (store.news[id].impressionUpdatedAt) {
+          excludeByScript[scriptId].impressionUpdatedAt = store.news[id].impressionUpdatedAt;
+        }
+      });
+    }
+  });
+  store.excludeByScript = excludeByScript;
+  verbose('updateExcludes: excludeByScript', excludeByScript);
+}
+
 function saveConfig() {
+  updateExcludes();
   browser.storage.local.set({
     news: JSON.stringify(store.news),
   });
@@ -145,6 +174,7 @@ export function getNewsForUrl(url) {
 
     const impressionCount = store.news[id].impressionCount || 0;
     if (impressionCount >= NOTIFICATION_MAX_IMPRESSIONS) {
+      verbose(`skip max impressions: id=${id} count=${impressionCount}`);
       return;
     }
     const impressionUpdatedAt = store.news[id].impressionUpdatedAt || 0;
@@ -152,7 +182,38 @@ export function getNewsForUrl(url) {
     const minAge = NOTIFICATION_BASE_INTERVAL + (impressionCount * NOTIFICATION_INTERVAL_ADJUST);
 
     if (age < minAge) {
+      verbose(`skip age: id=${id} age=${age} minAge=${minAge}`);
       return;
+    }
+
+    if (store.news[id].excludeBasedOnOther
+      && store.news[id].excludeScripts
+      && store.news[id].excludeScripts.length) {
+      for (let i = 0; i < store.news[id].excludeScripts.length; i += 1) {
+        const scriptId = store.news[id].excludeScripts[i];
+        if (store.excludeByScript[scriptId]) {
+          const item = store.excludeByScript[scriptId];
+          if (item.read) {
+            verbose(`skip read (other): id=${id} scriptId=${scriptId}`);
+            return;
+          }
+
+          if (item.impressionCount && item.impressionCount >= NOTIFICATION_MAX_IMPRESSIONS) {
+            verbose(`skip max impressions (other): id=${id} scriptId=${scriptId} count=${item.impressionCount}`);
+            return;
+          }
+
+          if (item.impressionUpdatedAt) {
+            const otherAge = Date.now() - item.impressionUpdatedAt;
+            const count = item.impressionCount || 0;
+            const otherMinAge = NOTIFICATION_BASE_INTERVAL + (count * NOTIFICATION_INTERVAL_ADJUST);
+            if (otherAge < otherMinAge) {
+              verbose(`skip age (other): id=${id} scriptId=${scriptId} age=${otherAge} min=${otherMinAge}`);
+              return;
+            }
+          }
+        }
+      }
     }
 
     let gotMatch = false;
