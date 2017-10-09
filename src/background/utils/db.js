@@ -199,12 +199,14 @@ export function normalizePosition() {
 
 export function getScript(where) {
   let script;
-  if (where.id) {
-    script = store.scriptMap[where.id];
-  } else {
-    const uri = where.uri || getNameURI({ meta: where.meta, id: '@@should-have-name' });
-    const predicate = item => uri === objectGet(item, 'props.uri');
-    script = store.scripts.find(predicate);
+  if (store.scripts) {
+    if (where.id) {
+      script = store.scriptMap[where.id];
+    } else {
+      const uri = where.uri || getNameURI({ meta: where.meta, id: '@@should-have-name' });
+      const predicate = item => uri === objectGet(item, 'props.uri');
+      script = store.scripts.find(predicate);
+    }
   }
   return Promise.resolve(script);
 }
