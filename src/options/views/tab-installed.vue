@@ -9,6 +9,7 @@
             </span>
           </tooltip>
           <div class="dropdown-menu-item" v-text="i18n('buttonNew')" @click.prevent="newScript"></div>
+          <a class="dropdown-menu-item" v-text="i18n('installFrom', 'Ace Script Market')" href="http://awe.acestream.me/" target="_blank"></a>
           <a class="dropdown-menu-item" v-text="i18n('installFrom', 'OpenUserJS')" href="https://openuserjs.org/" target="_blank"></a>
           <a class="dropdown-menu-item" v-text="i18n('installFrom', 'GreasyFork')" href="https://greasyfork.org/scripts" target="_blank"></a>
           <div class="dropdown-menu-item" v-text="i18n('buttonInstallFromURL')" @click.prevent="installFromURL"></div>

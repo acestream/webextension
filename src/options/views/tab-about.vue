@@ -7,9 +7,7 @@
     <p class="mb-2" v-text="i18n('extDescription')"></p>
     <div class="mb-2">
       <label v-text="i18n('labelRelated')"></label>
-      <a href="https://violentmonkey.github.io" target="_blank" v-text="i18n('extName')"></a> |
-      <a href="https://violentmonkey.github.io/donate/" target="_blank" v-text="i18n('labelDonate')"></a> |
-      <a href="https://github.com/violentmonkey/violentmonkey/issues" target="_blank" v-text="i18n('labelFeedback')"></a>
+      <a href="https://addons.mozilla.org/en-US/firefox/addon/ace-script/?src=ss" target="_blank" v-text="i18n('extName')"></a>
     </div>
     <div class="mb-2">
       <label v-text="i18n('labelAuthor')"></label>
