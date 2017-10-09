@@ -589,7 +589,7 @@ export function vacuum() {
     [storage.require, requireKeys],
     [storage.code, codeKeys],
   ];
-  browser.storage.get().then(data => {
+  browser.storage.local.get().then(data => {
     Object.keys(data).forEach(key => {
       mappings.some(([substore, map]) => {
         const { prefix } = substore;
