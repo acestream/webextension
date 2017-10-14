@@ -7,4 +7,3 @@ node_modules/
 /*.log
 /*.lock
 /stats.json
-package-lock.json
