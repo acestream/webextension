@@ -17,7 +17,6 @@ browser_action:
   default_popup: popup/index.html
 background:
   page: background/index.html
-options_page: options/index.html
 options_ui:
   page: options/index.html
   open_in_tab: true
@@ -41,3 +40,6 @@ permissions:
   - clipboardWrite
   - contextMenus
   - nativeMessaging
+applications:
+  gecko:
+    id: acewebextension_dev@acestream.org

@@ -79,6 +79,14 @@ gulp.task('manifest', () => (
       data.version += 'f';
       delete data.applications.gecko.update_url;
     }
+
+    if (process.env.TARGET === 'unlisted') {
+      data.applications.gecko.id = 'acewebextension_unlisted@acestream.org';
+    }
+    else if (process.env.TARGET === 'amo') {
+      data.applications.gecko.id = 'acewebextension@acestream.org';
+    }
+
     file.path = file.path.replace(/\.yml$/, '.json');
     return JSON.stringify(data);
   }))

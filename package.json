@@ -1,12 +1,15 @@
 {
   "name": "ace-script",
-  "version": "1.1.10",
+  "version": "1.1.11",
   "scripts": {
     "dev": "gulp watch",
     "prebuild": "npm run lint && gulp clean",
     "build:dev": "cross-env NODE_ENV=development gulp build",
     "build": "cross-env NODE_ENV=production gulp build",
+    "build": "cross-env NODE_ENV=production gulp build",
     "build:firefox": "cross-env TARGET=firefox npm run build",
+    "build:unlisted": "cross-env TARGET=unlisted npm run build",
+    "build:amo": "cross-env TARGET=amo npm run build",
     "analyze": "webpack --profile --json --config scripts/webpack.conf.js | webpack-bundle-size-analyzer",
     "analyze:json": "webpack --profile --json --config scripts/webpack.conf.js > stats.json",
     "i18n": "gulp i18n",
