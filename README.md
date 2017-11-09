@@ -10,4 +10,8 @@ $ npm i
 $ ./build.sh amo
 ```
 
+Build was tested with:
+* npm 5.5.1
+* node 8.6.0
+
 The result will be placed to 'xpi/' folder.
