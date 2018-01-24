@@ -10,6 +10,7 @@ import {
   setClipboard, checkUpdate,
   getOption, setOption, hookOptions, getAllOptions,
   initialize,
+  broadcast,
 } from './utils';
 import { tabOpen, tabClose } from './utils/tabs';
 import createNotification from './utils/notifications';
