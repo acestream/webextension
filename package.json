@@ -1,6 +1,6 @@
 {
   "name": "ace-script",
-  "version": "1.1.12",
+  "version": "1.1.13",
   "scripts": {
     "dev": "gulp dev",
     "prebuild": "npm run lint && gulp clean",
