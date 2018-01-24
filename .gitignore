@@ -9,3 +9,4 @@ node_modules/
 /stats.json
 /xpi/
 /releases/
+/tmp/
