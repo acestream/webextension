@@ -7,11 +7,11 @@ TARGET=$1
 if [ "$TARGET" == "unlisted" ]; then
     echo "build unlisted"
     NPM_TARGET="build:unlisted"
-    XPI_NAME="acewebextension_unlisted.xpi"
+    XPI_NAME="acewebextension_unlisted_unsigned.xpi"
 elif [ "$TARGET" == "amo" ]; then
     echo "build amo"
     NPM_TARGET="build:amo"
-    XPI_NAME="acewebextension.xpi"
+    XPI_NAME="acewebextension_unsigned.xpi"
 elif [ "$TARGET" == "dev" ]; then
     echo "build dev"
     NPM_TARGET="build:dev"
