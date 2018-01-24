@@ -1,4 +1,4 @@
-import { verbose, isDomainAllowed } from 'src/common';
+import { getUniqId, verbose, isDomainAllowed } from 'src/common';
 import { isFirefox, getVendor } from 'src/common/ua';
 import { bindEvents, sendMessage, inject, attachFunction } from '../utils';
 import bridge from './bridge';
@@ -10,23 +10,19 @@ import dirtySetClipboard from './clipboard';
 const IS_TOP = window.top === window;
 
 const ids = [];
+const enabledIds = [];
 const menus = [];
 
-const badge = {
-  number: 0,
-  ready: false,
-  willSet: false,
-};
-
-function getBadge() {
-  badge.willSet = true;
-  setBadge();
-}
-
 function setBadge() {
-  if (badge.ready && badge.willSet) {
-    sendMessage({ cmd: 'SetBadge', data: badge.number });
-  }
+  // delay setBadge in frames so that they can be added to the initial count
+  new Promise(resolve => setTimeout(resolve, IS_TOP ? 0 : 300))
+  .then(() => sendMessage({
+    cmd: 'SetBadge',
+    data: {
+      ids: enabledIds,
+      reset: IS_TOP,
+    },
+  }));
 }
 
 const bgHandlers = {
@@ -34,7 +30,6 @@ const bgHandlers = {
     bridge.post({ cmd: 'Command', data });
   },
   GetPopup: getPopup,
-  GetBadge: getBadge,
   HttpRequested: httpRequested,
   TabClosed: tabClosed,
   UpdatedValues(data) {
@@ -56,18 +51,34 @@ export default function initialize(contentId, webId) {
     if (handle) handle(req.data, src);
   });
 
-  sendMessage({ cmd: 'GetInjected', data: { url: window.location.href, isTop: IS_TOP } })
+  return sendMessage({
+    cmd: 'GetInjected',
+    data: {
+      url: window.location.href,
+      reset: IS_TOP,
+      isTop: IS_TOP,
+    },
+  })
   .then(data => {
     if (data.scripts) {
-      data.scripts.forEach(script => {
+      data.scripts = data.scripts.filter(script => {
         ids.push(script.props.id);
-        if (script.config.enabled) badge.number += 1;
+        if ((IS_TOP || !script.meta.noframes) && script.config.enabled) {
+          enabledIds.push(script.props.id);
+          return true;
+        }
+        return false;
       });
     }
-    bridge.post({ cmd: 'LoadScripts', data });
-    badge.ready = true;
     getPopup();
     setBadge();
+    const needInject = data.scripts && data.scripts.length;
+    if (needInject) {
+      bridge.ready.then(() => {
+        bridge.post({ cmd: 'LoadScripts', data });
+      });
+    }
+    return needInject;
   });
 }
 
@@ -78,6 +89,9 @@ const handlers = {
   Inject: injectScript,
   TabOpen: tabOpen,
   TabClose: tabClose,
+  Ready() {
+    bridge.ready = Promise.resolve();
+  },
   UpdateValue(data) {
     sendMessage({ cmd: 'UpdateValue', data });
   },
@@ -85,12 +99,16 @@ const handlers = {
     if (IS_TOP) menus.push(data);
     getPopup();
   },
-  AddStyle(css) {
+  AddStyle({ css, callbackId }) {
+    let styleId = null;
     if (document.head) {
+      styleId = getUniqId('VMst');
       const style = document.createElement('style');
+      style.id = styleId;
       style.textContent = css;
       document.head.appendChild(style);
     }
+    bridge.post({ cmd: 'Callback', data: { callbackId, payload: styleId } });
   },
   Notification: onNotificationCreate,
   SetClipboard(data) {
@@ -113,6 +131,10 @@ const handlers = {
     });
   },
 };
+
+bridge.ready = new Promise(resolve => {
+  handlers.Ready = resolve;
+});
 
 function onHandle(req) {
   const handle = handlers[req.cmd];

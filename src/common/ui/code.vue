@@ -1,8 +1,5 @@
 <template>
   <div class="flex flex-col">
-    <vl-code class="editor-code flex-auto"
-      :options="cmOptions" v-model="content" @ready="onReady"
-    />
     <div class="frame-block" v-show="search.show">
       <button class="pull-right" @click="clearSearch">&times;</button>
       <form class="inline-block mr-1" @submit.prevent="goToLine()">
@@ -31,7 +28,18 @@
           <button type="button" v-text="i18n('buttonReplaceAll')" @click="replace(1)"></button>
         </tooltip>
       </form>
+      <div class="inline-block">
+        <tooltip :title="i18n('searchUseRegex')">
+          <toggle-button v-model="searchOptions.useRegex">.*</toggle-button>
+        </tooltip>
+        <tooltip :title="i18n('searchCaseSensitive')">
+          <toggle-button v-model="searchOptions.caseSensitive">Aa</toggle-button>
+        </tooltip>
+      </div>
     </div>
+    <vl-code class="editor-code flex-auto"
+      :options="cmOptions" v-model="content" @ready="onReady"
+    />
   </div>
 </template>
 
@@ -51,8 +59,9 @@ import 'codemirror/addon/search/searchcursor';
 import 'codemirror/addon/selection/active-line';
 import CodeMirror from 'codemirror';
 import VlCode from 'vueleton/lib/code';
+import Tooltip from 'vueleton/lib/tooltip';
 import { debounce } from 'src/common';
-import Tooltip from './tooltip';
+import ToggleButton from 'src/common/ui/toggle-button';
 
 function getHandler(key) {
   return cm => {
@@ -92,15 +101,26 @@ const cmOptions = {
   gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
   theme: 'eclipse',
 };
+const searchOptions = {
+  useRegex: false,
+  caseSensitive: false,
+};
 
 function findNext(cm, state, reversed) {
   cm.operation(() => {
-    const query = state.query || '';
-    let cursor = cm.getSearchCursor(query, reversed ? state.posFrom : state.posTo);
+    let query = state.query || '';
+    if (query && searchOptions.useRegex) {
+      query = new RegExp(query, searchOptions.caseSensitive ? '' : 'i');
+    }
+    const options = {
+      caseFold: !searchOptions.caseSensitive,
+    };
+    let cursor = cm.getSearchCursor(query, reversed ? state.posFrom : state.posTo, options);
     if (!cursor.find(reversed)) {
       cursor = cm.getSearchCursor(
         query,
         reversed ? CodeMirror.Pos(cm.lastLine()) : CodeMirror.Pos(cm.firstLine(), 0),
+        options,
       );
       if (!cursor.find(reversed)) return;
     }
@@ -149,10 +169,12 @@ export default {
   components: {
     VlCode,
     Tooltip,
+    ToggleButton,
   },
   data() {
     return {
       cmOptions,
+      searchOptions,
       content: this.value,
       search: {
         show: false,
@@ -172,11 +194,19 @@ export default {
       this.content = value;
       const { cm } = this;
       if (!cm) return;
-      cm.getDoc().clearHistory();
-      cm.focus();
+      this.$nextTick(() => {
+        cm.getDoc().clearHistory();
+        cm.focus();
+      });
     },
     'search.state.query'() {
       this.debouncedFind();
+    },
+    searchOptions: {
+      deep: true,
+      handler() {
+        this.debouncedFind();
+      },
     },
   },
   methods: {
@@ -231,7 +261,7 @@ export default {
         return stop;
       });
     },
-    doFind(reversed) {
+    doSearch(reversed) {
       const { state } = this.search;
       const { cm } = this;
       if (state.query) {
@@ -239,10 +269,13 @@ export default {
       }
       this.search.show = true;
     },
-    find() {
+    searchInPlace() {
       const { state } = this.search;
       state.posTo = state.posFrom;
-      this.doFind();
+      this.doSearch();
+    },
+    find() {
+      this.searchInPlace();
       this.$nextTick(() => {
         const { search } = this.$refs;
         search.select();
@@ -250,7 +283,7 @@ export default {
       });
     },
     findNext(reversed) {
-      this.doFind(reversed);
+      this.doSearch(reversed);
       this.$nextTick(() => {
         this.$refs.search.focus();
       });
@@ -282,7 +315,7 @@ export default {
     },
   },
   mounted() {
-    this.debouncedFind = debounce(this.doFind, 100);
+    this.debouncedFind = debounce(this.searchInPlace, 100);
     if (this.global) window.addEventListener('keydown', this.onKeyDown, false);
   },
   beforeDestroy() {
@@ -292,8 +325,12 @@ export default {
 </script>
 
 <style>
-/* compatible with old browsers, e.g. Maxthon 4.4 */
+/* compatible with old browsers, e.g. Maxthon 4.4, Chrome 50- */
 .editor-code.flex-auto {
-  height: 100%;
+  position: relative;
+  > div {
+    position: absolute;
+    width: 100%;
+  }
 }
 </style>

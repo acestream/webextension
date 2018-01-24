@@ -239,7 +239,7 @@ export function confirmInstall(info) {
       from: info.from,
     });
     const optionsURL = browser.runtime.getURL('/confirm/index.html');
-    browser.tabs.create({ url: `${optionsURL}#?id=${confirmKey}` });
+    browser.tabs.create({ url: `${optionsURL}#${confirmKey}` });
   });
 }
 
@@ -265,7 +265,7 @@ browser.webRequest.onBeforeRequest.addListener(req => {
       whitelist.some(re => re.test(url)) || !blacklist.some(re => re.test(url))
     )) {
       Promise.all([
-        request(url),
+        request(url).catch(() => ({ data: '' })),
         req.tabId < 0 ? Promise.resolve() : browser.tabs.get(req.tabId),
       ])
       .then(([{ data: code }, tab]) => {

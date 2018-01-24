@@ -1,9 +1,7 @@
 import 'src/common/browser';
-import 'src/common/sprite';
 import Vue from 'vue';
 import { sendMessage, i18n, getLocaleString } from 'src/common';
 import options from 'src/common/options';
-import getPathInfo from 'src/common/pathinfo';
 import handlers from 'src/common/handlers';
 import 'src/common/ui/style';
 import { store } from './utils';
@@ -16,19 +14,13 @@ Object.assign(store, {
   cache: {},
   scripts: [],
   sync: [],
-  route: null,
+  filteredScripts: [],
 });
 zip.workerScriptsPath = '/public/lib/zip.js/';
 initialize();
 
-function loadHash() {
-  store.route = getPathInfo();
-}
-
 function initialize() {
   document.title = i18n('extName');
-  window.addEventListener('hashchange', loadHash, false);
-  loadHash();
   initMain();
   options.ready(() => {
     new Vue({
@@ -53,8 +45,8 @@ function initScript(script) {
   script._cache = { search, name, lowerName };
 }
 
-function loadData() {
-  sendMessage({ cmd: 'GetData' })
+function loadData(clear) {
+  sendMessage({ cmd: 'GetData', data: clear })
   .then(data => {
     [
       'cache',
@@ -72,9 +64,11 @@ function loadData() {
 
 function initMain() {
   store.loading = true;
-  loadData();
+  loadData(true);
   Object.assign(handlers, {
-    ScriptsUpdated: loadData,
+    ScriptsUpdated() {
+      loadData();
+    },
     UpdateSync(data) {
       store.sync = data;
     },
@@ -91,6 +85,10 @@ function initMain() {
         Vue.set(store.scripts, index, updated);
         initScript(updated);
       }
+    },
+    RemoveScript(id) {
+      const i = store.scripts.findIndex(script => script.props.id === id);
+      if (i >= 0) store.scripts.splice(i, 1);
     },
   });
 }

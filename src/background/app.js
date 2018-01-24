@@ -1,5 +1,5 @@
 import 'src/common/browser';
-import { i18n, defaultImage, verbose } from 'src/common';
+import { noop, verbose } from 'src/common';
 import { objectGet } from 'src/common/object';
 import * as sync from './sync';
 import * as news from './utils/news';
@@ -9,16 +9,19 @@ import {
   newScript, parseMeta,
   setClipboard, checkUpdate,
   getOption, setOption, hookOptions, getAllOptions,
-  initialize, broadcast,
+  initialize,
 } from './utils';
+import { tabOpen, tabClose } from './utils/tabs';
+import createNotification from './utils/notifications';
 import {
   getScripts, removeScript, getData, checkRemove, getScriptsByURL,
   updateScriptInfo, getExportData, getScriptCode,
   getScriptByIds, moveScript, vacuum, parseScript, getScript,
-  normalizePosition, getInstalledScripts,
+  getInstalledScripts,
+  sortScripts,
 } from './utils/db';
 import { resetBlacklist } from './utils/tester';
-import { setValueStore, updateValueStore } from './utils/values';
+import { setValueStore, updateValueStore, resetValueOpener, addValueOpener } from './utils/values';
 
 import {
   getEngineStatus,
@@ -36,6 +39,8 @@ let contextMenuCreated = false;
 
 hookOptions(changes => {
   if ('isApplied' in changes) setIcon(changes.isApplied);
+  if ('autoUpdate' in changes) autoUpdate();
+  if ('showBadge' in changes) updateBadges();
   browser.runtime.sendMessage({
     cmd: 'UpdateOptions',
     data: changes,
@@ -110,38 +115,34 @@ const commands = {
     return removeScript(id)
     .then(() => { sync.sync(); });
   },
-  GetData() {
-    return checkRemove()
-    .then(changed => {
-      if (changed) sync.sync();
-      return getData();
-    })
+  GetData(clear) {
+    return (clear ? checkRemove() : Promise.resolve())
+    .then(getData)
     .then(data => {
       data.sync = sync.getStates();
       data.version = VM_VER;
       return data;
     });
   },
-  GetInjected({ url, isTop }, src) {
+  GetInjected({ url, reset, isTop }, src) {
+    const srcTab = src.tab || {};
+    if (reset && srcTab.id) resetValueOpener(srcTab.id);
     const data = {
       isApplied: getOption('isApplied'),
       version: VM_VER,
     };
-    setTimeout(() => {
-      // delayed to wait for the tab URL updated
-      if (src.tab && url === src.tab.url) {
-        browser.tabs.sendMessage(src.tab.id, { cmd: 'GetBadge' });
-      }
+    if (!data.isApplied) return data;
+    return getScriptsByURL(url, isTop)
+    .then(res => {
+      addValueOpener(srcTab.id, Object.keys(res.values));
+      return Object.assign(data, res);
     });
-    return data.isApplied ? (
-      getScriptsByURL(url, isTop).then(res => Object.assign(data, res))
-    ) : data;
   },
   UpdateScriptInfo({ id, config }) {
     return updateScriptInfo(id, {
       config,
-      custom: {
-        modified: Date.now(),
+      props: {
+        lastModified: Date.now(),
       },
     })
     .then(([script]) => {
@@ -174,7 +175,9 @@ const commands = {
   },
   Move({ id, offset }) {
     return moveScript(id, offset)
-    .then(() => { sync.sync(); });
+    .then(() => {
+      sync.sync();
+    });
   },
   Vacuum: vacuum,
   ParseScript(data) {
@@ -194,14 +197,14 @@ const commands = {
   ParseMeta(code) {
     return parseMeta(code);
   },
-  AutoUpdate: autoUpdate,
   GetRequestId: getRequestId,
   HttpRequest(details, src) {
     httpRequest(details, res => {
       browser.tabs.sendMessage(src.tab.id, {
         cmd: 'HttpRequested',
         data: res,
-      });
+      })
+      .catch(noop);
     });
   },
   AbortRequest: abortRequest,
@@ -215,29 +218,10 @@ const commands = {
   CacheHit(data) {
     cache.hit(data.key, data.lifetime);
   },
-  Notification(data) {
-    return browser.notifications.create({
-      type: 'basic',
-      title: data.title || i18n('extName'),
-      message: data.text,
-      iconUrl: data.image || defaultImage,
-    });
-  },
+  Notification: createNotification,
   SetClipboard: setClipboard,
-  TabOpen(data, src) {
-    const srcTab = src.tab || {};
-    return browser.tabs.create({
-      url: data.url,
-      active: data.active,
-      windowId: srcTab.windowId,
-      index: srcTab.index + 1,
-    })
-    .then(tab => ({ id: tab.id }));
-  },
-  TabClose(data, src) {
-    const tabId = (data && data.id) || (src.tab && src.tab.id);
-    if (tabId) browser.tabs.remove(tabId);
-  },
+  TabOpen: tabOpen,
+  TabClose: tabClose,
   GetAllOptions: getAllOptions,
   GetOptions(data) {
     return data.reduce((res, key) => {
@@ -258,7 +242,7 @@ const commands = {
     return getInstalledScripts();
   },
   CheckPosition() {
-    return normalizePosition();
+    return sortScripts();
   },
   GetEngineStatus() {
     return new Promise(resolve => {
@@ -445,7 +429,8 @@ initialize()
         });
       }
     }
-    return res;
+    // undefined will be ignored
+    return res || null;
   });
   setTimeout(autoUpdate, 2e4);
   sync.initialize();
@@ -460,25 +445,54 @@ initialize()
 // Common functions
 
 const badges = {};
-function setBadge(num, src) {
-  let data = badges[src.id];
+function setBadge({ ids, reset }, src) {
+  const srcTab = src.tab || {};
+  let data = !reset && badges[srcTab.id];
   if (!data) {
-    data = { num: 0 };
-    badges[src.id] = data;
+    data = {
+      number: 0,
+      unique: 0,
+      idMap: {},
+    };
+    badges[srcTab.id] = data;
   }
-  data.num += num;
+  data.number += ids.length;
+  if (ids) {
+    ids.forEach(id => {
+      data.idMap[id] = 1;
+    });
+    data.unique = Object.keys(data.idMap).length;
+  }
   browser.browserAction.setBadgeBackgroundColor({
     color: '#808',
-    tabId: src.tab.id,
+    tabId: srcTab.id,
   });
-  const text = ((getOption('showBadge') && data.num) || '').toString();
-  browser.browserAction.setBadgeText({
-    text,
-    tabId: src.tab.id,
-  });
-  if (data.timer) clearTimeout(data.timer);
-  data.timer = setTimeout(() => { delete badges[src.id]; }, 300);
+  updateBadge(srcTab.id);
 }
+function updateBadge(tabId) {
+  const data = badges[tabId];
+  if (data) {
+    const showBadge = getOption('showBadge');
+    let text;
+    if (showBadge === 'total') text = data.number;
+    else if (showBadge) text = data.unique;
+    browser.browserAction.setBadgeText({
+      text: `${text || ''}`,
+      tabId,
+    });
+  }
+}
+function updateBadges() {
+  browser.tabs.query({})
+  .then(tabs => {
+    tabs.forEach(tab => {
+      updateBadge(tab.id);
+    });
+  });
+}
+browser.tabs.onRemoved.addListener(id => {
+  delete badges[id];
+});
 
 function setIcon(isApplied) {
   browser.browserAction.setIcon({

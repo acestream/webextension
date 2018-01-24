@@ -1,4 +1,4 @@
-import { i18n, defaultImage } from 'src/common';
+import { i18n, defaultImage, noop } from 'src/common';
 
 export cache from './cache';
 export setClipboard from './clipboard';
@@ -25,8 +25,7 @@ export function broadcast(data) {
   .then(tabs => {
     tabs.forEach(tab => {
       browser.tabs.sendMessage(tab.id, data)
-      // suppress errors like 'receiving end does not exist'
-      .catch(() => {});
+      .catch(noop);
     });
   });
 }

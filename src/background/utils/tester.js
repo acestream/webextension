@@ -1,6 +1,8 @@
-// import tldjs from 'tldjs';
+import * as tld from 'src/common/tld';
 import cache from './cache';
 import { getOption, hookOptions } from './options';
+
+tld.initTLD(true);
 
 const RE_MATCH_PARTS = /(.*?):\/\/([^/]*)\/(.*)/;
 let blacklistRules = [];
@@ -69,7 +71,7 @@ function mergeLists(...args) {
 }
 
 function str2RE(str) {
-  const re = str.replace(/([.?])/g, '\\$1').replace(/\*/g, '.*?');
+  const re = str.replace(/([.?+[\]{}()|^$])/g, '\\$1').replace(/\*/g, '.*?');
   return `^${re}$`;
 }
 
@@ -82,17 +84,17 @@ function autoReg(str) {
   const tests = [
     tstr => re.test(tstr),
   ];
-  // if (str.includes('.tld/')) {
-  //   const reTldStr = reStr.replace('\\.tld/', '((?:\\.\\w+)+)/');
-  //   tests.push(tstr => {
-  //     const matches = tstr.match(reTldStr);
-  //     if (matches) {
-  //       const suffix = matches[1].slice(1);
-  //       if (tldjs.getPublicSuffix(suffix) === suffix) return true;
-  //     }
-  //     return false;
-  //   });
-  // }
+  if (tld.isReady() && str.includes('.tld/')) {
+    const reTldStr = reStr.replace('\\.tld/', '((?:\\.\\w+)+)/');
+    tests.push(tstr => {
+      const matches = tstr.match(reTldStr);
+      if (matches) {
+        const suffix = matches[1].slice(1);
+        if (tld.getPublicSuffix(suffix) === suffix) return true;
+      }
+      return false;
+    });
+  }
   return { test: tstr => tests.some(test => test(tstr)) };
 }
 
@@ -126,18 +128,24 @@ function pathMatcher(rule) {
 }
 function matchTester(rule) {
   let test;
-  if (rule === '<all_urls>') test = () => true;
-  else {
+  if (rule === '<all_urls>') {
+    test = () => true;
+  } else {
     const ruleParts = rule.match(RE_MATCH_PARTS);
-    const matchHost = hostMatcher(ruleParts[2]);
-    const matchPath = pathMatcher(ruleParts[3]);
-    test = url => {
-      const parts = url.match(RE_MATCH_PARTS);
-      return !!ruleParts && !!parts
-      && matchScheme(ruleParts[1], parts[1])
-      && matchHost(parts[2])
-      && matchPath(parts[3]);
-    };
+    if (ruleParts) {
+      const matchHost = hostMatcher(ruleParts[2]);
+      const matchPath = pathMatcher(ruleParts[3]);
+      test = url => {
+        const parts = url.match(RE_MATCH_PARTS);
+        return !!ruleParts && !!parts
+          && matchScheme(ruleParts[1], parts[1])
+          && matchHost(parts[2])
+          && matchPath(parts[3]);
+      };
+    } else {
+      // Ignore invalid match rules
+      test = () => false;
+    }
   }
   return { test };
 }

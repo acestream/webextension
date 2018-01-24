@@ -7,13 +7,24 @@ import initialize from './content';
   if (window.VM) return;
   window.VM = 1;
 
+  // eslint-disable-next-line camelcase
+  const { VM_initializeWeb } = window;
+
   function initBridge() {
     const contentId = getUniqId();
     const webId = getUniqId();
+    initialize(contentId, webId).then(needInject => {
+      if (needInject) {
+        doInject(contentId, webId);
+      }
+    });
+  }
+
+  function doInject(contentId, webId) {
     const props = {};
     [
       Object.getOwnPropertyNames(window),
-      typeof global !== 'undefined' && Object.getOwnPropertyNames(global),
+      Object.getOwnPropertyNames(global),
     ].forEach(keys => {
       keys.forEach(key => { props[key] = 1; });
     });
@@ -22,9 +33,9 @@ import initialize from './content';
       JSON.stringify(contentId),
       JSON.stringify(Object.keys(props)),
     ];
-    inject(`(${window.VM_initializeWeb.toString()}())(${args.join(',')})`);
-    initialize(contentId, webId);
+    inject(`(${VM_initializeWeb.toString()}())(${args.join(',')})`);
   }
+
   initBridge();
 
   // For installation

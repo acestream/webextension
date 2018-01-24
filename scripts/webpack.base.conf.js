@@ -1,16 +1,11 @@
 const path = require('path');
 const webpack = require('webpack');
 const MinifyPlugin = require('babel-minify-webpack-plugin');
-const minifyPreset = require('babel-preset-minify');
 const vueLoaderConfig = require('./vue-loader.conf');
-const { IS_DEV, styleRule } = require('./utils');
+const { IS_DEV, styleRule, definitions } = require('./utils');
 
-// const { MINIFY } = process.env;
-const MINIFY = true;
 const DIST = 'dist';
-const definePlugin = new webpack.DefinePlugin({
-  'process.env.DEBUG': IS_DEV ? 'true' : 'false', // whether to log message errors
-});
+const definePlugin = new webpack.DefinePlugin(definitions);
 
 function resolve(dir) {
   return path.join(__dirname, '..', dir);
@@ -51,6 +46,11 @@ module.exports = {
         loader: 'babel-loader',
         include: [resolve('src'), resolve('test')]
       },
+      {
+        test: /\.svg$/,
+        loader: 'svg-sprite-loader',
+        include: [resolve('src/resources/icons')],
+      },
       styleRule({
         fallback: 'vue-style-loader',
         loaders: ['postcss-loader'],
@@ -61,13 +61,6 @@ module.exports = {
   devtool: IS_DEV ? '#inline-source-map' : false,
   plugins: [
     definePlugin,
-    !IS_DEV && new MinifyPlugin({
-      mangle: !!MINIFY,
-    }, {
-      babili: (...args) => Object.assign(minifyPreset(...args), {
-        minified: !!MINIFY,
-        compact: !!MINIFY,
-      }),
-    }),
+    !IS_DEV && new MinifyPlugin(),
   ].filter(Boolean),
 };
