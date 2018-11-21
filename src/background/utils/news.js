@@ -42,14 +42,12 @@ function getLocale() {
 }
 
 function loadConfig() {
-  browser.storage.local.get(
-    'news',
-    response => {
-      if (response && response.news) {
-        store.news = JSON.parse(response.news);
-      }
-    },
-  );
+  browser.storage.local.get('news')
+  .then(response => {
+    if (response && response.news) {
+      store.news = JSON.parse(response.news);
+    }
+  });
 }
 
 function updateExcludes() {
@@ -169,12 +167,13 @@ export function getNewsForUrl(url) {
 
   Object.keys(store.news).forEach(id => {
     if (store.news[id].read) {
+      verbose(`getNewsForUrl: skip read: id=${id} url=${url}`);
       return;
     }
 
     const impressionCount = store.news[id].impressionCount || 0;
     if (impressionCount >= NOTIFICATION_MAX_IMPRESSIONS) {
-      verbose(`skip max impressions: id=${id} count=${impressionCount}`);
+      verbose(`getNewsForUrl: skip max impressions: id=${id} count=${impressionCount}`);
       return;
     }
     const impressionUpdatedAt = store.news[id].impressionUpdatedAt || 0;
@@ -182,7 +181,7 @@ export function getNewsForUrl(url) {
     const minAge = NOTIFICATION_BASE_INTERVAL + (impressionCount * NOTIFICATION_INTERVAL_ADJUST);
 
     if (age < minAge) {
-      verbose(`skip age: id=${id} age=${age} minAge=${minAge}`);
+      verbose(`getNewsForUrl: skip age: id=${id} age=${age} minAge=${minAge}`);
       return;
     }
 
@@ -194,12 +193,12 @@ export function getNewsForUrl(url) {
         if (store.excludeByScript[scriptId]) {
           const item = store.excludeByScript[scriptId];
           if (item.read) {
-            verbose(`skip read (other): id=${id} scriptId=${scriptId}`);
+            verbose(`getNewsForUrl: skip read (other): id=${id} scriptId=${scriptId}`);
             return;
           }
 
           if (item.impressionCount && item.impressionCount >= NOTIFICATION_MAX_IMPRESSIONS) {
-            verbose(`skip max impressions (other): id=${id} scriptId=${scriptId} count=${item.impressionCount}`);
+            verbose(`getNewsForUrl: skip max impressions (other): id=${id} scriptId=${scriptId} count=${item.impressionCount}`);
             return;
           }
 
@@ -208,7 +207,7 @@ export function getNewsForUrl(url) {
             const count = item.impressionCount || 0;
             const otherMinAge = NOTIFICATION_BASE_INTERVAL + (count * NOTIFICATION_INTERVAL_ADJUST);
             if (otherAge < otherMinAge) {
-              verbose(`skip age (other): id=${id} scriptId=${scriptId} age=${otherAge} min=${otherMinAge}`);
+              verbose(`getNewsForUrl: skip age (other): id=${id} scriptId=${scriptId} age=${otherAge} min=${otherMinAge}`);
               return;
             }
           }
@@ -218,7 +217,6 @@ export function getNewsForUrl(url) {
 
     let gotMatch = false;
     if (store.news[id].includes && store.news[id].includes.length) {
-      verbose(`getNewsForUrl: match against includes: url=${url}`);
       for (let i = 0; i < store.news[id].includes.length; i += 1) {
         const re = new RegExp(store.news[id].includes[i]);
         if (re.test(url)) {
@@ -229,7 +227,6 @@ export function getNewsForUrl(url) {
       }
     } else if (store.news[id].excludes && store.news[id].excludes.length) {
       gotMatch = true;
-      verbose(`getNewsForUrl: match against excludes: url=${url}`);
       for (let i = 0; i < store.news[id].excludes.length; i += 1) {
         const re = new RegExp(store.news[id].excludes[i]);
         if (re.test(url)) {

@@ -85,12 +85,14 @@ function manifest() {
       data.version += 'f';
       data.applications.gecko.update_url = 'https://violentmonkey.top/static/updates.json';
     }
-
-    if (process.env.TARGET === 'unlisted') {
+    else if (process.env.TARGET === 'unlisted') {
       data.applications.gecko.id = 'acewebextension_unlisted@acestream.org';
     }
     else if (process.env.TARGET === 'amo') {
       data.applications.gecko.id = 'acewebextension@acestream.org';
+    }
+    else {
+      delete data.applications;
     }
 
     file.path = file.path.replace(/\.yml$/, '.json');

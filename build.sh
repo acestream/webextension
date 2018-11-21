@@ -16,8 +16,11 @@ elif [ "$TARGET" == "dev" ]; then
     echo "build dev"
     NPM_TARGET="build:dev"
     XPI_NAME="acewebextension_dev.xpi"
+elif [ "$TARGET" == "chrome" ]; then
+    echo "build chrome"
+    NPM_TARGET="build:chrome"
 else
-    echo "Usage: build.sh <amo|unlisted|dev>"
+    echo "Usage: build.sh <amo|unlisted|dev|chrome>"
     exit
 fi
 
@@ -31,11 +34,13 @@ mkdir $BUILD_DIR
 # build webextension
 npm run $NPM_TARGET
 
-# make unlisted xpi
-echo "Build $XPI_NAME..."
-cd $BUILD_DIR
-zip -qr9DX "../$XPI_DIR/$XPI_NAME" *
-cd ..
+if [ "$TARGET" != "chrome" ]; then
+    # make xpi
+    echo "Build $XPI_NAME..."
+    cd $BUILD_DIR
+    zip -qr9DX "../$XPI_DIR/$XPI_NAME" *
+    cd ..
+fi
 
 # finish
 echo "Done"

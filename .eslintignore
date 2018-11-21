@@ -2,3 +2,4 @@
 !src/**
 !test/**
 src/public/**
+src/background/utils/tampermonkey.js

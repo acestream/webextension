@@ -9,6 +9,7 @@
     "build:firefox": "cross-env TARGET=firefox npm run build",
     "build:unlisted": "cross-env TARGET=unlisted npm run build",
     "build:amo": "cross-env TARGET=amo npm run build",
+    "build:chrome": "cross-env TARGET=chrome npm run build",
     "analyze": "webpack --profile --json --config scripts/webpack.conf.js | webpack-bundle-size-analyzer",
     "analyze:json": "webpack --profile --json --config scripts/webpack.conf.js > stats.json",
     "i18n": "gulp i18n",

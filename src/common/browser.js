@@ -45,10 +45,12 @@ const meta = {
     onClicked: true,
     onClosed: true,
     create: wrapAsync,
+    clear: wrapAsync,
   },
   runtime: {
     getManifest: true,
     getURL: true,
+    sendNativeMessage: true,
     openOptionsPage: wrapAsync,
     onMessage(onMessage) {
       function wrapListener(listener) {

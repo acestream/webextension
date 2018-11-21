@@ -3,6 +3,7 @@ import { noop, verbose } from 'src/common';
 import { objectGet } from 'src/common/object';
 import * as sync from './sync';
 import * as news from './utils/news';
+import * as tmWrapper from './utils/tampermonkey';
 import {
   cache,
   getRequestId, httpRequest, abortRequest, confirmInstall,
@@ -343,7 +344,7 @@ const commands = {
               browser.tabs.create({ url: targetUrl });
             }
             news.markAsRead(newsId);
-            browser.notifications.clear(newNotificationId, () => {});
+            browser.notifications.clear(newNotificationId);
           },
           onButtonClicked: index => {
             if (index === 0) {
@@ -354,7 +355,7 @@ const commands = {
             } else if (index === 1) {
               news.markAsRead(newsId);
             }
-            browser.notifications.clear(newNotificationId, () => {});
+            browser.notifications.clear(newNotificationId);
           },
         };
       });
@@ -362,7 +363,7 @@ const commands = {
       news.registerImpression(newsId);
 
       window.setTimeout(() => {
-        browser.notifications.clear(notificationId, () => {});
+        browser.notifications.clear(notificationId);
       }, 15000);
     }
 
@@ -370,47 +371,67 @@ const commands = {
   },
 };
 
-// request data from host legacy extension
+// Import scripts from tampermonkey extension
 function importScripts() {
-  return browser.runtime.sendMessage('get-all-userscripts')
-  .then(response => {
-    if (!response) {
-      return;
-    }
+  if (typeof chrome === 'undefined') {
+    // Not Chrome, do nothing
+    return Promise.resolve();
+  }
 
-    const { scripts } = response;
+  // Chrome, import scripts from tampermonkey database
+  return getInstalledScriptsTm().then(scripts => {
+    verbose('tm scripts', scripts);
 
     getInstalledScripts().then(installed => {
       verbose('bg:init: installed scripts', installed);
 
       scripts.forEach(script => {
-        if (!installed.includes(script.id)) {
-          verbose(`bg:init: install new script: id=${script.id}`);
+        if (!installed.includes(script.scriptId)) {
+          verbose(`bg:init: install new script: id=${script.scriptId}`);
           parseScript({
-            url: script.url,
+            url: script.fileURL,
             code: script.code,
           });
         } else {
-          verbose(`bg:init: script already installed: id=${script.id}`);
+          verbose(`bg:init: script already installed: id=${script.scriptId}`);
         }
       });
     });
   });
 }
 
-// request news
-function importNews() {
-  browser.runtime.sendMessage('get-news')
-  .then(response => {
-    if (!response) {
-      return;
-    }
+function getInstalledScriptsTm() {
+  return new Promise(resolve => {
+    const rea = tmWrapper.getRea();
+    const registry = tmWrapper.getRegistry();
+    const storage = registry.get('storage');
+    const installedScripts = [];
 
-    if (!response.news) {
-      return;
-    }
+    storage.init().then(() => {
+      storage.listValues().forEach(e => {
+        if (e.match(`^${rea.FEATURES.CONSTANTS.PREFIX.META}`)) {
+          const s = storage.getValue(e);
+          let scriptId = '';
+          if (s.namespace) {
+            scriptId = `${s.namespace}/`;
+          }
+          scriptId += s.name;
+          s.scriptId = scriptId;
+          installedScripts.push(s);
+        }
+      });
 
-    news.importData(response.news);
+      // get code
+      installedScripts.forEach(script => {
+        script.code = storage.getValue(rea.FEATURES.CONSTANTS.PREFIX.SCRIPT + script.uuid);
+
+        // cleanup (we need to import scripts only once)
+        storage.deleteValue(rea.FEATURES.CONSTANTS.PREFIX.META + script.uuid);
+        storage.deleteValue(rea.FEATURES.CONSTANTS.PREFIX.SCRIPT + script.uuid);
+      });
+
+      resolve(installedScripts);
+    });
   });
 }
 
@@ -439,7 +460,6 @@ initialize()
   checkRemove();
 
   importScripts()
-  .then(() => importNews())
   .then(() => news.initialize());
 });
 

@@ -1,6 +1,6 @@
 import { i18n, request, buffer2string, getFullUrl, isRemote, getRnd4 } from 'src/common';
 import { objectGet, objectSet } from 'src/common/object';
-import { getNameURI, parseMeta, newScript } from './script';
+import { getNameURI, makeScriptId, parseMeta, newScript } from './script';
 import { testScript, testBlacklist } from './tester';
 import { register } from './init';
 import patchDB from './patch-db';
@@ -243,6 +243,7 @@ export function getInstalledScripts() {
           installed.push(script.props.scriptId);
         });
       }
+
       resolve(installed);
     });
   });
@@ -443,6 +444,9 @@ function saveScript(script, code) {
     oldScript = store.scriptMap[props.id];
   }
   props.uri = getNameURI(script);
+  // :ace
+  props.scriptId = makeScriptId(script);
+  // /ace
   props.uuid = props.uuid || getUUID(props.id);
   // Do not allow script with same name and namespace
   if (store.scripts.some(item => {
