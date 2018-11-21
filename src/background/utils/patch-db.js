@@ -9,7 +9,7 @@ export default () => new Promise((resolve, reject) => {
       transform(req.result);
     };
     req.onerror = reject;
-    req.onupgradeneeded = (e) => {
+    req.onupgradeneeded = e => {
       // No available upgradation
       e.target.transaction.abort();
       reject();
