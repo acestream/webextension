@@ -177,6 +177,7 @@ export function getFullUrl(url, base) {
     'https:',
     'ftp:',
     'data:',
+    'file:',
   ].includes(obj.protocol)) obj.protocol = 'http:';
   return obj.href;
 }
