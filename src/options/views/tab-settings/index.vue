@@ -35,38 +35,78 @@
     <vm-import></vm-import>
     <vm-export></vm-export>
     <vm-sync></vm-sync>
-    <vm-blacklist></vm-blacklist>
-    <vm-css></vm-css>
+    <div class="show-advanced">
+      <button @click="showAdvanced = !showAdvanced">
+        <span v-text="i18n('labelAdvanced')"></span>
+        <icon name="arrow" :class="{ rotate: showAdvanced }" />
+      </button>
+    </div>
+    <div v-show="showAdvanced">
+      <section>
+        <h3 v-text="i18n('labelEditor')"></h3>
+        <div class="mb-1">
+          <label>
+            <setting-check name="editor.lineWrapping" />
+            <span v-text="i18n('labelLineWrapping')"></span>
+          </label>
+        </div>
+        <div class="mb-1">
+          <label>
+            <span class="mr-1" v-text="i18n('labelIndentUnit')"></span>
+            <input type="number" min="1" class="w-1" v-model="indentUnit" />
+          </label>
+        </div>
+      </section>
+      <vm-template />
+      <vm-blacklist />
+      <vm-css />
+    </div>
   </div>
 </template>
 
 <script>
-import SettingCheck from 'src/common/ui/setting-check';
-import options from 'src/common/options';
-import hookSetting from 'src/common/hook-setting';
+import { debounce } from '#/common';
+import SettingCheck from '#/common/ui/setting-check';
+import options from '#/common/options';
+import hookSetting from '#/common/hook-setting';
+import Icon from '#/common/ui/icon';
 import VmImport from './vm-import';
 import VmExport from './vm-export';
 import VmSync from './vm-sync';
+import VmTemplate from './vm-template';
 import VmBlacklist from './vm-blacklist';
 import VmCss from './vm-css';
 
+const items = [
+  {
+    name: 'showBadge',
+    normalize(value) {
+      if (!value) return '';
+      return value === 'total' ? 'total' : 'unique';
+    },
+  },
+  {
+    name: 'indentUnit',
+    key: 'editor.indentUnit',
+    normalize(value) {
+      return +value || 2;
+    },
+  },
+];
 const settings = {
-  showBadge: normalizeShowBadge(options.get('showBadge')),
+  showAdvanced: false,
 };
-hookSetting('showBadge', value => {
-  settings.showBadge = normalizeShowBadge(value);
+items.forEach(({ name }) => {
+  settings[name] = null;
 });
-
-function normalizeShowBadge(value) {
-  if (!value) return '';
-  return value === 'total' ? 'total' : 'unique';
-}
 
 export default {
   components: {
+    Icon,
     VmImport,
     VmExport,
     VmSync,
+    VmTemplate,
     VmBlacklist,
     VmCss,
     SettingCheck,
@@ -74,10 +114,24 @@ export default {
   data() {
     return settings;
   },
-  watch: {
-    showBadge(value) {
-      options.set('showBadge', value);
+  methods: {
+    getUpdater({ key, name, normalize }) {
+      return (value, oldValue) => {
+        if (value !== oldValue) options.set(key || name, normalize(value));
+      };
     },
+  },
+  created() {
+    options.ready(() => {
+      items.forEach(item => {
+        const { name, key, normalize } = item;
+        settings[name] = normalize(options.get(key || name));
+        hookSetting(key, value => {
+          settings[name] = value;
+        });
+        this.$watch(name, debounce(this.getUpdater(item), 300));
+      });
+    });
   },
 };
 </script>
@@ -87,6 +141,12 @@ export default {
   overflow-y: auto;
   textarea {
     height: 10em;
+  }
+}
+.show-advanced {
+  margin: 20px 0;
+  .rotate {
+    transform: rotate(90deg);
   }
 }
 </style>

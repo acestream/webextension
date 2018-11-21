@@ -10,7 +10,7 @@
     </div>
     <button v-text="i18n('buttonAllNone')" @click="toggleSelection()"></button>
     <button v-text="i18n('buttonExportData')" @click="exportData" :disabled="exporting"></button>
-    <label>
+    <label class="ml-1">
       <setting-check name="exportValues" />
       <span v-text="i18n('labelExportScriptData')"></span>
     </label>
@@ -27,10 +27,12 @@
 
 <script>
 import Modal from 'vueleton/lib/modal';
-import { sendMessage, getLocaleString } from 'src/common';
-import options from 'src/common/options';
-import { isFirefox } from 'src/common/ua';
-import SettingCheck from 'src/common/ui/setting-check';
+import { sendMessage, getLocaleString } from '#/common';
+import { objectGet } from '#/common/object';
+import options from '#/common/options';
+import { isFirefox } from '#/common/ua';
+import SettingCheck from '#/common/ui/setting-check';
+import { downloadBlob } from '#/common/download';
 import { store } from '../../utils';
 
 /**
@@ -80,7 +82,7 @@ export default {
     exportData() {
       this.exporting = true;
       Promise.resolve(exportData(this.selectedIds))
-      .then(downloadBlob)
+      .then(download)
       .catch(err => {
         console.error(err);
       })
@@ -137,20 +139,7 @@ function getExportname() {
   return `scripts_${getTimestamp()}.zip`;
 }
 
-function download(url, cb) {
-  const a = document.createElement('a');
-  a.style.display = 'none';
-  document.body.appendChild(a);
-  a.href = url;
-  a.download = getExportname();
-  a.click();
-  setTimeout(() => {
-    document.body.removeChild(a);
-    if (cb) cb();
-  });
-}
-
-function downloadBlob(blob) {
+function download(blob) {
   // Known issue: does not work on Firefox
   // https://bugzilla.mozilla.org/show_bug.cgi?id=1331176
   if (isFirefox) {
@@ -163,23 +152,19 @@ function downloadBlob(blob) {
     };
     reader.readAsDataURL(blob);
   } else {
-    const url = URL.createObjectURL(blob);
-    download(url, () => {
-      URL.revokeObjectURL(url);
-    });
+    downloadBlob(blob, getExportname());
   }
 }
 
 function exportData(selectedIds) {
-  if (!selectedIds.length) return;
   const withValues = options.get('exportValues');
-  return sendMessage({
+  return (selectedIds.length ? sendMessage({
     cmd: 'ExportZip',
     data: {
       values: withValues,
       ids: selectedIds,
     },
-  })
+  }) : Promise.resolve())
   .then(data => {
     const names = {};
     const vm = {
@@ -188,7 +173,7 @@ function exportData(selectedIds) {
     };
     delete vm.settings.sync;
     if (withValues) vm.values = {};
-    const files = data.items.map(({ script, code }) => {
+    const files = (objectGet(data, 'items') || []).map(({ script, code }) => {
       let name = script.custom.name || script.meta.name || script.props.id;
       if (names[name]) {
         names[name] += 1;

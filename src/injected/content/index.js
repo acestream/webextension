@@ -1,17 +1,21 @@
-import { getUniqId, verbose, isDomainAllowed } from 'src/common';
-import { isFirefox, getVendor } from 'src/common/ua';
-import { bindEvents, sendMessage, inject, attachFunction } from '../utils';
+import { getUniqId, verbose, isDomainAllowed } from '#/common';
+import { isFirefox, getVendor } from '#/common/ua';
+import {
+  bindEvents, sendMessage, inject, attachFunction,
+} from '../utils';
 import bridge from './bridge';
 import { tabOpen, tabClose, tabClosed } from './tabs';
 import { onNotificationCreate, onNotificationClick, onNotificationClose } from './notifications';
-import { getRequestId, httpRequest, abortRequest, httpRequested } from './requests';
+import {
+  getRequestId, httpRequest, abortRequest, httpRequested,
+} from './requests';
 import dirtySetClipboard from './clipboard';
 
 const IS_TOP = window.top === window;
 
 const ids = [];
 const enabledIds = [];
-const menus = [];
+const menus = {};
 
 function setBadge() {
   // delay setBadge in frames so that they can be added to the initial count
@@ -96,7 +100,17 @@ const handlers = {
     sendMessage({ cmd: 'UpdateValue', data });
   },
   RegisterMenu(data) {
-    if (IS_TOP) menus.push(data);
+    if (IS_TOP) {
+      const [key] = data;
+      menus[key] = data;
+    }
+    getPopup();
+  },
+  UnregisterMenu(data) {
+    if (IS_TOP) {
+      const [key] = data;
+      delete menus[key];
+    }
     getPopup();
   },
   AddStyle({ css, callbackId }) {
@@ -146,7 +160,7 @@ function getPopup() {
   if (IS_TOP) {
     sendMessage({
       cmd: 'SetPopup',
-      data: { ids, menus },
+      data: { ids, menus: Object.values(menus) },
     });
   }
 }
@@ -164,7 +178,8 @@ function injectScript(data) {
     `function(${wrapperKeys.join(',')}){${code}}`,
     JSON.stringify(vCallbackId),
   ];
-  inject(`!${func.toString()}(${args.join(',')})`);
+  const injectedCode = `!${func.toString()}(${args.join(',')})`;
+  inject(injectedCode);
 }
 
 function watchDOM(func, retryCount, retryInterval) {

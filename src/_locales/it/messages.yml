@@ -58,9 +58,12 @@ buttonReplace:
 buttonReplaceAll:
   description: Button to replace all matches.
   message: Tutti
+buttonReset:
+  description: Button to reset to default values.
+  message: ''
 buttonSave:
   description: Button to save modifications of a script.
-  message: Salve
+  message: Salva
 buttonSaveBlacklist:
   description: Button to save global blacklist.
   message: Salva
@@ -116,6 +119,15 @@ editNavCode:
 editNavSettings:
   description: Label of settings tab in script editor.
   message: Impostazioni
+editNavValues:
+  description: Label of values tab in script editor.
+  message: Valori
+editValueCancel:
+  description: Button to cancel modification of a script value.
+  message: Annulla
+editValueSave:
+  description: Button to save modification of a script value.
+  message: Salva
 extDescription:
   description: Description for this extension.
   message: Introduce il supporto agli userscript per browser.
@@ -149,6 +161,9 @@ installOptionTrack:
 labelAbout:
   description: Label shown on top of the about page.
   message: Riguardo Ace Script
+labelAdvanced:
+  description: Label for button to show advanced settings.
+  message: Impostazioni avanzate
 labelAllowUpdate:
   description: Option to allow checking updates for a script.
   message: Permetti aggiornamenti
@@ -157,22 +172,22 @@ labelAuthor:
   message: 'Autore: '
 labelAutoReloadCurrentTab:
   description: Option to reload current tab after a script is switched on or off from menu.
-  message: Ricarica la scheda corente dopo aver spento o acceso uno script dal menu
+  message: Ricarica la scheda corrente dopo aver spento o acceso uno script dal menu
 labelAutoUpdate:
   description: Option to allow automatically checking scripts for updates every 24 hours.
   message: Controlla automaticamente gli script per aggiornamenti tutti i giorni
 labelBadge:
   description: Label for option to show number on badge.
-  message: ''
+  message: Mostra sull'icona
 labelBadgeNone:
   description: Option to display nothing on badge.
-  message: ''
+  message: Nulla
 labelBadgeTotal:
   description: Option to display total number of running scripts on badge.
-  message: ''
+  message: Il numero di script totali in esecuzione
 labelBadgeUnique:
   description: Option to display number of unique running scripts on badge.
-  message: ''
+  message: Il numero di script unici in esecuzione
 labelBlacklist:
   description: Label for global blacklist settings in security section.
   message: Blacklist
@@ -194,6 +209,15 @@ labelDonate:
 labelDownloadURL:
   description: Label of script @downloadURL in custom meta data.
   message: 'URL Download:'
+labelEditValue:
+  description: Label shown in the panel to edit a script value.
+  message: Modifica valore per lo scipt
+labelEditing:
+  description: Label for current editing script
+  message: ''
+labelEditor:
+  description: Label for Editor settings
+  message: ''
 labelExclude:
   description: Label of @exclude rules.
   message: '@exclude rules'
@@ -202,7 +226,7 @@ labelExcludeMatch:
   message: '@exclude-match rules'
 labelExportScriptData:
   description: Option to export script data along with scripts.
-  message: Esporta dati script
+  message: Esporta i dati degli script
 labelFeedback:
   description: Label of link to feedback page.
   message: Feedback
@@ -212,9 +236,12 @@ labelFilterSort:
 labelGeneral:
   description: Label for general settings.
   message: Generale
+labelHelpTranslate:
+  description: Label for link to localization guide in about tab
+  message: ''
 labelHomepage:
   description: Label for home page in about tab.
-  message: ''
+  message: Homepage
 labelHomepageURL:
   description: Label of script @homepageURL in custom meta data.
   message: 'URL Homepage:'
@@ -224,18 +251,24 @@ labelImportSettings:
 labelInclude:
   description: Label of @include rules.
   message: '@include rules'
+labelIndentUnit:
+  description: Label for editor option of indent unit size.
+  message: 'Indentazione:'
 labelInstall:
   description: Shown in the title of the confirm page while trying to install a script.
   message: Installando script
 labelKeepOriginal:
   description: Option to keep the original match or ignore rules.
-  message: Tieni originale
+  message: Mantieni originale
 labelLastUpdatedAt:
   description: Label shown on last updated time.
-  message: ''
+  message: 'Ultimo aggiornamento il:'
 labelLineNumber:
   description: Label for line number jumper.
   message: 'Linea numero: '
+labelLineWrapping:
+  description: Label for editor option of line wrapping.
+  message: A-capo automatico
 labelMatch:
   description: Label of @match rules.
   message: '@match rules'
@@ -272,6 +305,9 @@ labelRunAtDefault:
 labelScriptEditor:
   description: Shown in the title of the script editing page.
   message: Editor Script
+labelScriptTemplate:
+  description: Label for custom script template.
+  message: ''
 labelSearch:
   description: Label for search input in search box.
   message: 'Cerca: '
@@ -300,12 +336,13 @@ labelSyncDisabled:
 labelSyncReauthorize:
   description: Option to reauthorize sync service when expired.
   message: ''
+  touched: false
 labelSyncRevoke:
   description: Label for button to revoke authorization for a service.
   message: Revoca
 labelSyncScriptStatus:
   description: Label for option to sync script status.
-  message: Stato sincronizzazione script
+  message: Sincronizza lo stato degli script
 labelSyncService:
   description: Label for sync service select.
   message: Sincronizza con
@@ -333,6 +370,9 @@ menuFindScripts:
 menuMatchedScripts:
   description: Label for menu listing matched scripts.
   message: Script corrispondenti
+menuNewScript:
+  description: Menu item to create a new script.
+  message: ''
 menuScriptDisabled:
   description: 'Menu item showing the status of Ace Script, when disabled.'
   message: Script disabilitati
@@ -341,7 +381,7 @@ menuScriptEnabled:
   message: Script abilitati
 msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
-  message: Controllando aggiornamenti...
+  message: Controllo degli aggiornamenti...
 msgErrorFetchingScript:
   description: Message shown when Ace Script fails fetching a new version of the script.
   message: Errore durante lo scaricamento dello script!
@@ -402,6 +442,9 @@ msgSavedBlacklist:
 msgSavedCustomCSS:
   description: Message shown when custom CSS is saved.
   message: Stile personalizzato aggiornato.
+msgSavedScriptTemplate:
+  description: Message shown when custom script template is saved.
+  message: ''
 msgScriptUpdated:
   description: Notification message for script updates.
   message: 'Lo script [$1] è aggiornato!'
@@ -426,15 +469,18 @@ msgUpdated:
 msgUpdating:
   description: Message shown when a new version of script is being fetched.
   message: Aggiornando...
+noValues:
+  description: Label shown when there is no value for current script.
+  message: Nessun valore salvato
 optionShowEnabledFirst:
   description: Option to show enabled scripts first in alphabetical order.
   message: Visualizza script abilitati per primi
 searchCaseSensitive:
   description: Option to perform a case-sensitive search
-  message: ''
+  message: Maiuscole/minuscole
 searchUseRegex:
   description: Option to perform a regular expression search
-  message: ''
+  message: Espressione regolare
 sideMenuAbout:
   description: 'Side menu: About'
   message: A riguardo
@@ -447,3 +493,14 @@ sideMenuSettings:
 titleScriptUpdated:
   description: Notification title for script updates.
   message: Aggiornamento
+valueLabelKey:
+  description: Label for key of a script value.
+  message: Chiave (stringa)
+valueLabelValue:
+  description: Label for value of a script value.
+  message: Valore (stringa JSON)
+warnScriptLongLines:
+  description: Warning message shown when script has lines that are too long to be edited.
+  message: >-
+    Alcune linee dello script sono troppo lunghe e non possono essere editate.
+    Apri lo script con un editor esterno.

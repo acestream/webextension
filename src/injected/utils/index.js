@@ -1,6 +1,8 @@
 import { CustomEvent, jsonDump, jsonLoad } from './helpers';
 
-export { sendMessage, request, throttle } from 'src/common';
+export {
+  sendMessage, request, throttle, cache2blobUrl,
+} from '#/common';
 
 export function postData(destId, data) {
   // Firefox issue: data must be stringified to avoid cross-origin problem
@@ -8,56 +10,22 @@ export function postData(destId, data) {
   document.dispatchEvent(e);
 }
 
-let doInject;
+function removeElement(id) {
+  const el = document.querySelector(`#${id}`);
+  if (el) {
+    el.parentNode.removeChild(el);
+    return true;
+  }
+}
+
 export function inject(code) {
-  if (!doInject) {
-    const id = getUniqId('VM-');
-    const detect = domId => {
-      const span = document.createElement('span');
-      span.id = domId;
-      document.documentElement.appendChild(span);
-    };
-    injectViaText(`(${detect.toString()})(${jsonDump(id)})`);
-    const span = document.querySelector(`#${id}`);
-    if (span) {
-      span.parentNode.removeChild(span);
-      doInject = injectViaText;
-    } else {
-      // For Firefox in CSP limited pages
-      doInject = injectViaBlob;
-    }
-  }
-  doInject(code);
-}
-
-function injectViaText(code) {
   const script = document.createElement('script');
-  const doc = document.body || document.documentElement;
-  script.textContent = code;
-  doc.appendChild(script);
-  try {
-    doc.removeChild(script);
-  } catch (e) {
-    // ignore if body is changed and script is detached
-  }
-}
-
-// Firefox does not support script injection by `textCode` in CSP limited pages
-// have to inject via blob URL, leading to delayed first injection
-function injectViaBlob(code) {
-  const script = document.createElement('script');
-  const doc = document.body || document.documentElement;
-  // https://en.wikipedia.org/wiki/Byte_order_mark
-  const blob = new Blob(['\ufeff', code], { type: 'text/javascript' });
-  const url = URL.createObjectURL(blob);
-  script.src = url;
-  doc.appendChild(script);
-  try {
-    doc.removeChild(script);
-  } catch (e) {
-    // ignore if body is changed and script is detached
-  }
-  URL.revokeObjectURL(url);
+  const id = getUniqId('VM-');
+  script.id = id;
+  script.textContent = `!${removeElement.toString()}(${JSON.stringify(id)});${code}`;
+  document.documentElement.appendChild(script);
+  // in case the script is blocked by CSP
+  removeElement(id);
 }
 
 export function getUniqId() {

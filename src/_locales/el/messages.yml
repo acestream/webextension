@@ -58,6 +58,9 @@ buttonReplace:
 buttonReplaceAll:
   description: Button to replace all matches.
   message: Όλα
+buttonReset:
+  description: Button to reset to default values.
+  message: ''
 buttonSave:
   description: Button to save modifications of a script.
   message: Αποθήκευση
@@ -118,6 +121,15 @@ editNavCode:
 editNavSettings:
   description: Label of settings tab in script editor.
   message: Ρυθμίσεις
+editNavValues:
+  description: Label of values tab in script editor.
+  message: ''
+editValueCancel:
+  description: Button to cancel modification of a script value.
+  message: ''
+editValueSave:
+  description: Button to save modification of a script value.
+  message: ''
 extDescription:
   description: Description for this extension.
   message: Προσφέρει υποστήριξη για σενάρια χρηστών για τους φυλλομετρητές.
@@ -153,6 +165,9 @@ installOptionTrack:
 labelAbout:
   description: Label shown on top of the about page.
   message: Περί του Ace Script
+labelAdvanced:
+  description: Label for button to show advanced settings.
+  message: ''
 labelAllowUpdate:
   description: Option to allow checking updates for a script.
   message: Επιτρέψτε αναβαθμίσεις
@@ -200,12 +215,21 @@ labelDonate:
 labelDownloadURL:
   description: Label of script @downloadURL in custom meta data.
   message: 'URL Λήψης:'
+labelEditValue:
+  description: Label shown in the panel to edit a script value.
+  message: ''
+labelEditing:
+  description: Label for current editing script
+  message: ''
+labelEditor:
+  description: Label for Editor settings
+  message: ''
 labelExclude:
   description: Label of @exclude rules.
-  message: 'Κανόνες @exclude'
+  message: Κανόνες @exclude
 labelExcludeMatch:
   description: Label of @exclude-match rules.
-  message: 'Κανόνες @exclude-match'
+  message: Κανόνες @exclude-match
 labelExportScriptData:
   description: Option to export script data along with scripts.
   message: Εξαγωγή δεδομένων σεναρίου
@@ -218,6 +242,12 @@ labelFilterSort:
 labelGeneral:
   description: Label for general settings.
   message: Γενικές
+labelHelpTranslate:
+  description: Label for link to localization guide in about tab
+  message: ''
+labelHomepage:
+  description: Label for home page in about tab.
+  message: ''
 labelHomepageURL:
   description: Label of script @homepageURL in custom meta data.
   message: 'URL Αρχικής Σελίδας:'
@@ -226,7 +256,10 @@ labelImportSettings:
   message: Ρυθμίσεις εισαγωγής
 labelInclude:
   description: Label of @include rules.
-  message: 'Κανόνες @include'
+  message: Κανόνες @include
+labelIndentUnit:
+  description: Label for editor option of indent unit size.
+  message: ''
 labelInstall:
   description: Shown in the title of the confirm page while trying to install a script.
   message: Σενάριο εγκατάστασης
@@ -239,9 +272,12 @@ labelLastUpdatedAt:
 labelLineNumber:
   description: Label for line number jumper.
   message: 'Αριθμός γραμμής: '
+labelLineWrapping:
+  description: Label for editor option of line wrapping.
+  message: ''
 labelMatch:
   description: Label of @match rules.
-  message: 'Κανόνες @match'
+  message: Κανόνες @match
 labelName:
   description: Label of script name.
   message: 'Όνομα:'
@@ -275,6 +311,9 @@ labelRunAtDefault:
 labelScriptEditor:
   description: Shown in the title of the script editing page.
   message: Επεξεργαστής σεναρίου
+labelScriptTemplate:
+  description: Label for custom script template.
+  message: ''
 labelSearch:
   description: Label for search input in search box.
   message: 'Αναζήτηση για: '
@@ -303,6 +342,7 @@ labelSyncDisabled:
 labelSyncReauthorize:
   description: Option to reauthorize sync service when expired.
   message: Αυτόματη επανεξουσιοδότηση όταν λήξει
+  touched: false
 labelSyncRevoke:
   description: Label for button to revoke authorization for a service.
   message: Ανάκληση
@@ -332,10 +372,13 @@ menuDashboard:
   message: Άνοιγμα Ταμπλό
 menuFindScripts:
   description: Menu item to find scripts for a site.
-  message: 'Βρείτε σενάρια γι᾽ αυτήν την σελίδα'
+  message: Βρείτε σενάρια γι᾽ αυτήν την σελίδα
 menuMatchedScripts:
   description: Label for menu listing matched scripts.
   message: Σενάρια που ταιριάζουν
+menuNewScript:
+  description: Menu item to create a new script.
+  message: ''
 menuScriptDisabled:
   description: 'Menu item showing the status of Ace Script, when disabled.'
   message: Σενάρια απενεργοποιήθηκαν
@@ -388,7 +431,9 @@ msgNamespaceConflict:
   description: >-
     Message shown when namespace of the new script conflicts with an existent
     one.
-  message: Σύγκρουση χώρου ονόματος σεναρίου! Παρακαλώ αλλάξτε το @name και το @namespace.
+  message: >-
+    Σύγκρουση χώρου ονόματος σεναρίου! Παρακαλώ αλλάξτε το @name και το
+    @namespace.
 msgNewVersion:
   description: >-
     Message shown when a new version of script is found by @updateURL, but no
@@ -403,6 +448,9 @@ msgSavedBlacklist:
 msgSavedCustomCSS:
   description: Message shown when custom CSS is saved.
   message: Το προσαρμοσμένο στυλ ενημερώθηκε.
+msgSavedScriptTemplate:
+  description: Message shown when custom script template is saved.
+  message: ''
 msgScriptUpdated:
   description: Notification message for script updates.
   message: 'Το σενάριο [$1] είναι ενημερωμένο!'
@@ -427,9 +475,18 @@ msgUpdated:
 msgUpdating:
   description: Message shown when a new version of script is being fetched.
   message: Ενημέρωση...
+noValues:
+  description: Label shown when there is no value for current script.
+  message: ''
 optionShowEnabledFirst:
   description: Option to show enabled scripts first in alphabetical order.
   message: Εμφάνιση των ενεργοποιημένων σεναρίων πρώτα
+searchCaseSensitive:
+  description: Option to perform a case-sensitive search
+  message: ''
+searchUseRegex:
+  description: Option to perform a regular expression search
+  message: ''
 sideMenuAbout:
   description: 'Side menu: About'
   message: Σχετικά
@@ -442,3 +499,12 @@ sideMenuSettings:
 titleScriptUpdated:
   description: Notification title for script updates.
   message: Ενημέρωση
+valueLabelKey:
+  description: Label for key of a script value.
+  message: ''
+valueLabelValue:
+  description: Label for value of a script value.
+  message: ''
+warnScriptLongLines:
+  description: Warning message shown when script has lines that are too long to be edited.
+  message: ''

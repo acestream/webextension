@@ -1,14 +1,17 @@
-import { debounce, normalizeKeys, request, noop } from 'src/common';
-import { objectSet, objectPick, objectPurify } from 'src/common/object';
-import { getEventEmitter, getOption, setOption, hookOptions } from '../utils';
 import {
-  getScripts,
-  getScriptCode,
-  parseScript,
-  removeScript,
+  debounce, normalizeKeys, request, noop,
+} from '#/common';
+import {
+  objectGet, objectSet, objectPick, objectPurify,
+} from '#/common/object';
+import {
+  getEventEmitter, getOption, setOption, hookOptions, sendMessageOrIgnore,
+} from '../utils';
+import {
   sortScripts,
   updateScriptInfo,
 } from '../utils/db';
+import { script as pluginScript } from '../plugin';
 
 const serviceNames = [];
 const serviceClasses = [];
@@ -173,7 +176,7 @@ function extendService(options) {
 }
 
 const onStateChange = debounce(() => {
-  browser.runtime.sendMessage({
+  sendMessageOrIgnore({
     cmd: 'UpdateSync',
     data: getStates(),
   });
@@ -330,8 +333,7 @@ export const BaseService = serviceFactory({
     });
   },
   getLocalData() {
-    return getScripts()
-    .then(scripts => scripts.filter(script => !script.config.removed));
+    return pluginScript.list();
   },
   getSyncData() {
     return this.getMeta()
@@ -435,13 +437,12 @@ export const BaseService = serviceFactory({
             if (!getOption('syncScriptStatus') && data.config) {
               delete data.config.enabled;
             }
-            return parseScript(data)
-            .then(res => { browser.runtime.sendMessage(res); });
+            return pluginScript.update(data);
           });
         }),
         ...putRemote.map(({ local, remote }) => {
           this.log('Upload script:', local.props.uri);
-          return getScriptCode(local.props.id)
+          return pluginScript.get(local.props.id)
           .then(code => {
             // XXX use version 1 to be compatible with Violentmonkey on other platforms
             const data = getScriptData(local, 1, { code });
@@ -464,7 +465,7 @@ export const BaseService = serviceFactory({
         }),
         ...delLocal.map(({ local }) => {
           this.log('Remove local script:', local.props.uri);
-          return removeScript(local.props.id);
+          return pluginScript.remove(local.props.id);
         }),
         ...updateLocal.map(({ local, info }) => {
           const updates = {};
@@ -477,7 +478,8 @@ export const BaseService = serviceFactory({
       promiseQueue.push(Promise.all(promiseQueue).then(() => sortScripts()).then(changed => {
         if (!changed) return;
         remoteChanged = true;
-        return getScripts().then(scripts => {
+        return pluginScript.list()
+        .then(scripts => {
           scripts.forEach(script => {
             const remoteInfo = remoteMetaData.info[script.props.uri];
             if (remoteInfo) remoteInfo.position = script.props.position;
@@ -561,5 +563,6 @@ export function revoke() {
 }
 
 hookOptions(data => {
-  if ('sync.current' in data) initialize();
+  const value = objectGet(data, 'sync.current');
+  if (value) initialize();
 });

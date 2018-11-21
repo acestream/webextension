@@ -58,6 +58,9 @@ buttonReplace:
 buttonReplaceAll:
   description: Button to replace all matches.
   message: Tudo
+buttonReset:
+  description: Button to reset to default values.
+  message: ''
 buttonSave:
   description: Button to save modifications of a script.
   message: Salvar
@@ -81,7 +84,7 @@ buttonUpdate:
   message: Procurar atualizações
 buttonUpdateAll:
   description: Check all scripts for updates.
-  message: Procurar atualizações para todos
+  message: Procurar atualizações para todos scripts
 buttonVacuum:
   description: Button to vacuum extension data.
   message: Limpar base de dados
@@ -116,6 +119,15 @@ editNavCode:
 editNavSettings:
   description: Label of settings tab in script editor.
   message: Definições
+editNavValues:
+  description: Label of values tab in script editor.
+  message: ''
+editValueCancel:
+  description: Button to cancel modification of a script value.
+  message: Cancelar
+editValueSave:
+  description: Button to save modification of a script value.
+  message: Salvar
 extDescription:
   description: Description for this extension.
   message: Fornece suporte a scripts de usuários para navegadores.
@@ -149,6 +161,9 @@ installOptionTrack:
 labelAbout:
   description: Label shown on top of the about page.
   message: Sobre o Ace Script
+labelAdvanced:
+  description: Label for button to show advanced settings.
+  message: Avançado
 labelAllowUpdate:
   description: Option to allow checking updates for a script.
   message: Permitir atualização
@@ -165,16 +180,16 @@ labelAutoUpdate:
   message: Procurar atualizações de scripts automaticamente todos os dias
 labelBadge:
   description: Label for option to show number on badge.
-  message: ''
+  message: Exibir no Ícone
 labelBadgeNone:
   description: Option to display nothing on badge.
-  message: ''
+  message: nada
 labelBadgeTotal:
   description: Option to display total number of running scripts on badge.
-  message: ''
+  message: número de scripts em execução
 labelBadgeUnique:
   description: Option to display number of unique running scripts on badge.
-  message: ''
+  message: número de scripts únicos em execução
 labelBlacklist:
   description: Label for global blacklist settings in security section.
   message: Lista negra
@@ -196,6 +211,15 @@ labelDonate:
 labelDownloadURL:
   description: Label of script @downloadURL in custom meta data.
   message: 'URL de download:'
+labelEditValue:
+  description: Label shown in the panel to edit a script value.
+  message: ''
+labelEditing:
+  description: Label for current editing script
+  message: ''
+labelEditor:
+  description: Label for Editor settings
+  message: ''
 labelExclude:
   description: Label of @exclude rules.
   message: Regras @exclude
@@ -214,6 +238,9 @@ labelFilterSort:
 labelGeneral:
   description: Label for general settings.
   message: Gerais
+labelHelpTranslate:
+  description: Label for link to localization guide in about tab
+  message: ''
 labelHomepage:
   description: Label for home page in about tab.
   message: ''
@@ -226,6 +253,9 @@ labelImportSettings:
 labelInclude:
   description: Label of @include rules.
   message: Regras @include
+labelIndentUnit:
+  description: Label for editor option of indent unit size.
+  message: ''
 labelInstall:
   description: Shown in the title of the confirm page while trying to install a script.
   message: Instalando o script
@@ -238,6 +268,9 @@ labelLastUpdatedAt:
 labelLineNumber:
   description: Label for line number jumper.
   message: 'Linha n.º: '
+labelLineWrapping:
+  description: Label for editor option of line wrapping.
+  message: ''
 labelMatch:
   description: Label of @match rules.
   message: Regras @match
@@ -274,6 +307,9 @@ labelRunAtDefault:
 labelScriptEditor:
   description: Shown in the title of the script editing page.
   message: Editor de scripts
+labelScriptTemplate:
+  description: Label for custom script template.
+  message: ''
 labelSearch:
   description: Label for search input in search box.
   message: 'Localizar: '
@@ -301,7 +337,8 @@ labelSyncDisabled:
   message: Nenhum
 labelSyncReauthorize:
   description: Option to reauthorize sync service when expired.
-  message: ''
+  message: Reautorizar automaticamente quando expirar
+  touched: false
 labelSyncRevoke:
   description: Label for button to revoke authorization for a service.
   message: Revogar
@@ -335,6 +372,9 @@ menuFindScripts:
 menuMatchedScripts:
   description: Label for menu listing matched scripts.
   message: Scripts correspondidos
+menuNewScript:
+  description: Menu item to create a new script.
+  message: ''
 menuScriptDisabled:
   description: 'Menu item showing the status of Ace Script, when disabled.'
   message: Scripts desativados
@@ -404,6 +444,9 @@ msgSavedBlacklist:
 msgSavedCustomCSS:
   description: Message shown when custom CSS is saved.
   message: Estilo personalizado atualizado.
+msgSavedScriptTemplate:
+  description: Message shown when custom script template is saved.
+  message: ''
 msgScriptUpdated:
   description: Notification message for script updates.
   message: '[$1] foi atualizado!'
@@ -428,6 +471,9 @@ msgUpdated:
 msgUpdating:
   description: Message shown when a new version of script is being fetched.
   message: Atualizando...
+noValues:
+  description: Label shown when there is no value for current script.
+  message: ''
 optionShowEnabledFirst:
   description: Option to show enabled scripts first in alphabetical order.
   message: Mostrar scripts ativos primeiro
@@ -449,3 +495,12 @@ sideMenuSettings:
 titleScriptUpdated:
   description: Notification title for script updates.
   message: Atualização
+valueLabelKey:
+  description: Label for key of a script value.
+  message: ''
+valueLabelValue:
+  description: Label for value of a script value.
+  message: ''
+warnScriptLongLines:
+  description: Warning message shown when script has lines that are too long to be edited.
+  message: ''

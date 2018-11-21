@@ -1,4 +1,3 @@
-import 'src/common/browser';
 import { inject, getUniqId, sendMessage } from './utils';
 import initialize from './content';
 
@@ -7,8 +6,8 @@ import initialize from './content';
   if (window.VM) return;
   window.VM = 1;
 
-  // eslint-disable-next-line camelcase
-  const { VM_initializeWeb } = window;
+  // Firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1408996
+  const VMInitInjection = window[process.env.INIT_FUNC_NAME];
 
   function initBridge() {
     const contentId = getUniqId();
@@ -29,11 +28,12 @@ import initialize from './content';
       keys.forEach(key => { props[key] = 1; });
     });
     const args = [
-      JSON.stringify(webId),
-      JSON.stringify(contentId),
-      JSON.stringify(Object.keys(props)),
+      webId,
+      contentId,
+      Object.keys(props),
     ];
-    inject(`(${VM_initializeWeb.toString()}())(${args.join(',')})`);
+    // Avoid using Function::apply in case it is shimmed
+    inject(`(${VMInitInjection.toString()}())(${args.map(arg => JSON.stringify(arg)).join(',')})`);
   }
 
   initBridge();

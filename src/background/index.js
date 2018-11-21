@@ -1,6 +1,5 @@
-import 'src/common/browser';
-import { noop, verbose } from 'src/common';
-import { objectGet } from 'src/common/object';
+import { noop, verbose, getUniqId } from '#/common';
+import { objectGet } from '#/common/object';
 import * as sync from './sync';
 import * as news from './utils/news';
 import * as tmWrapper from './utils/tampermonkey';
@@ -9,9 +8,8 @@ import {
   getRequestId, httpRequest, abortRequest, confirmInstall,
   newScript, parseMeta,
   setClipboard, checkUpdate,
-  getOption, setOption, hookOptions, getAllOptions,
-  initialize,
-  broadcast,
+  getOption, getDefaultOption, setOption, hookOptions, getAllOptions,
+  initialize, sendMessageOrIgnore, broadcast,
 } from './utils';
 import { tabOpen, tabClose } from './utils/tabs';
 import createNotification from './utils/notifications';
@@ -20,10 +18,12 @@ import {
   updateScriptInfo, getExportData, getScriptCode,
   getScriptByIds, moveScript, vacuum, parseScript, getScript,
   getInstalledScripts,
-  sortScripts,
+  sortScripts, getValueStoresByIds,
 } from './utils/db';
 import { resetBlacklist } from './utils/tester';
-import { setValueStore, updateValueStore, resetValueOpener, addValueOpener } from './utils/values';
+import {
+  setValueStore, updateValueStore, resetValueOpener, addValueOpener,
+} from './utils/values';
 
 import {
   getEngineStatus,
@@ -34,16 +34,33 @@ import {
 
 const VM_VER = browser.runtime.getManifest().version;
 
+//:ace
 // not supported by Firefox yet
 const NOTIFICATIONS_BUTTONS_SUPPORTED = false;
 const registeredNotifications_ = {};
 let contextMenuCreated = false;
+///ace
+
+// Firefox Android does not support such APIs, use noop
+const browserAction = [
+  'setIcon',
+  'setBadgeText',
+  'setBadgeBackgroundColor',
+].reduce((actions, key) => {
+  const fn = browser.browserAction[key];
+  actions[key] = fn ? fn.bind(browser.browserAction) : noop;
+  return actions;
+}, {});
 
 hookOptions(changes => {
   if ('isApplied' in changes) setIcon(changes.isApplied);
   if ('autoUpdate' in changes) autoUpdate();
   if ('showBadge' in changes) updateBadges();
-  browser.runtime.sendMessage({
+  const SCRIPT_TEMPLATE = 'scriptTemplate';
+  if (SCRIPT_TEMPLATE in changes && !changes[SCRIPT_TEMPLATE]) {
+    setOption(SCRIPT_TEMPLATE, getDefaultOption(SCRIPT_TEMPLATE));
+  }
+  sendMessageOrIgnore({
     cmd: 'UpdateOptions',
     data: changes,
   });
@@ -110,8 +127,13 @@ function autoUpdate() {
 }
 
 const commands = {
-  NewScript() {
-    return newScript();
+  NewScript(id) {
+    return id && cache.get(`new-${id}`) || newScript();
+  },
+  CacheNewScript(data) {
+    const id = getUniqId();
+    cache.put(`new-${id}`, newScript(data));
+    return id;
   },
   RemoveScript(id) {
     return removeScript(id)
@@ -149,7 +171,7 @@ const commands = {
     })
     .then(([script]) => {
       sync.sync();
-      browser.runtime.sendMessage({
+      sendMessageOrIgnore({
         cmd: 'UpdateScript',
         data: {
           where: { id: script.props.id },
@@ -157,6 +179,9 @@ const commands = {
         },
       });
     });
+  },
+  GetValueStore(id) {
+    return getValueStoresByIds([id]).then(res => res[id] || {});
   },
   SetValueStore({ where, valueStore }) {
     // Value store will be replaced soon.
@@ -484,7 +509,7 @@ function setBadge({ ids, reset }, src) {
     });
     data.unique = Object.keys(data.idMap).length;
   }
-  browser.browserAction.setBadgeBackgroundColor({
+  browserAction.setBadgeBackgroundColor({
     color: '#808',
     tabId: srcTab.id,
   });
@@ -497,7 +522,7 @@ function updateBadge(tabId) {
     let text;
     if (showBadge === 'total') text = data.number;
     else if (showBadge) text = data.unique;
-    browser.browserAction.setBadgeText({
+    browserAction.setBadgeText({
       text: `${text || ''}`,
       tabId,
     });
@@ -516,7 +541,7 @@ browser.tabs.onRemoved.addListener(id => {
 });
 
 function setIcon(isApplied) {
-  browser.browserAction.setIcon({
+  browserAction.setIcon({
     path: {
       19: `/public/images/icon19${isApplied ? '' : 'w'}.png`,
       38: `/public/images/icon38${isApplied ? '' : 'w'}.png`,

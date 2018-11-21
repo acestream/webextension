@@ -7,9 +7,10 @@ const plumber = require('gulp-plumber');
 const yaml = require('js-yaml');
 const webpack = require('webpack');
 const webpackConfig = require('./scripts/webpack.conf');
+const webpackTestConfig = require('./scripts/webpack.test.conf');
 const i18n = require('./scripts/i18n');
 const string = require('./scripts/string');
-const { IS_DEV } = require('./scripts/utils');
+const { isProd } = require('./scripts/util');
 const pkg = require('./package.json');
 
 const DIST = 'dist';
@@ -75,6 +76,13 @@ function jsProd(done) {
   });
 }
 
+function jsTest(done) {
+  webpack(webpackTestConfig, (...args) => {
+    webpackCallback(...args);
+    done();
+  });
+}
+
 function manifest() {
   return gulp.src(paths.manifest, { base: 'src' })
   .pipe(string((input, file) => {
@@ -104,12 +112,20 @@ function manifest() {
 function copyFiles() {
   const jsFilter = gulpFilter(['**/*.js'], { restore: true });
   let stream = gulp.src(paths.copy, { base: 'src' });
-  if (!IS_DEV) stream = stream
+  if (isProd) stream = stream
   .pipe(jsFilter)
   .pipe(uglify())
   .pipe(jsFilter.restore);
   return stream
   .pipe(gulp.dest(DIST));
+}
+
+function checkI18n() {
+  return gulp.src(paths.templates)
+  .pipe(i18n.extract({
+    base: 'src/_locales',
+    extension: '.json',
+  }));
 }
 
 function copyI18n() {
@@ -152,4 +168,6 @@ const pack = gulp.parallel(manifest, copyFiles, copyI18n);
 exports.clean = clean;
 exports.dev = gulp.series(gulp.parallel(pack, jsDev), watch);
 exports.build = gulp.parallel(pack, jsProd);
+exports.buildTest = jsTest;
 exports.i18n = updateI18n;
+exports.check = checkI18n;

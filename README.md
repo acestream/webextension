@@ -6,8 +6,11 @@ Userscript manager based on [Violentmonkey](https://github.com/violentmonkey/vio
 Build
 ---
 ``` sh
-$ npm i
-$ ./build.sh amo
+# Install dependencies
+$ yarn
+
+# Build
+$ yarn build
 ```
 
 Build was tested with:

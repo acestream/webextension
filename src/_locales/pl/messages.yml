@@ -61,6 +61,9 @@ buttonReplace:
 buttonReplaceAll:
   description: Button to replace all matches.
   message: Wszystko
+buttonReset:
+  description: Button to reset to default values.
+  message: ''
 buttonSave:
   description: Button to save modifications of a script.
   message: Zapisz
@@ -119,6 +122,15 @@ editNavCode:
 editNavSettings:
   description: Label of settings tab in script editor.
   message: Ustawienia
+editNavValues:
+  description: Label of values tab in script editor.
+  message: Wartości
+editValueCancel:
+  description: Button to cancel modification of a script value.
+  message: Anuluj
+editValueSave:
+  description: Button to save modification of a script value.
+  message: Zapisz
 extDescription:
   description: Description for this extension.
   message: Zapewnia obsługę skryptów użytkownika dla przeglądarek.
@@ -154,6 +166,9 @@ installOptionTrack:
 labelAbout:
   description: Label shown on top of the about page.
   message: O rozszerzeniu Ace Script
+labelAdvanced:
+  description: Label for button to show advanced settings.
+  message: Zaawansowane
 labelAllowUpdate:
   description: Option to allow checking updates for a script.
   message: Zezwalaj na aktualizację
@@ -168,16 +183,16 @@ labelAutoUpdate:
   message: Automatycznie codziennie sprawdzaj aktualizacje dla skryptów
 labelBadge:
   description: Label for option to show number on badge.
-  message: ''
+  message: 'Wyświetl na plakietce: '
 labelBadgeNone:
   description: Option to display nothing on badge.
-  message: ''
+  message: nic
 labelBadgeTotal:
   description: Option to display total number of running scripts on badge.
-  message: ''
+  message: liczbę uruchomionych skryptów
 labelBadgeUnique:
   description: Option to display number of unique running scripts on badge.
-  message: ''
+  message: liczbę unikalnych uruchomionych skryptów
 labelBlacklist:
   description: Label for global blacklist settings in security section.
   message: Czarna lista
@@ -199,6 +214,15 @@ labelDonate:
 labelDownloadURL:
   description: Label of script @downloadURL in custom meta data.
   message: 'Adres URL pobierania:'
+labelEditValue:
+  description: Label shown in the panel to edit a script value.
+  message: Edytowanie wartości skryptu
+labelEditing:
+  description: Label for current editing script
+  message: ''
+labelEditor:
+  description: Label for Editor settings
+  message: Edytor
 labelExclude:
   description: Label of @exclude rules.
   message: Reguły @exclude
@@ -217,9 +241,12 @@ labelFilterSort:
 labelGeneral:
   description: Label for general settings.
   message: Ogólne
+labelHelpTranslate:
+  description: Label for link to localization guide in about tab
+  message: Pomóż z tłumaczeniem
 labelHomepage:
   description: Label for home page in about tab.
-  message: ''
+  message: Strona główna
 labelHomepageURL:
   description: Label of script @homepageURL in custom meta data.
   message: 'Adres URL strony głównej:'
@@ -229,6 +256,9 @@ labelImportSettings:
 labelInclude:
   description: Label of @include rules.
   message: Reguły @include
+labelIndentUnit:
+  description: Label for editor option of indent unit size.
+  message: 'Jednostki wcięcia:'
 labelInstall:
   description: Shown in the title of the confirm page while trying to install a script.
   message: Instalacja skryptu
@@ -241,6 +271,9 @@ labelLastUpdatedAt:
 labelLineNumber:
   description: Label for line number jumper.
   message: 'Linia nr:'
+labelLineWrapping:
+  description: Label for editor option of line wrapping.
+  message: Zawijaj długie linie
 labelMatch:
   description: Label of @match rules.
   message: Reguły @match
@@ -277,6 +310,9 @@ labelRunAtDefault:
 labelScriptEditor:
   description: Shown in the title of the script editing page.
   message: Edytor skryptu
+labelScriptTemplate:
+  description: Label for custom script template.
+  message: Niestandardowy szablon skryptu
 labelSearch:
   description: Label for search input in search box.
   message: 'Szukaj: '
@@ -304,7 +340,8 @@ labelSyncDisabled:
   message: Żaden
 labelSyncReauthorize:
   description: Option to reauthorize sync service when expired.
-  message: ''
+  message: Automatycznie reautoryzuj po wygaśnięciu
+  touched: false
 labelSyncRevoke:
   description: Label for button to revoke authorization for a service.
   message: Unieważnij
@@ -338,6 +375,9 @@ menuFindScripts:
 menuMatchedScripts:
   description: Label for menu listing matched scripts.
   message: Dopasowane skrypty
+menuNewScript:
+  description: Menu item to create a new script.
+  message: ''
 menuScriptDisabled:
   description: 'Menu item showing the status of Ace Script, when disabled.'
   message: Skrypty wyłączone
@@ -405,6 +445,9 @@ msgSavedBlacklist:
 msgSavedCustomCSS:
   description: Message shown when custom CSS is saved.
   message: Styl niestandardowy jest aktualizowany.
+msgSavedScriptTemplate:
+  description: Message shown when custom script template is saved.
+  message: Niestandardowy szablon skryptu jest aktualizowany.
 msgScriptUpdated:
   description: Notification message for script updates.
   message: 'Skrypt [$1] jest aktualizowany!'
@@ -429,15 +472,18 @@ msgUpdated:
 msgUpdating:
   description: Message shown when a new version of script is being fetched.
   message: Aktualizacja...
+noValues:
+  description: Label shown when there is no value for current script.
+  message: Żadna wartość nie jest przechowywana
 optionShowEnabledFirst:
   description: Option to show enabled scripts first in alphabetical order.
   message: Pokazuj najpierw włączone skrypty
 searchCaseSensitive:
   description: Option to perform a case-sensitive search
-  message: ''
+  message: Rozróżnianie wielkości liter
 searchUseRegex:
   description: Option to perform a regular expression search
-  message: ''
+  message: Skorzystaj z wyrażeń regularnych
 sideMenuAbout:
   description: 'Side menu: About'
   message: O rozszerzeniu
@@ -450,3 +496,14 @@ sideMenuSettings:
 titleScriptUpdated:
   description: Notification title for script updates.
   message: Aktualizacja
+valueLabelKey:
+  description: Label for key of a script value.
+  message: Klucz (string)
+valueLabelValue:
+  description: Label for value of a script value.
+  message: Wartość (serializowana jako JSON)
+warnScriptLongLines:
+  description: Warning message shown when script has lines that are too long to be edited.
+  message: >-
+    Niektóre linie są zbyt długie, otwieranie w trybie tylko do odczytu. Proszę
+    edytować za pomocą zewnętrznego edytora.

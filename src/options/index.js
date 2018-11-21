@@ -1,9 +1,10 @@
-import 'src/common/browser';
 import Vue from 'vue';
-import { sendMessage, i18n, getLocaleString } from 'src/common';
-import options from 'src/common/options';
-import handlers from 'src/common/handlers';
-import 'src/common/ui/style';
+import {
+  sendMessage, i18n, getLocaleString, cache2blobUrl,
+} from '#/common';
+import options from '#/common/options';
+import handlers from '#/common/handlers';
+import '#/common/ui/style';
 import { store } from './utils';
 import App from './views/app';
 
@@ -23,9 +24,12 @@ function initialize() {
   document.title = i18n('extName');
   initMain();
   options.ready(() => {
+    const el = document.createElement('div');
+    document.body.appendChild(el);
     new Vue({
       render: h => h(App),
-    }).$mount('#app');
+    })
+    .$mount(el);
   });
 }
 
@@ -42,12 +46,14 @@ function initScript(script) {
   ].filter(Boolean).join('\n').toLowerCase();
   const name = script.custom.name || localeName;
   const lowerName = name.toLowerCase();
-  script._cache = { search, name, lowerName };
+  script.$cache = { search, name, lowerName };
 }
 
 function loadData(clear) {
   sendMessage({ cmd: 'GetData', data: clear })
   .then(data => {
+    const oldCache = store.cache || {};
+    store.cache = null;
     [
       'cache',
       'scripts',
@@ -58,6 +64,20 @@ function loadData(clear) {
     if (store.scripts) {
       store.scripts.forEach(initScript);
     }
+    if (store.cache) {
+      Object.keys(store.cache).forEach(url => {
+        const raw = store.cache[url];
+        if (oldCache[url]) {
+          store.cache[url] = oldCache[url];
+          delete oldCache[url];
+        } else {
+          store.cache[url] = cache2blobUrl(raw, { defaultType: 'image/png' });
+        }
+      });
+    }
+    Object.values(oldCache).forEach(blobUrl => {
+      URL.revokeObjectURL(blobUrl);
+    });
     store.loading = false;
   });
 }

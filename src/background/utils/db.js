@@ -1,13 +1,20 @@
-import { i18n, request, buffer2string, getFullUrl, isRemote, getRnd4 } from 'src/common';
-import { objectGet, objectSet } from 'src/common/object';
-import { getNameURI, makeScriptId, parseMeta, newScript } from './script';
+import {
+  i18n, request, buffer2string, getFullUrl, isRemote, getRnd4,
+} from '#/common';
+import { objectGet, objectSet } from '#/common/object';
+import { getNameURI, parseMeta, newScript } from './script';
 import { testScript, testBlacklist } from './tester';
 import { register } from './init';
 import patchDB from './patch-db';
 import { setOption } from './options';
-import getEventEmitter from './events';
+import { sendMessageOrIgnore } from './message';
+import pluginEvents from '../plugin/events';
 
+//:ace
+import getEventEmitter from './events';
+import { makeScriptId } from './script';
 export const eventEmitter = getEventEmitter();
+///ace
 
 function cacheOrFetch(handle) {
   const requests = {};
@@ -15,8 +22,8 @@ function cacheOrFetch(handle) {
     let promise = requests[url];
     if (!promise) {
       promise = handle.call(this, url, ...args)
-      .catch(() => {
-        console.error(`Error fetching: ${url}`);
+      .catch(err => {
+        console.error(`Error fetching: ${url}`, err);
       })
       .then(() => {
         delete requests[url];
@@ -106,15 +113,17 @@ storage.cache = Object.assign({}, storage.base, {
   prefix: 'cac:',
   fetch: cacheOrFetch(function fetch(uri, check) {
     return request(uri, { responseType: 'arraybuffer' })
-    .then(({ data: buffer }) => {
+    .then(({ data: buffer, xhr }) => {
+      const contentType = (xhr.getResponseHeader('content-type') || '').split(';')[0];
       const data = {
+        contentType,
         buffer,
-        blob: options => new Blob([buffer], options),
+        blob: options => new Blob([buffer], Object.assign({ type: contentType }, options)),
         string: () => buffer2string(buffer),
         base64: () => window.btoa(data.string()),
       };
       return (check ? Promise.resolve(check(data)) : Promise.resolve())
-      .then(() => this.set(uri, data.base64()));
+      .then(() => this.set(uri, `${contentType},${data.base64()}`));
     });
   }),
 });
@@ -211,7 +220,7 @@ export function sortScripts() {
   });
   return normalizePosition()
   .then(changed => {
-    browser.runtime.sendMessage({ cmd: 'ScriptsUpdated' });
+    sendMessageOrIgnore({ cmd: 'ScriptsUpdated' });
     return changed;
   });
 }
@@ -231,7 +240,8 @@ export function getScript(where) {
 }
 
 export function getScripts() {
-  return Promise.resolve(store.scripts);
+  return Promise.resolve(store.scripts)
+  .then(scripts => scripts.filter(script => !script.config.removed));
 }
 
 export function getInstalledScripts() {
@@ -362,12 +372,6 @@ export function getData() {
     }
   });
   return storage.cache.getMulti(Object.keys(cacheKeys))
-  .then(cache => {
-    Object.keys(cache).forEach(key => {
-      cache[key] = `data:image/png;base64,${cache[key]}`;
-    });
-    return cache;
-  })
   .then(cache => ({ scripts, cache }));
 }
 
@@ -394,11 +398,13 @@ export function removeScript(id) {
     storage.value.remove(id);
   }
 
+  //:ace
   if (scriptId) {
     eventEmitter.fire('scriptRemoved', scriptId);
   }
+  ///ace
 
-  browser.runtime.sendMessage({
+  sendMessageOrIgnore({
     cmd: 'RemoveScript',
     data: id,
   });
@@ -511,14 +517,16 @@ export function getExportData(ids, withValues) {
   });
 }
 
+const CMD_UPDATE = 'UpdateScript';
+const CMD_ADD = 'AddScript';
 export function parseScript(data) {
   const {
-    id, code, message, isNew, config, custom, props,
+    id, code, message, isNew, config, custom, props, update,
   } = data;
   const meta = parseMeta(code);
   if (!meta.name) return Promise.reject(i18n('msgInvalidScript'));
   const result = {
-    cmd: 'UpdateScript',
+    cmd: CMD_UPDATE,
     data: {
       update: {
         message: message == null ? i18n('msgUpdated') : message || '',
@@ -533,7 +541,8 @@ export function parseScript(data) {
       script = Object.assign({}, oldScript);
     } else {
       ({ script } = newScript());
-      result.cmd = 'AddScript';
+      result.cmd = CMD_ADD;
+      result.data.isNew = true;
       result.data.update.message = i18n('msgInstalled');
     }
     script.config = Object.assign({}, script.config, config, {
@@ -551,31 +560,33 @@ export function parseScript(data) {
     if (isRemote(data.url)) script.custom.lastInstallURL = data.url;
     const position = +data.position;
     if (position) objectSet(script, 'props.position', position);
-    buildPathMap(script);
+    buildPathMap(script, data.url);
     return saveScript(script, code).then(() => script);
   })
   .then(script => {
     fetchScriptResources(script, data);
-    Object.assign(result.data.update, script);
+    Object.assign(result.data.update, script, update);
     result.data.where = { id: script.props.id };
+    sendMessageOrIgnore(result);
+    pluginEvents.emit('scriptChanged', result.data);
     return result;
   });
 }
 
-function buildPathMap(script) {
+function buildPathMap(script, base) {
   const { meta } = script;
-  const base = script.custom.lastInstallURL;
-  const pathMap = {};
-  [
+  const baseUrl = base || script.custom.lastInstallURL;
+  const pathMap = baseUrl ? [
     ...meta.require,
     ...Object.values(meta.resources),
-    isRemote(meta.icon) && meta.icon,
-  ].forEach(key => {
+    meta.icon,
+  ].reduce((map, key) => {
     if (key) {
-      const fullUrl = getFullUrl(key, base);
-      if (fullUrl !== key) pathMap[key] = fullUrl;
+      const fullUrl = getFullUrl(key, baseUrl);
+      if (fullUrl !== key) map[key] = fullUrl;
     }
-  });
+    return map;
+  }, {}) : {};
   script.custom.pathMap = pathMap;
   return pathMap;
 }
@@ -606,7 +617,7 @@ function fetchScriptResources(script, cache) {
   if (isRemote(meta.icon)) {
     const fullUrl = pathMap[meta.icon] || meta.icon;
     storage.cache.fetch(fullUrl, ({ blob: getBlob }) => new Promise((resolve, reject) => {
-      const blob = getBlob({ type: 'image/png' });
+      const blob = getBlob();
       const url = URL.createObjectURL(blob);
       const image = new Image();
       const free = () => URL.revokeObjectURL(url);
@@ -616,7 +627,7 @@ function fetchScriptResources(script, cache) {
       };
       image.onerror = () => {
         free();
-        reject();
+        reject({ type: 'IMAGE_ERROR', url });
       };
       image.src = url;
     }));
