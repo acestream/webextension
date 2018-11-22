@@ -2,6 +2,10 @@
 Ace Script web extension changelog
 ==================================
 
+1.1.15
+------
+* Fix context menus API for Chrome
+
 1.1.14
 ------
 
