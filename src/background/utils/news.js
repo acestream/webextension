@@ -1,5 +1,5 @@
-import { verbose } from 'src/common';
-import { getVendor } from 'src/common/ua';
+import { verbose } from '#/common';
+import { getVendor } from '#/common/ua';
 import { getEngineStatus } from './engine-api';
 import { getInstalledScripts, eventEmitter } from './db';
 

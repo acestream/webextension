@@ -27,6 +27,7 @@ module.exports = {
     }],
     indent: ['error', 2, { MemberExpression: 0 }],
     'object-shorthand': ['error', 'always'],
+    'no-underscore-dangle': 'off'
   },
   globals: {
     browser: true,

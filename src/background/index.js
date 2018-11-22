@@ -34,12 +34,10 @@ import {
 
 const VM_VER = browser.runtime.getManifest().version;
 
-//:ace
 // not supported by Firefox yet
 const NOTIFICATIONS_BUTTONS_SUPPORTED = false;
 const registeredNotifications_ = {};
 let contextMenuCreated = false;
-///ace
 
 // Firefox Android does not support such APIs, use noop
 const browserAction = [
@@ -209,7 +207,6 @@ const commands = {
   Vacuum: vacuum,
   ParseScript(data) {
     return parseScript(data).then(res => {
-      browser.runtime.sendMessage(res).catch(() => {});
       sync.sync();
       return res.data;
     });

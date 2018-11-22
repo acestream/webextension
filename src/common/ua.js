@@ -7,7 +7,8 @@ export const isAndroid = /android /i.test(userAgent);
 export function getVendor() {
   if (isFirefox) {
     return 'firefox';
-  } else if (isChrome) {
+  }
+  if (isChrome) {
     return 'chrome';
   }
   return 'unknown';

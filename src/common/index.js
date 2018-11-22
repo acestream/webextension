@@ -203,7 +203,7 @@ export function cache2blobUrl(raw, { defaultType, type: overrideType } = {}) {
 }
 
 export function verbose(...params) {
-  if (process.env.DEBUG) {
+  if (process.env.NODE_ENV === 'development') {
     console.info(...params);
   }
 }

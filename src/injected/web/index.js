@@ -1,4 +1,4 @@
-import { verbose, isDomainAllowed } from 'src/common';
+import { verbose, isDomainAllowed } from '#/common';
 import {
   getUniqId, bindEvents, attachFunction, cache2blobUrl,
 } from '../utils';

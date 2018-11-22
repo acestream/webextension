@@ -2,19 +2,18 @@ import {
   i18n, request, buffer2string, getFullUrl, isRemote, getRnd4,
 } from '#/common';
 import { objectGet, objectSet } from '#/common/object';
-import { getNameURI, parseMeta, newScript } from './script';
+import {
+  getNameURI, parseMeta, newScript, makeScriptId,
+} from './script';
 import { testScript, testBlacklist } from './tester';
 import { register } from './init';
 import patchDB from './patch-db';
 import { setOption } from './options';
 import { sendMessageOrIgnore } from './message';
 import pluginEvents from '../plugin/events';
-
-//:ace
 import getEventEmitter from './events';
-import { makeScriptId } from './script';
+
 export const eventEmitter = getEventEmitter();
-///ace
 
 function cacheOrFetch(handle) {
   const requests = {};
@@ -398,11 +397,9 @@ export function removeScript(id) {
     storage.value.remove(id);
   }
 
-  //:ace
   if (scriptId) {
     eventEmitter.fire('scriptRemoved', scriptId);
   }
-  ///ace
 
   sendMessageOrIgnore({
     cmd: 'RemoveScript',
@@ -450,9 +447,7 @@ function saveScript(script, code) {
     oldScript = store.scriptMap[props.id];
   }
   props.uri = getNameURI(script);
-  // :ace
   props.scriptId = makeScriptId(script);
-  // /ace
   props.uuid = props.uuid || getUUID(props.id);
   // Do not allow script with same name and namespace
   if (store.scripts.some(item => {

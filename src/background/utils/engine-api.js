@@ -1,4 +1,4 @@
-import { verbose } from 'src/common';
+import { verbose } from '#/common';
 
 // TODO: register initiator before each play (engine can restart)
 let gDeviceId = null;

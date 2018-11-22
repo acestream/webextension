@@ -65,6 +65,7 @@
     "svg-sprite-loader": "^4.1.2",
     "svgo": "^1.1.1",
     "tape": "^4.9.0",
+    "request": "^2.83.0",
     "through2": "^2.0.3",
     "url-loader": "^1.1.2",
     "vinyl": "^2.1.0",
