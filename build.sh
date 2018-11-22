@@ -4,23 +4,23 @@ XPI_DIR=xpi
 BUILD_DIR=dist
 TARGET=$1
 
-if [ "$TARGET" == "unlisted" ]; then
-    echo "build unlisted"
-    NPM_TARGET="build:unlisted"
-    XPI_NAME="acewebextension_unlisted_unsigned.xpi"
-elif [ "$TARGET" == "amo" ]; then
-    echo "build amo"
-    NPM_TARGET="build:amo"
+if [ "$TARGET" == "firefox" ]; then
+    echo "build firefox"
+    YARN_TARGET="build:firefox"
     XPI_NAME="acewebextension_unsigned.xpi"
+elif [ "$TARGET" == "firefox_unlisted" ]; then
+    echo "build firefox unlisted"
+    YARN_TARGET="build:firefox_unlisted"
+    XPI_NAME="acewebextension_unlisted_unsigned.xpi"
 elif [ "$TARGET" == "dev" ]; then
     echo "build dev"
-    NPM_TARGET="build:dev"
+    YARN_TARGET="build:dev"
     XPI_NAME="acewebextension_dev.xpi"
 elif [ "$TARGET" == "chrome" ]; then
     echo "build chrome"
-    NPM_TARGET="build:chrome"
+    YARN_TARGET="build:chrome"
 else
-    echo "Usage: build.sh <amo|unlisted|dev|chrome>"
+    echo "Usage: build.sh <firefox|firefox_unlisted|chrome|dev>"
     exit
 fi
 
@@ -32,7 +32,7 @@ rm -rf $BUILD_DIR
 mkdir $BUILD_DIR
 
 # build webextension
-npm run $NPM_TARGET
+yarn $YARN_TARGET
 
 if [ "$TARGET" != "chrome" ]; then
     # make xpi

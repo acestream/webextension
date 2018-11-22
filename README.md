@@ -9,12 +9,16 @@ Build
 # Install dependencies
 $ yarn
 
-# Build
-$ yarn build
+# Build for Firefox
+$ ./build.sh amo
+
+# Build for Chrome
+$ ./build.sh chrome
 ```
 
 Build was tested with:
-* npm 5.5.1
-* node 8.6.0
+* Ubuntu Ubuntu 14.04.4 LTS
+* yarn 1.12.3
+* node 8.12.0
 
 The result will be placed to 'xpi/' folder.

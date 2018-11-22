@@ -90,14 +90,10 @@ function manifest() {
     // Strip alphabetic suffix
     data.version = pkg.version.replace(/-[^.]*/, '');
     if (process.env.TARGET === 'firefox') {
-      data.version += 'f';
-      data.applications.gecko.update_url = 'https://violentmonkey.top/static/updates.json';
-    }
-    else if (process.env.TARGET === 'unlisted') {
-      data.applications.gecko.id = 'acewebextension_unlisted@acestream.org';
-    }
-    else if (process.env.TARGET === 'amo') {
       data.applications.gecko.id = 'acewebextension@acestream.org';
+    }
+    else if (process.env.TARGET === 'firefox_unlisted') {
+      data.applications.gecko.id = 'acewebextension_unlisted@acestream.org';
     }
     else {
       delete data.applications;
