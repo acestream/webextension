@@ -75,7 +75,7 @@ function onGlobalContextMenuClick(info, tab) {
 
 function createGlobalContextMenu() {
   if (contextMenuCreated) {
-    return;
+    return Promise.resolve();
   }
 
   contextMenuCreated = true;
