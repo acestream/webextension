@@ -10,7 +10,7 @@ Build
 $ yarn
 
 # Build for Firefox
-$ ./build.sh amo
+$ ./build.sh firefox
 
 # Build for Chrome
 $ ./build.sh chrome
