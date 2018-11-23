@@ -1,6 +1,6 @@
 {
   "name": "ace-script",
-  "version": "1.1.15",
+  "version": "1.1.16",
   "scripts": {
     "dev": "gulp dev",
     "prebuild": "yarn lint && gulp clean",
@@ -20,7 +20,7 @@
     "test": "node dist/test",
     "transform": "node scripts/transform-lock"
   },
-  "description": "Violentmonkey",
+  "description": "Ace Script",
   "devDependencies": {
     "@babel/core": "^7.1.2",
     "@babel/plugin-proposal-class-properties": "^7.1.0",
