@@ -2,7 +2,7 @@
 node_modules/
 *.log
 /stats.json
-/xpi/
-/crx/
+/firefox/
+/chrome/
 /releases/
 /tmp/
