@@ -124,7 +124,7 @@ const meta = {
   webRequest: true,
   contextMenus: {
     create: true,
-  }
+  },
 };
 if (typeof browser === 'undefined' && typeof chrome !== 'undefined') {
   global.browser = wrapAPIs(chrome, meta);
