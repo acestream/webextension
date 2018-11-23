@@ -133,11 +133,11 @@ editValueSave:
 extDescription:
   description: Description for this extension.
   message: >-
-    Violentmonkey дозволяє користувачеві автоматично вводити скрипти в сторінки,
+    Ace Script дозволяє користувачеві автоматично вводити скрипти в сторінки,
     щоб змінювати їх вигляд чи поведінку.
 extName:
   description: Name of this extension.
-  message: Violentmonkey
+  message: Ace Script
 filterAlphabeticalOrder:
   description: Label for option to sort scripts in alphabetical order.
   message: алфавіту
@@ -164,7 +164,7 @@ installOptionTrack:
   message: 'Стежити за оновленнями локального файлу, доки відкрите це вікно.'
 labelAbout:
   description: Label shown on top of the about page.
-  message: Про додаток Violentmonkey
+  message: Про додаток Ace Script
 labelAdvanced:
   description: Label for button to show advanced settings.
   message: ''
@@ -378,19 +378,19 @@ menuNewScript:
   description: Menu item to create a new script.
   message: ''
 menuScriptDisabled:
-  description: 'Menu item showing the status of Violentmonkey, when disabled.'
+  description: 'Menu item showing the status of Ace Script, when disabled.'
   message: Скрипти вимкнені
 menuScriptEnabled:
-  description: 'Menu item showing the status of Violentmonkey, when enabled.'
+  description: 'Menu item showing the status of Ace Script, when enabled.'
   message: Скрипти ввімкнені
 msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
   message: Перевірка наявності оновлень...
 msgErrorFetchingScript:
-  description: Message shown when Violentmonkey fails fetching a new version of the script.
+  description: Message shown when Ace Script fails fetching a new version of the script.
   message: Помилка завантаження скрипта!
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Violentmonkey fails fetching version data of the script.
+  description: Message shown when Ace Script fails fetching version data of the script.
   message: Не вдається перевірити наявність оновлень.
 msgErrorLoadingData:
   description: >-

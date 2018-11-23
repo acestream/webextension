@@ -131,7 +131,7 @@ extDescription:
   message: Umožňuje inštaláciu skriptov v prehliadači.
 extName:
   description: Name of this extension.
-  message: Violentmonkey
+  message: Ace Script
 filterAlphabeticalOrder:
   description: Label for option to sort scripts in alphabetical order.
   message: abecedne
@@ -160,7 +160,7 @@ installOptionTrack:
   message: Sledovať lokálne súbory predtým ako sa toto okno zavrie
 labelAbout:
   description: Label shown on top of the about page.
-  message: Informácie o Violentmonkey
+  message: Informácie o Ace Script
 labelAdvanced:
   description: Label for button to show advanced settings.
   message: Pokročilé
@@ -374,19 +374,19 @@ menuNewScript:
   description: Menu item to create a new script.
   message: Vytvoriť nový skript
 menuScriptDisabled:
-  description: 'Menu item showing the status of Violentmonkey, when disabled.'
+  description: 'Menu item showing the status of Ace Script, when disabled.'
   message: Skripty sú zakázané
 menuScriptEnabled:
-  description: 'Menu item showing the status of Violentmonkey, when enabled.'
+  description: 'Menu item showing the status of Ace Script, when enabled.'
   message: Skripty sú povolené
 msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
   message: Kontrola aktualizácií...
 msgErrorFetchingScript:
-  description: Message shown when Violentmonkey fails fetching a new version of the script.
+  description: Message shown when Ace Script fails fetching a new version of the script.
   message: Chyba pri načítaní skriptu!
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Violentmonkey fails fetching version data of the script.
+  description: Message shown when Ace Script fails fetching version data of the script.
   message: Načítanie informácií o aktualizácii skončilo chybou.
 msgErrorLoadingData:
   description: >-
@@ -481,7 +481,7 @@ searchUseRegex:
   message: Použiť regulárne výrazy
 sideMenuAbout:
   description: 'Side menu: About'
-  message: O Violentmonkey
+  message: O Ace Script
 sideMenuInstalled:
   description: 'Side menu: Installed scripts'
   message: Nainštalované skripty
