@@ -124,7 +124,9 @@ export default {
     },
     onFindSameDomainScripts() {
       browser.tabs.create({
-        url: `https://greasyfork.org/scripts/by-site/${encodeURIComponent(this.store.domain)}`,
+        // OpenUserJS engine (which we use) doesn't support searcing by domain currently
+        // url: `https://greasyfork.org/scripts/by-site/${encodeURIComponent(this.store.domain)}`,
+        url: 'http://awe.acestream.me',
       });
     },
     onCommand(item) {
