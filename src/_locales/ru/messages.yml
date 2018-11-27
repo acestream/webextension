@@ -379,7 +379,7 @@ menuMatchedScripts:
   message: Совпадающие скрипты
 menuNewScript:
   description: Menu item to create a new script.
-  message: ''
+  message: Создать новый скрипт
 menuScriptDisabled:
   description: 'Menu item showing the status of Ace Script, when disabled.'
   message: Скрипты отключены

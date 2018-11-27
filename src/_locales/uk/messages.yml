@@ -376,7 +376,7 @@ menuMatchedScripts:
   message: Співпадаючі скрипти
 menuNewScript:
   description: Menu item to create a new script.
-  message: ''
+  message: Створити новий скрипт
 menuScriptDisabled:
   description: 'Menu item showing the status of Ace Script, when disabled.'
   message: Скрипти вимкнені
