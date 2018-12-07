@@ -57,7 +57,7 @@ import initialize from './content';
       });
     }
   }
-  if (/\.user\.js$/.test(window.location.pathname)) {
+  if (/\.(user|acestream)\.js$/.test(window.location.pathname)) {
     if (document.readyState === 'complete') checkJS();
     else window.addEventListener('load', checkJS, false);
   }
