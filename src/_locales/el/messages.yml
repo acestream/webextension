@@ -236,6 +236,7 @@ labelExportScriptData:
 labelFeedback:
   description: Label of link to feedback page.
   message: Σχόλια
+  touched: false
 labelFilterSort:
   description: Label for sort filter.
   message: Ταξινόμηση κατά $1
@@ -248,6 +249,7 @@ labelHelpTranslate:
 labelHomepage:
   description: Label for home page in about tab.
   message: ''
+  touched: false
 labelHomepageURL:
   description: Label of script @homepageURL in custom meta data.
   message: 'URL Αρχικής Σελίδας:'
@@ -311,6 +313,7 @@ labelRunAtDefault:
 labelScriptEditor:
   description: Shown in the title of the script editing page.
   message: Επεξεργαστής σεναρίου
+  touched: false
 labelScriptTemplate:
   description: Label for custom script template.
   message: ''
@@ -477,6 +480,12 @@ msgUpdating:
   message: Ενημέρωση...
 noValues:
   description: Label shown when there is no value for current script.
+  message: ''
+notifDontShowAnymore:
+  description: Label for the second notification button
+  message: ''
+notifShowMore:
+  description: Label for the first notification button
   message: ''
 optionShowEnabledFirst:
   description: Option to show enabled scripts first in alphabetical order.

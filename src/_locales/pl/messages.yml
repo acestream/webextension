@@ -235,6 +235,7 @@ labelExportScriptData:
 labelFeedback:
   description: Label of link to feedback page.
   message: Informacje zwrotne
+  touched: false
 labelFilterSort:
   description: Label for sort filter.
   message: Sortuj wg $1
@@ -247,6 +248,7 @@ labelHelpTranslate:
 labelHomepage:
   description: Label for home page in about tab.
   message: Strona główna
+  touched: false
 labelHomepageURL:
   description: Label of script @homepageURL in custom meta data.
   message: 'Adres URL strony głównej:'
@@ -310,6 +312,7 @@ labelRunAtDefault:
 labelScriptEditor:
   description: Shown in the title of the script editing page.
   message: Edytor skryptu
+  touched: false
 labelScriptTemplate:
   description: Label for custom script template.
   message: Niestandardowy szablon skryptu
@@ -475,6 +478,12 @@ msgUpdating:
 noValues:
   description: Label shown when there is no value for current script.
   message: Żadna wartość nie jest przechowywana
+notifDontShowAnymore:
+  description: Label for the second notification button
+  message: ''
+notifShowMore:
+  description: Label for the first notification button
+  message: ''
 optionShowEnabledFirst:
   description: Option to show enabled scripts first in alphabetical order.
   message: Pokazuj najpierw włączone skrypty

@@ -231,6 +231,7 @@ labelExportScriptData:
 labelFeedback:
   description: Label of link to feedback page.
   message: フィードバック
+  touched: false
 labelFilterSort:
   description: Label for sort filter.
   message: $1 によって
@@ -243,6 +244,7 @@ labelHelpTranslate:
 labelHomepage:
   description: Label for home page in about tab.
   message: ホームページ
+  touched: false
 labelHomepageURL:
   description: Label of script @homepageURL in custom meta data.
   message: 'ホームページのURL:'
@@ -306,6 +308,7 @@ labelRunAtDefault:
 labelScriptEditor:
   description: Shown in the title of the script editing page.
   message: スクリプトエディタ
+  touched: false
 labelScriptTemplate:
   description: Label for custom script template.
   message: カスタムスクリプト (テンプレート)
@@ -471,6 +474,12 @@ msgUpdating:
 noValues:
   description: Label shown when there is no value for current script.
   message: 値は保存されていません
+notifDontShowAnymore:
+  description: Label for the second notification button
+  message: ''
+notifShowMore:
+  description: Label for the first notification button
+  message: ''
 optionShowEnabledFirst:
   description: Option to show enabled scripts first in alphabetical order.
   message: 有効にされたスクリプトを先に

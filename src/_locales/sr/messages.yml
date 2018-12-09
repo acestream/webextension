@@ -230,6 +230,7 @@ labelExportScriptData:
 labelFeedback:
   description: Label of link to feedback page.
   message: Повратне информације
+  touched: false
 labelFilterSort:
   description: Label for sort filter.
   message: ''
@@ -242,6 +243,7 @@ labelHelpTranslate:
 labelHomepage:
   description: Label for home page in about tab.
   message: ''
+  touched: false
 labelHomepageURL:
   description: Label of script @homepageURL in custom meta data.
   message: 'Адреса почетне странице:'
@@ -305,6 +307,7 @@ labelRunAtDefault:
 labelScriptEditor:
   description: Shown in the title of the script editing page.
   message: Уређивач скрипте
+  touched: false
 labelScriptTemplate:
   description: Label for custom script template.
   message: ''
@@ -469,6 +472,12 @@ msgUpdating:
   message: Ажурирање...
 noValues:
   description: Label shown when there is no value for current script.
+  message: ''
+notifDontShowAnymore:
+  description: Label for the second notification button
+  message: ''
+notifShowMore:
+  description: Label for the first notification button
   message: ''
 optionShowEnabledFirst:
   description: Option to show enabled scripts first in alphabetical order.
