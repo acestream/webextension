@@ -130,7 +130,7 @@ editValueSave:
   message: Save
 extDescription:
   description: Description for this extension.
-  message: Provide userscript support for browsers.
+  message: Ace Script is an open-source extension which provides userscript support for browsers.
 extName:
   description: Name of this extension.
   message: Ace Script

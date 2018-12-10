@@ -136,7 +136,7 @@ editValueSave:
 extDescription:
   description: Description for this extension.
   message: >-
-    Ace Script позволяет пользователю автоматически вводить скрипты в страницы
+    Ace Script - это расширение с открытым исходным кодом, которое позволяет пользователю автоматически вводить скрипты в страницы
     чтобы изменять их вид или поведение.
 extName:
   description: Name of this extension.
