@@ -3,11 +3,6 @@ import { getVendor } from '#/common/ua';
 import { getEngineStatus } from './engine-api';
 import { getInstalledScripts, eventEmitter } from './db';
 
-// minimum interval between showing same news
-const NOTIFICATION_BASE_INTERVAL = 3600000;
-const NOTIFICATION_INTERVAL_ADJUST = 3600000;
-const NOTIFICATION_MAX_IMPRESSIONS = 10;
-
 eventEmitter.on('scriptSaved', data => {
   verbose('news:scriptSaved: data', data);
   updateInstalledScripts();
@@ -18,8 +13,21 @@ eventEmitter.on('scriptRemoved', data => {
   updateInstalledScripts();
 });
 
+eventEmitter.on('scriptUpdated', data => {
+  verbose('news:scriptUpdated: data', data);
+  updateInstalledScripts();
+});
+
 const store = {
-  checkInterval: 14400000,
+  config: {
+    checkInterval: 14400000,
+    notificationBaseInterval: 3600000,
+    notificationIntervalAdjust: 3600000,
+    notificationMaxImpressions: 10,
+    notificationMaxSkip: 2,
+    notificationBaseSkipInterval: 7 * 86400 * 1000, // 1 week
+    notificationSkipIntervalAdjust: 0,
+  },
   initDone: false,
   lastEngineVersion: 0,
   news: {},
@@ -28,7 +36,7 @@ const store = {
 };
 
 function updateInstalledScripts() {
-  getInstalledScripts().then(installed => {
+  return getInstalledScripts().then(installed => {
     store.installedScripts = {};
     installed.forEach(id => {
       store.installedScripts[id] = 1;
@@ -42,7 +50,7 @@ function getLocale() {
 }
 
 function loadConfig() {
-  browser.storage.local.get('news')
+  return browser.storage.local.get('news')
   .then(response => {
     if (response && response.news) {
       store.news = JSON.parse(response.news);
@@ -59,22 +67,24 @@ function updateExcludes() {
           excludeByScript[scriptId] = {};
         }
 
-        if (store.news[id].read) {
-          excludeByScript[scriptId].read = true;
-        }
+        const fields = [
+          'skipCount',
+          'skipUpdatedAt',
+          'impressionCount',
+          'impressionUpdatedAt',
+        ];
 
-        if (store.news[id].impressionCount) {
-          excludeByScript[scriptId].impressionCount = store.news[id].impressionCount;
-        }
-
-        if (store.news[id].impressionUpdatedAt) {
-          excludeByScript[scriptId].impressionUpdatedAt = store.news[id].impressionUpdatedAt;
-        }
+        fields.forEach(field => {
+          if (store.news[id][field]) {
+            excludeByScript[scriptId][field] = store.news[id][field];
+          }
+        });
       });
     }
   });
   store.excludeByScript = excludeByScript;
   verbose('updateExcludes: excludeByScript', excludeByScript);
+  return Promise.resolve();
 }
 
 function saveConfig() {
@@ -121,7 +131,6 @@ function checkNews(engineStatus) {
           keys.forEach(id => {
             if (!store.news[id]) {
               store.news[id] = remote[id];
-              store.news[id].read = false;
               updated = true;
             }
           });
@@ -145,15 +154,63 @@ function checkNews(engineStatus) {
   } catch (e) {
     console.error(`checkEngine: error: ${e}`);
   }
-  window.setTimeout(check, store.checkInterval);
+  window.setTimeout(check, store.config.checkInterval);
+}
+
+function shouldShowNotification(id, item) {
+  if (item.read) {
+    verbose(`shouldShowNotification: read: id=${id}`);
+    return false;
+  }
+
+  const skipCount = item.skipCount || 0;
+  if (store.config.notificationMaxSkip > 0 && skipCount >= store.config.notificationMaxSkip) {
+    verbose(`shouldShowNotification: max skip: id=${id} count=${skipCount}`);
+    return false;
+  }
+
+  const impressionCount = item.impressionCount || 0;
+  if (store.config.notificationMaxImpressions > 0
+      && impressionCount >= store.config.notificationMaxImpressions) {
+    verbose(`shouldShowNotification: max impressions: id=${id} count=${impressionCount}`);
+    return false;
+  }
+
+  if (item.skipUpdatedAt) {
+    const skipUpdatedAt = item.skipUpdatedAt || 0;
+    const skipAge = Date.now() - skipUpdatedAt;
+    const skipMinAge = store.config.notificationBaseSkipInterval
+      + (skipCount * store.config.notificationSkipIntervalAdjust);
+
+    if (skipAge < skipMinAge) {
+      verbose(`shouldShowNotification: skip age: id=${id} age=${skipAge} minAge=${skipMinAge}`);
+      return false;
+    }
+  }
+
+  if (item.impressionUpdatedAt) {
+    const impressionUpdatedAt = item.impressionUpdatedAt || 0;
+    const age = Date.now() - impressionUpdatedAt;
+    const minAge = store.config.notificationBaseInterval
+      + (impressionCount * store.config.notificationIntervalAdjust);
+
+    if (age < minAge) {
+      verbose(`shouldShowNotification: impression age: id=${id} age=${age} minAge=${minAge}`);
+      return false;
+    }
+  }
+
+
+  return true;
 }
 
 export function initialize() {
   if (!store.initDone_) {
     store.initDone_ = true;
-    loadConfig();
-    updateInstalledScripts();
-    check();
+    return loadConfig()
+    .then(updateInstalledScripts)
+    .then(updateExcludes)
+    .then(check);
   }
 }
 export function importData(news) {
@@ -166,55 +223,6 @@ export function getNewsForUrl(url) {
   const result = [];
 
   Object.keys(store.news).forEach(id => {
-    if (store.news[id].read) {
-      verbose(`getNewsForUrl: skip read: id=${id} url=${url}`);
-      return;
-    }
-
-    const impressionCount = store.news[id].impressionCount || 0;
-    if (impressionCount >= NOTIFICATION_MAX_IMPRESSIONS) {
-      verbose(`getNewsForUrl: skip max impressions: id=${id} count=${impressionCount}`);
-      return;
-    }
-    const impressionUpdatedAt = store.news[id].impressionUpdatedAt || 0;
-    const age = Date.now() - impressionUpdatedAt;
-    const minAge = NOTIFICATION_BASE_INTERVAL + (impressionCount * NOTIFICATION_INTERVAL_ADJUST);
-
-    if (age < minAge) {
-      verbose(`getNewsForUrl: skip age: id=${id} age=${age} minAge=${minAge}`);
-      return;
-    }
-
-    if (store.news[id].excludeBasedOnOther
-      && store.news[id].excludeScripts
-      && store.news[id].excludeScripts.length) {
-      for (let i = 0; i < store.news[id].excludeScripts.length; i += 1) {
-        const scriptId = store.news[id].excludeScripts[i];
-        if (store.excludeByScript[scriptId]) {
-          const item = store.excludeByScript[scriptId];
-          if (item.read) {
-            verbose(`getNewsForUrl: skip read (other): id=${id} scriptId=${scriptId}`);
-            return;
-          }
-
-          if (item.impressionCount && item.impressionCount >= NOTIFICATION_MAX_IMPRESSIONS) {
-            verbose(`getNewsForUrl: skip max impressions (other): id=${id} scriptId=${scriptId} count=${item.impressionCount}`);
-            return;
-          }
-
-          if (item.impressionUpdatedAt) {
-            const otherAge = Date.now() - item.impressionUpdatedAt;
-            const count = item.impressionCount || 0;
-            const otherMinAge = NOTIFICATION_BASE_INTERVAL + (count * NOTIFICATION_INTERVAL_ADJUST);
-            if (otherAge < otherMinAge) {
-              verbose(`getNewsForUrl: skip age (other): id=${id} scriptId=${scriptId} age=${otherAge} min=${otherMinAge}`);
-              return;
-            }
-          }
-        }
-      }
-    }
-
     let gotMatch = false;
     if (store.news[id].includes && store.news[id].includes.length) {
       for (let i = 0; i < store.news[id].includes.length; i += 1) {
@@ -238,13 +246,32 @@ export function getNewsForUrl(url) {
     }
 
     if (gotMatch) {
+      if (!shouldShowNotification(id, store.news[id])) {
+        verbose(`getNewsForUrl: skip: id=${id} url=${url}`);
+        return;
+      }
+
+      if (store.news[id].excludeBasedOnOther
+        && store.news[id].excludeScripts
+        && store.news[id].excludeScripts.length) {
+        for (let i = 0; i < store.news[id].excludeScripts.length; i += 1) {
+          const scriptId = store.news[id].excludeScripts[i];
+          if (store.excludeByScript[scriptId]) {
+            if (!shouldShowNotification(id, store.excludeByScript[scriptId])) {
+              verbose(`getNewsForUrl: skip (other): id=${id} scriptId=${scriptId}`);
+              return;
+            }
+          }
+        }
+      }
+
       let notifyUser = true;
       if (store.news[id].excludeScripts && store.news[id].excludeScripts.length) {
         // check all installed scripts
         verbose('getNewsForUrl: installedScripts', store.installedScripts);
         for (let i = 0; i < store.news[id].excludeScripts.length; i += 1) {
           if (store.installedScripts[store.news[id].excludeScripts[i]] === 1) {
-            verbose(`getNewsForUrl: skip user notify, got installed script: ${store.news[id].excludeScripts[i]}`);
+            verbose(`getNewsForUrl: skip user notify, got installed script: id=${id} script=${store.news[id].excludeScripts[i]}`);
             notifyUser = false;
             break;
           }
@@ -265,9 +292,24 @@ export function getNewsForUrl(url) {
   return result;
 }
 
-export function markAsRead(id) {
-  if (store.news[id] && !store.news[id].read) {
-    store.news[id].read = true;
+export function onInstallButtonClicked(id) {
+  if (store.news[id]) {
+    // Update impression to prevent showing notification for some short time.
+    // We assume that user will install userscript during this time.
+    verbose(`news:onInstallButtonClicked: id=${id}`);
+    store.news[id].impressionUpdatedAt = Date.now();
+    saveConfig();
+  }
+}
+
+export function onSkipButtonClicked(id) {
+  if (store.news[id]) {
+    verbose(`news:onSkipButtonClicked: id=${id}`);
+    if (typeof store.news[id].skipCount === 'undefined') {
+      store.news[id].skipCount = 0;
+    }
+    store.news[id].skipUpdatedAt = Date.now();
+    store.news[id].skipCount += 1;
     saveConfig();
   }
 }
@@ -281,4 +323,10 @@ export function registerImpression(id) {
     store.news[id].impressionCount += 1;
     saveConfig();
   }
+}
+
+export function setNotificationsConfig({ base, adjust, maxImpressions }) {
+  store.config.notificationBaseInterval = base;
+  store.config.notificationIntervalAdjust = adjust;
+  store.config.notificationMaxImpressions = maxImpressions;
 }

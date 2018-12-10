@@ -1,5 +1,8 @@
-import { noop, verbose, getUniqId } from '#/common';
+import {
+  noop, verbose, getUniqId, i18n,
+} from '#/common';
 import { objectGet } from '#/common/object';
+import { isChrome } from '#/common/ua';
 import * as sync from './sync';
 import * as news from './utils/news';
 import * as tmWrapper from './utils/tampermonkey';
@@ -33,9 +36,7 @@ import {
 } from './utils/engine-api';
 
 const VM_VER = browser.runtime.getManifest().version;
-
-// not supported by Firefox yet
-const NOTIFICATIONS_BUTTONS_SUPPORTED = false;
+const NOTIFICATIONS_BUTTONS_SUPPORTED = isChrome;
 const registeredNotifications_ = {};
 let contextMenuCreated = false;
 
@@ -340,8 +341,8 @@ const commands = {
         targetUrl = newsList[i].btnUrl;
 
         if (NOTIFICATIONS_BUTTONS_SUPPORTED) {
-          buttons.push({ title: newsList[i].btnTitle || browser.i18n.getMessage('show_more') });
-          buttons.push({ title: browser.i18n.getMessage('do_not_show_anymore') });
+          buttons.push({ title: newsList[i].btnTitle || i18n('notifShowMore') });
+          buttons.push({ title: i18n('notifDontShowAnymore') });
         }
       }
 
@@ -360,22 +361,26 @@ const commands = {
         notificationId,
         options,
       ).then(newNotificationId => {
+        verbose(`notification created: id=${newNotificationId}`);
         registeredNotifications_[newNotificationId] = {
           onClicked: () => {
+            // Use has clicked notification itself.
             if (targetUrl) {
               browser.tabs.create({ url: targetUrl });
             }
-            news.markAsRead(newsId);
+            news.onInstallButtonClicked(newsId);
             browser.notifications.clear(newNotificationId);
           },
           onButtonClicked: index => {
             if (index === 0) {
+              // User has pressed 'Install' button
               if (targetUrl) {
                 browser.tabs.create({ url: targetUrl });
               }
-              news.markAsRead(newsId);
+              news.onInstallButtonClicked(newsId);
             } else if (index === 1) {
-              news.markAsRead(newsId);
+              // User has pressed 'No, thanks' button
+              news.onSkipButtonClicked(newsId);
             }
             browser.notifications.clear(newNotificationId);
           },
@@ -384,9 +389,11 @@ const commands = {
 
       news.registerImpression(newsId);
 
-      window.setTimeout(() => {
-        browser.notifications.clear(notificationId);
-      }, 15000);
+      if (!NOTIFICATIONS_BUTTONS_SUPPORTED) {
+        window.setTimeout(() => {
+          browser.notifications.clear(notificationId);
+        }, 15000);
+      }
     }
 
     return Promise.resolve();
@@ -570,6 +577,12 @@ browser.notifications.onClosed.addListener(id => {
 });
 
 if (NOTIFICATIONS_BUTTONS_SUPPORTED) {
+  // Show notifications each 60 seconds until skipped by user.
+  news.setNotificationsConfig({
+    base: 60000,
+    adjust: 0,
+    maxImpressions: 0,
+  });
   browser.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {
     if (registeredNotifications_[notificationId] && typeof registeredNotifications_[notificationId].onButtonClicked === 'function') {
       registeredNotifications_[notificationId].onButtonClicked(buttonIndex);

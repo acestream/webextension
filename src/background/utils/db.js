@@ -485,6 +485,7 @@ export function updateScriptInfo(id, data) {
   if (!script) return Promise.reject();
   script.props = Object.assign({}, script.props, data.props);
   script.config = Object.assign({}, script.config, data.config);
+  eventEmitter.fire('scriptUpdated', script.props.scriptId);
   // script.custom = Object.assign({}, script.custom, data.custom);
   return storage.script.dump(script);
 }

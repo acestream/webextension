@@ -46,6 +46,7 @@ const meta = {
     onClosed: true,
     create: wrapAsync,
     clear: wrapAsync,
+    onButtonClicked: true,
   },
   runtime: {
     getManifest: true,
