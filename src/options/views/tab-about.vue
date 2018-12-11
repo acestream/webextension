@@ -7,7 +7,8 @@
     <p class="mb-2" v-text="i18n('extDescription')"></p>
     <div class="mb-1">
       <label v-text="i18n('labelRelated')"></label>
-      <a href="https://addons.mozilla.org/en-US/firefox/addon/ace-script/?src=ss" target="_blank" v-text="i18n('extName')"></a>
+      <a href="https://github.com/acestream/webextension" target="_blank">Source code</a>
+      | <a href="http://acestream.org/about/privacy-policy" target="_blank">Privacy policy</a>
     </div>
     <div class="mb-1">
       <label v-text="i18n('labelAuthor')"></label>
