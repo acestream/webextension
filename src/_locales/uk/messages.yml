@@ -1,6 +1,6 @@
 anchorAuthor:
   description: Author shown on about tab.
-  message: '<a href=mailto:i@gerald.top>Gerald</a>'
+  message: ''
 anchorTranslator:
   description: Translator shown on about tab.
   message: henaro aka ironwool
@@ -133,8 +133,9 @@ editValueSave:
 extDescription:
   description: Description for this extension.
   message: >-
-    Ace Script - це розширення з відкритим кодом, яке дозволяє користувачеві автоматично вводити скрипти в сторінки,
-    щоб змінювати їх вигляд чи поведінку.
+    Ace Script - це розширення з відкритим кодом, яке дозволяє користувачеві
+    автоматично вводити скрипти в сторінки, щоб змінювати їх вигляд чи
+    поведінку.
 extName:
   description: Name of this extension.
   message: Ace Script
