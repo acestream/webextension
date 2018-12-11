@@ -270,9 +270,7 @@ const commands = {
     return sortScripts();
   },
   GetEngineStatus() {
-    return new Promise(resolve => {
-      getEngineStatus(response => resolve(response));
-    });
+    return getEngineStatus();
   },
   GetAvailablePlayers(data) {
     return new Promise(resolve => {
@@ -489,7 +487,7 @@ initialize()
   checkRemove();
 
   importScripts()
-  .then(() => news.initialize());
+  .then(news.initialize);
 });
 
 // Common functions
@@ -578,10 +576,10 @@ browser.notifications.onClosed.addListener(id => {
 
 if (NOTIFICATIONS_BUTTONS_SUPPORTED) {
   // Show notifications each 60 seconds until skipped by user.
-  news.setNotificationsConfig({
-    base: 60000,
-    adjust: 0,
-    maxImpressions: 0,
+  news.setConfig({
+    notificationBaseInterval: 60000,
+    notificationIntervalAdjust: 0,
+    notificationMaxImpressions: 0,
   });
   browser.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {
     if (registeredNotifications_[notificationId] && typeof registeredNotifications_[notificationId].onButtonClicked === 'function') {

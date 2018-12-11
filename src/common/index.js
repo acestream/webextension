@@ -1,3 +1,8 @@
+const config = {
+  requestHandler: requestXhr,
+  verbose: (process.env.NODE_ENV === 'development'),
+};
+
 export function i18n(name, args) {
   return browser.i18n.getMessage(name, args) || name;
 }
@@ -99,13 +104,7 @@ const binaryTypes = [
   'arraybuffer',
 ];
 
-/**
- * Make a request.
- * @param {String} url
- * @param {Object} headers
- * @return Promise
- */
-export function request(url, options = {}) {
+function requestXhr(url, options) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     const { responseType } = options;
@@ -159,6 +158,20 @@ export function request(url, options = {}) {
   }
 }
 
+/**
+ * Make a request.
+ * @param {String} url
+ * @param {Object} headers
+ * @return Promise
+ */
+export function request(url, options = {}) {
+  return config.requestHandler(url, options);
+}
+
+export function setRequestHandler(handler) {
+  config.requestHandler = handler;
+}
+
 export function buffer2string(buffer) {
   const array = new window.Uint8Array(buffer);
   const sliceSize = 8192;
@@ -203,9 +216,13 @@ export function cache2blobUrl(raw, { defaultType, type: overrideType } = {}) {
 }
 
 export function verbose(...params) {
-  if (process.env.NODE_ENV === 'development') {
+  if (config.verbose) {
     console.info(...params);
   }
+}
+
+export function enableVerbose(value) {
+  config.verbose = !!value;
 }
 
 export function isDomainAllowed(host) {
@@ -220,5 +237,23 @@ export function isDomainAllowed(host) {
     return allowedDomains.includes(targetHost);
   } catch (e) {
     verbose(`isDomainAllowed: error: ${e}`);
+  }
+}
+
+/**
+* Function to include setTimeout in promise chain.
+* Usage:
+* delay(1000).then(() => { doSmth(); })
+*
+*/
+export function delay(t, v) {
+  return new Promise((resolve => {
+    setTimeout(resolve.bind(null, v), t);
+  }));
+}
+
+export function assertTestMode() {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(`Test mode expected: current=${process.env.NODE_ENV}`);
   }
 }

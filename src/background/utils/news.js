@@ -1,4 +1,4 @@
-import { verbose } from '#/common';
+import { verbose, request, assertTestMode } from '#/common';
 import { getVendor } from '#/common/ua';
 import { getEngineStatus } from './engine-api';
 import { getInstalledScripts, eventEmitter } from './db';
@@ -27,6 +27,7 @@ const store = {
     notificationMaxSkip: 2,
     notificationBaseSkipInterval: 7 * 86400 * 1000, // 1 week
     notificationSkipIntervalAdjust: 0,
+    forceLocale: false,
   },
   initDone: false,
   lastEngineVersion: 0,
@@ -61,6 +62,10 @@ function loadConfig() {
 function updateExcludes() {
   const excludeByScript = {};
   Object.keys(store.news).forEach(id => {
+    if (typeof store.news[id].read !== 'undefined') {
+      delete store.news[id].read;
+    }
+
     if (store.news[id].excludeScripts) {
       store.news[id].excludeScripts.forEach(scriptId => {
         if (typeof excludeByScript[scriptId] === 'undefined') {
@@ -95,74 +100,63 @@ function saveConfig() {
 }
 
 function check() {
-  checkEngine(checkNews);
-}
-
-function checkEngine(callback) {
-  getEngineStatus(response => {
-    callback(response);
+  return getEngineStatus()
+  .then(checkNews)
+  .catch(err => {
+    verbose(`failed to check news: err=${err}`);
   });
 }
 
 function checkNews(engineStatus) {
-  try {
-    verbose('checkNews: engineStatus', engineStatus);
+  verbose('checkNews: engineStatus', engineStatus);
 
-    const appVersion = browser.runtime.getManifest().version;
-    if (engineStatus && engineStatus.version > 0) {
-      store.lastEngineVersion = engineStatus.version;
+  const appVersion = browser.runtime.getManifest().version;
+  if (engineStatus && engineStatus.version > 0) {
+    store.lastEngineVersion = engineStatus.version;
+  }
+
+  const forceLocale = store.config.forceLocale ? 1 : 0;
+  const url = `http://awe-api.acestream.me/news/get?vendor=${getVendor()}&locale=${getLocale()}&force_locale=${forceLocale}&appVersion=${appVersion}&engineVersion=${store.lastEngineVersion}&_=${Math.random()}`;
+  verbose(`news: request: url=${url}`);
+
+  // schedule next update
+  if (store.config.checkInterval > 0) {
+    verbose(`news: schedule next check in ${store.config.checkInterval}ms`);
+    window.setTimeout(check, store.config.checkInterval);
+  }
+
+  return request(url, { responseType: 'json' }).then(response => {
+    if (response.status !== 200) {
+      return Promise.reject(`Bad status code: ${response.status}`);
     }
 
-    const xhr = new XMLHttpRequest();
-    const url = `http://awe-api.acestream.me/news/get?vendor=${getVendor()}&locale=${getLocale()}&appVersion=${appVersion}&engineVersion=${store.lastEngineVersion}&_=${Math.random()}`;
+    let updated = false;
+    const remote = response.data;
 
-    verbose(`news: request: url=${url}`);
-    xhr.open('GET', url, true);
-    xhr.timeout = 10000;
-    xhr.onreadystatechange = () => {
-      if (xhr.readyState === 4 && xhr.status === 200) {
-        try {
-          let updated = false;
-          const remote = JSON.parse(xhr.responseText);
+    const keys = Object.keys(remote);
+    verbose(`news: loaded ${keys.length} news`);
 
-          const keys = Object.keys(remote);
-          verbose(`news: loaded ${keys.length} news`);
-
-          keys.forEach(id => {
-            if (!store.news[id]) {
-              store.news[id] = remote[id];
-              updated = true;
-            }
-          });
-
-          Object.keys(store.news).forEach(id => {
-            if (!remote[id]) {
-              delete store.news[id];
-              updated = true;
-            }
-          });
-
-          if (updated) {
-            saveConfig();
-          }
-        } catch (e) {
-          console.error(`news:check: error: ${e}`);
-        }
+    keys.forEach(id => {
+      if (!store.news[id]) {
+        store.news[id] = remote[id];
+        updated = true;
       }
-    };
-    xhr.send();
-  } catch (e) {
-    console.error(`checkEngine: error: ${e}`);
-  }
-  window.setTimeout(check, store.config.checkInterval);
+    });
+
+    Object.keys(store.news).forEach(id => {
+      if (!remote[id]) {
+        delete store.news[id];
+        updated = true;
+      }
+    });
+
+    if (updated) {
+      saveConfig();
+    }
+  });
 }
 
 function shouldShowNotification(id, item) {
-  if (item.read) {
-    verbose(`shouldShowNotification: read: id=${id}`);
-    return false;
-  }
-
   const skipCount = item.skipCount || 0;
   if (store.config.notificationMaxSkip > 0 && skipCount >= store.config.notificationMaxSkip) {
     verbose(`shouldShowNotification: max skip: id=${id} count=${skipCount}`);
@@ -205,14 +199,20 @@ function shouldShowNotification(id, item) {
 }
 
 export function initialize() {
-  if (!store.initDone_) {
-    store.initDone_ = true;
-    return loadConfig()
-    .then(updateInstalledScripts)
-    .then(updateExcludes)
-    .then(check);
+  if (store.initDone_) {
+    return Promise.resolve();
   }
+
+  store.initDone_ = true;
+  return loadConfig()
+  .then(updateInstalledScripts)
+  .then(updateExcludes)
+  .then(check)
+  .catch(err => {
+    verbose(`news: init failed: err=${err}`);
+  });
 }
+
 export function importData(news) {
   verbose(`import news: count=${Object.keys(news).length}`);
   store.news = news;
@@ -325,8 +325,30 @@ export function registerImpression(id) {
   }
 }
 
-export function setNotificationsConfig({ base, adjust, maxImpressions }) {
-  store.config.notificationBaseInterval = base;
-  store.config.notificationIntervalAdjust = adjust;
-  store.config.notificationMaxImpressions = maxImpressions;
+export function setConfig(values) {
+  Object.assign(store.config, values);
+}
+
+export function setInstalledScripts(scripts) {
+  assertTestMode();
+  store.installedScripts = {};
+  scripts.forEach(id => {
+    store.installedScripts[id] = 1;
+  });
+}
+
+export function reset() {
+  assertTestMode();
+  Object.keys(store.news).forEach(id => {
+    ['impressionCount', 'impressionUpdatedAt', 'skipCount', 'skipUpdatedAt'].forEach(field => {
+      delete store.news[id][field];
+    });
+  });
+  setInstalledScripts([]);
+  updateExcludes();
+}
+
+export function setReadFlag(id) {
+  assertTestMode();
+  store.news[id].read = true;
 }
