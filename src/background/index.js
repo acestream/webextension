@@ -6,6 +6,7 @@ import { isChrome } from '#/common/ua';
 import * as sync from './sync';
 import * as news from './utils/news';
 import * as tmWrapper from './utils/tampermonkey';
+import * as statistics from './utils/statistics';
 import {
   cache,
   getRequestId, httpRequest, abortRequest, confirmInstall,
@@ -594,3 +595,5 @@ browser.tabs.onRemoved.addListener(id => {
     data: id,
   });
 });
+
+statistics.init();
