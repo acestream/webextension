@@ -2,6 +2,12 @@
 Ace Script web extension changelog
 ==================================
 
+1.1.17
+------
+* Add buttons to notifications in Chrome
+* Fix .acestream.js installation from local files (file:// URI) in Firefox
+* Add analytics and privacy policy link
+
 1.1.16
 ------
 * Fix build scripts for Chrome and some localized strings
@@ -12,6 +18,5 @@ Ace Script web extension changelog
 
 1.1.14
 ------
-
 * Update to lastest Violentmonkey commit (`f8daba <https://github.com/violentmonkey/violentmonkey/commit/f8dabab4fc36f589b121b9c7fd77ea54a541858c>`_)
 * Build for Google Chrome (``chrome`` build target)
