@@ -137,3 +137,10 @@ input[type=checkbox] {
     }
   }
 }
+
+.tab-privacy-settings p {
+  margin: 14px 0 14px 0;
+}
+.tab-privacy-settings ul {
+  margin: 14px 0 14px 40px;
+}

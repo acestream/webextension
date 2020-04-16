@@ -3,6 +3,7 @@ import {
 } from '#/common';
 import { objectGet } from '#/common/object';
 import { isChrome } from '#/common/ua';
+import { getPrivacyOptions } from '#/common/privacy';
 import * as sync from './sync';
 import * as news from './utils/news';
 import * as tmWrapper from './utils/tampermonkey';
@@ -597,3 +598,10 @@ browser.tabs.onRemoved.addListener(id => {
 });
 
 statistics.init();
+
+// Check privacy opt-in
+getPrivacyOptions().then(result => {
+  if(!result.confirmed) {
+    browser.tabs.create({ url: "/options/index.html#privacySettings" });
+  }
+});

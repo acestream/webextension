@@ -1,5 +1,6 @@
 import { verbose, request, assertTestMode } from '#/common';
 import { getVendor } from '#/common/ua';
+import { getPrivacyOptions } from '#/common/privacy';
 import { getEngineStatus } from './engine-api';
 import { getInstalledScripts, eventEmitter } from './db';
 
@@ -34,6 +35,7 @@ const store = {
   news: {},
   installedScripts: {},
   excludeByScript: {},
+  privacyOptInAccepted: false,
 };
 
 function updateInstalledScripts() {
@@ -48,6 +50,12 @@ function updateInstalledScripts() {
 
 function getLocale() {
   return browser.i18n.getUILanguage();
+}
+
+function loadPrivacyOptions() {
+  return getPrivacyOptions().then(response => {
+    store.privacyOptInAccepted = response.accepted;
+  });
 }
 
 function loadConfig() {
@@ -116,7 +124,7 @@ function checkNews(engineStatus) {
   }
 
   const forceLocale = store.config.forceLocale ? 1 : 0;
-  const url = `http://awe-api.acestream.me/news/get?vendor=${getVendor()}&locale=${getLocale()}&force_locale=${forceLocale}&appVersion=${appVersion}&engineVersion=${store.lastEngineVersion}&_=${Math.random()}`;
+  const url = `http://awe-api.acestream.me/news/get?vendor=${getVendor()}&locale=${getLocale()}&force_locale=${forceLocale}&appVersion=${appVersion}&engineVersion=${store.lastEngineVersion}&privacy_opt_in=${store.privacyOptInAccepted}&_=${Math.random()}`;
   verbose(`news: request: url=${url}`);
 
   // schedule next update
@@ -204,7 +212,8 @@ export function initialize() {
   }
 
   store.initDone_ = true;
-  return loadConfig()
+  return loadPrivacyOptions()
+  .then(loadConfig)
   .then(updateInstalledScripts)
   .then(updateExcludes)
   .then(check)
