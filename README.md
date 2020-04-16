@@ -17,8 +17,8 @@ $ ./build.sh chrome
 ```
 
 Build was tested with:
-* Ubuntu Ubuntu 14.04.4 LTS
-* yarn 1.12.3
-* node 8.12.0
+* Ubuntu Ubuntu 18.04.3 LTS
+* yarn 1.19.2
+* node 11.15.0
 
-The result will be placed to 'xpi/' folder.
+The result will be placed to 'firefox/' or 'chrome/' folder.
