@@ -90,8 +90,8 @@ export default {
       confirm(false);
     },
     onChange(event) {
-    confirm(event.target.checked);
-    }
+      confirm(event.target.checked);
+    },
   },
 };
 </script>

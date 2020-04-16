@@ -601,7 +601,7 @@ statistics.init();
 
 // Check privacy opt-in
 getPrivacyOptions().then(result => {
-  if(!result.confirmed) {
-    browser.tabs.create({ url: "/options/index.html#privacySettings" });
+  if (!result.confirmed) {
+    browser.tabs.create({ url: '/options/index.html#privacySettings' });
   }
 });
