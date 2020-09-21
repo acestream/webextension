@@ -121,6 +121,10 @@ const meta = {
     remove: wrapAsync,
     sendMessage: wrapAsync,
     update: wrapAsync,
+    executeScript: wrapAsync,
+  },
+  windows: {
+    getAll: wrapAsync,
   },
   webRequest: true,
   contextMenus: {

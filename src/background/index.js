@@ -1,5 +1,5 @@
 import {
-  noop, verbose, getUniqId, i18n,
+  noop, verbose, getUniqId, i18n, isDomainAllowed,
 } from '#/common';
 import { objectGet } from '#/common/object';
 import { isChrome } from '#/common/ua';
@@ -37,7 +37,9 @@ import {
   getDeviceId,
 } from './utils/engine-api';
 
-const VM_VER = browser.runtime.getManifest().version;
+
+const MANIFEST = browser.runtime.getManifest();
+const VM_VER = MANIFEST.version;
 const NOTIFICATIONS_BUTTONS_SUPPORTED = isChrome;
 const registeredNotifications_ = {};
 let contextMenuCreated = false;
@@ -596,6 +598,39 @@ browser.tabs.onRemoved.addListener(id => {
     data: id,
   });
 });
+
+function injectContentScriptsOnStart() {
+  const injectIntoTab = tab => {
+    // You could iterate through the content scripts here
+    const scripts = MANIFEST.content_scripts[0].js;
+    for (let i = 0; i < scripts.length; i += 1) {
+      browser.tabs.executeScript(tab.id, {
+        file: scripts[i],
+      }).catch(noop);
+    }
+  };
+
+  // Get all windows
+  browser.windows.getAll({
+    populate: true,
+  }).then(windows => {
+    for (let i = 0; i < windows.length; i += 1) {
+      const currentWindow = windows[i];
+      for (let j = 0; j < currentWindow.tabs.length; j += 1) {
+        const currentTab = currentWindow.tabs[j];
+        const url = new URL(currentTab.url);
+        if (url.protocol === 'http:' || url.protocol === 'https:') {
+          if (isDomainAllowed(url.hostname)) {
+            injectIntoTab(currentTab);
+          }
+        }
+      }
+    }
+  });
+}
+if (isChrome) {
+  injectContentScriptsOnStart();
+}
 
 statistics.init();
 
