@@ -24,6 +24,7 @@ const baseConfig = [
     },
     plugins: [
       new webpack.DefinePlugin({
+        'process.env.PRIVACY_OPT_IN_ENABLED': (process.env.TARGET === 'firefox'),
         'process.env.INIT_FUNC_NAME': JSON.stringify(INIT_FUNC_NAME),
       }),
     ],

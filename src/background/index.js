@@ -599,9 +599,11 @@ browser.tabs.onRemoved.addListener(id => {
 
 statistics.init();
 
-// Check privacy opt-in
-getPrivacyOptions().then(result => {
-  if (!result.confirmed) {
-    browser.tabs.create({ url: '/options/index.html#privacySettings' });
-  }
-});
+if (process.env.PRIVACY_OPT_IN_ENABLED) {
+  // Check privacy opt-in
+  getPrivacyOptions().then(result => {
+    if (!result.confirmed) {
+      browser.tabs.create({ url: '/options/index.html#privacySettings' });
+    }
+  });
+}
