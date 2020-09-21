@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test</title>
+</head>
+<body>
+
+    <button onclick="requestVersion();">Get version</button>
+    <button onclick="requestInstalledScripts();">Get scripts</button>
+
+    <script>
+        const BRIDGE_ID_VERSION = 'x-acestream-awe-version';
+        const BRIDGE_ID_INSTALLED_SCRIPTS = 'x-acestream-awe-installed-scripts';
+        function installBridgeVersion(callback) {
+            var bridge = document.getElementById(BRIDGE_ID_VERSION);
+            if(!bridge) {
+                bridge = document.createElement('div');
+                bridge.id = BRIDGE_ID_VERSION;
+                bridge.addEventListener('response', function (e) {
+                    callback(e.detail);
+                }, false);
+                document.body.appendChild(bridge);
+            }
+        }
+
+        function installBridgeInstalledScripts(callback) {
+            var bridge = document.getElementById(BRIDGE_ID_INSTALLED_SCRIPTS);
+            if(!bridge) {
+                bridge = document.createElement('div');
+                bridge.id = BRIDGE_ID_INSTALLED_SCRIPTS;
+                bridge.addEventListener('response', function (e) {
+                    callback(e.detail);
+                }, false);
+                document.body.appendChild(bridge);
+            }
+        }
+
+        function requestVersion() {
+            var bridge = document.getElementById(BRIDGE_ID_VERSION);
+            if(bridge) {
+                bridge.dispatchEvent(new Event('request'));
+            }
+        }
+
+        function requestInstalledScripts() {
+            var bridge = document.getElementById(BRIDGE_ID_INSTALLED_SCRIPTS);
+            if(bridge) {
+                bridge.dispatchEvent(new Event('request'));
+            }
+        }
+
+        function test() {
+            installBridgeVersion(function(response) {
+                console.log('version', response);
+            });
+            installBridgeInstalledScripts(function(response) {
+                console.log('scripts', response);
+            });
+        }
+        setTimeout(test, 2500);
+    </script>
+</body>
+</html>

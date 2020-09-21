@@ -1,4 +1,6 @@
-import { getUniqId, verbose, isDomainAllowed } from '#/common';
+import {
+  getUniqId, verbose, isDomainAllowed, noop,
+} from '#/common';
 import { isFirefox, getVendor } from '#/common/ua';
 import {
   bindEvents, sendMessage, inject, attachFunction,
@@ -182,14 +184,24 @@ function injectScript(data) {
   inject(injectedCode);
 }
 
-function watchDOM(func, retryCount, retryInterval) {
-  if (!func()) {
-    if (retryCount && retryCount > 0) {
-      setTimeout(() => {
-        watchDOM(func, retryCount - 1, retryInterval);
-      }, retryInterval);
-    }
-  }
+function watchDOM(func) {
+  const observer = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
+      [].forEach.call(mutation.addedNodes, node => {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          func(node);
+        }
+        [].forEach.call(node.childNodes, child => {
+          if (child.nodeType === Node.ELEMENT_NODE) {
+            func(child);
+          }
+        });
+      });
+    });
+  });
+
+  func();
+  observer.observe(document.body, { childList: true, subtree: true });
 }
 
 function checkStartEngineMarker() {
@@ -213,52 +225,97 @@ function checkStartEngineMarker() {
   return true;
 }
 
-function exposeVersion() {
-  // set version in special container
-  const el = document.getElementById('x-acestream-awe-version');
+function exposeVersion(node) {
+  const BRIDGE_ID = 'x-acestream-awe-version';
+  let el = node;
   if (!el) {
+    el = document.getElementById(BRIDGE_ID);
+    if (!el) {
+      return false;
+    }
+  } else if (el.id !== BRIDGE_ID) {
     return false;
   }
 
-  if (isDomainAllowed(window.location.host)) {
-    el.setAttribute('data-vendor', getVendor());
-    el.setAttribute('data-version', browser.runtime.getManifest().version);
+  function sendResponse(target) {
+    try {
+      const vendor = getVendor();
+      const version = browser.runtime.getManifest().version;
+      target.setAttribute('data-vendor', vendor);
+      target.setAttribute('data-version', version);
+
+      const event = new CustomEvent('response', { detail: { vendor, version } });
+      target.dispatchEvent(event);
+    } catch (e) {
+      if (process.env.DEBUG) console.error(e);
+    }
+  }
+
+  if (isDomainAllowed(window.location.hostname)) {
+    sendResponse(el);
+    el.addEventListener('request', () => {
+      sendResponse(el);
+    }, false);
   }
 
   return true;
 }
 
-function exposeInstalledScripts() {
-  // expose installed scripts to a limited set of domains
-  const el = document.getElementById('x-acestream-awe-installed-scripts');
+function exposeInstalledScripts(node) {
+  const BRIDGE_ID = 'x-acestream-awe-installed-scripts';
+  let el = node;
   if (!el) {
+    el = document.getElementById(BRIDGE_ID);
+    if (!el) {
+      return false;
+    }
+  } else if (el.id !== BRIDGE_ID) {
     return false;
   }
 
-  if (isDomainAllowed(window.location.host)) {
+  function sendResponse(target) {
     sendMessage({ cmd: 'GetInstalledScripts' })
     .then(response => {
       if (response) {
-        el.setAttribute('data-scripts', JSON.stringify(response));
+        target.setAttribute('data-scripts', JSON.stringify(response));
+
+        const event = new CustomEvent('response', { detail: response });
+        target.dispatchEvent(event);
       }
-    });
+    })
+    .catch(noop);
+  }
+
+  if (isDomainAllowed(window.location.hostname)) {
+    sendResponse(el);
+    el.addEventListener('request', () => {
+      sendResponse(el);
+    }, false);
   }
 
   return true;
 }
 
-function onDOMContentLoaded() {
-  watchDOM(checkStartEngineMarker, 60, 500);
+function onDomReady(callback) {
+  if (document.readyState === 'complete'
+    || document.readyState === 'loaded'
+    || document.readyState === 'interactive') {
+    setTimeout(callback, 0);
+  } else {
+    document.addEventListener('DOMContentLoaded', callback, false);
+  }
+}
 
-  if (isDomainAllowed(window.location.host)) {
-    watchDOM(exposeVersion, 240, 500);
-    watchDOM(exposeInstalledScripts, 60, 500);
+onDomReady(() => {
+  watchDOM(checkStartEngineMarker);
+
+  if (isDomainAllowed(window.location.hostname)) {
+    watchDOM(exposeVersion);
+    watchDOM(exposeInstalledScripts);
   }
 
   if (IS_TOP) {
     // check news for this site
     sendMessage({ cmd: 'CheckNews', data: { url: window.location.href } });
   }
-}
-
-document.addEventListener('DOMContentLoaded', onDOMContentLoaded, false);
+});
