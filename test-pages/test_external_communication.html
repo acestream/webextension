@@ -2,62 +2,40 @@
 <html>
 <head>
     <title>Test</title>
+    <script src="ace-script-utils.js"></script>
 </head>
 <body>
 
-    <button onclick="requestVersion();">Get version</button>
-    <button onclick="requestInstalledScripts();">Get scripts</button>
+    <button onclick="getVersion();">Get version</button>
+    <button onclick="getInstalledScripts();">Get scripts</button>
 
     <script>
-        const BRIDGE_ID_VERSION = 'x-acestream-awe-version';
-        const BRIDGE_ID_INSTALLED_SCRIPTS = 'x-acestream-awe-installed-scripts';
-        function installBridgeVersion(callback) {
-            var bridge = document.getElementById(BRIDGE_ID_VERSION);
-            if(!bridge) {
-                bridge = document.createElement('div');
-                bridge.id = BRIDGE_ID_VERSION;
-                bridge.addEventListener('response', function (e) {
-                    callback(e.detail);
-                }, false);
-                document.body.appendChild(bridge);
-            }
-        }
-
-        function installBridgeInstalledScripts(callback) {
-            var bridge = document.getElementById(BRIDGE_ID_INSTALLED_SCRIPTS);
-            if(!bridge) {
-                bridge = document.createElement('div');
-                bridge.id = BRIDGE_ID_INSTALLED_SCRIPTS;
-                bridge.addEventListener('response', function (e) {
-                    callback(e.detail);
-                }, false);
-                document.body.appendChild(bridge);
-            }
-        }
-
-        function requestVersion() {
-            var bridge = document.getElementById(BRIDGE_ID_VERSION);
-            if(bridge) {
-                bridge.dispatchEvent(new Event('request'));
-            }
-        }
-
-        function requestInstalledScripts() {
-            var bridge = document.getElementById(BRIDGE_ID_INSTALLED_SCRIPTS);
-            if(bridge) {
-                bridge.dispatchEvent(new Event('request'));
-            }
-        }
-
-        function test() {
-            installBridgeVersion(function(response) {
+        function getVersion() {
+            AceScriptUtils.getVersion(function(response) {
                 console.log('version', response);
             });
-            installBridgeInstalledScripts(function(response) {
+        }
+
+        function getInstalledScripts() {
+            AceScriptUtils.getInstalledScripts(function(response) {
                 console.log('scripts', response);
             });
         }
-        setTimeout(test, 2500);
+
+        AceScriptUtils.init();
+
+        console.log('version 1', AceScriptUtils.getVersion());
+        setTimeout(function() {
+            console.log('version 2', AceScriptUtils.getVersion());
+        }, 1000);
+
+        AceScriptUtils.addVersionCallback(function(response) {
+            console.log('got version', response);
+        });
+
+        AceScriptUtils.addInstalledScriptsCallback(function(response) {
+            console.log('got scripts', response);
+        });
     </script>
 </body>
 </html>

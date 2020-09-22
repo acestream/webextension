@@ -237,14 +237,18 @@ function exposeVersion(node) {
     return false;
   }
 
-  function sendResponse(target) {
+  function sendResponse(target, requestId) {
     try {
       const vendor = getVendor();
       const version = browser.runtime.getManifest().version;
       target.setAttribute('data-vendor', vendor);
       target.setAttribute('data-version', version);
 
-      const event = new CustomEvent('response', { detail: { vendor, version } });
+      const payload = { response: { vendor, version } };
+      if (requestId) {
+        payload.requestId = requestId;
+      }
+      const event = new CustomEvent('response', { detail: payload });
       target.dispatchEvent(event);
     } catch (e) {
       if (process.env.DEBUG) console.error(e);
@@ -253,8 +257,8 @@ function exposeVersion(node) {
 
   if (isDomainAllowed(window.location.hostname)) {
     sendResponse(el);
-    el.addEventListener('request', () => {
-      sendResponse(el);
+    el.addEventListener('request', e => {
+      sendResponse(el, e.detail.requestId);
     }, false);
   }
 
@@ -273,13 +277,17 @@ function exposeInstalledScripts(node) {
     return false;
   }
 
-  function sendResponse(target) {
+  function sendResponse(target, requestId) {
     sendMessage({ cmd: 'GetInstalledScripts' })
     .then(response => {
       if (response) {
         target.setAttribute('data-scripts', JSON.stringify(response));
 
-        const event = new CustomEvent('response', { detail: response });
+        const payload = { response };
+        if (requestId) {
+          payload.requestId = requestId;
+        }
+        const event = new CustomEvent('response', { detail: payload });
         target.dispatchEvent(event);
       }
     })
@@ -288,8 +296,8 @@ function exposeInstalledScripts(node) {
 
   if (isDomainAllowed(window.location.hostname)) {
     sendResponse(el);
-    el.addEventListener('request', () => {
-      sendResponse(el);
+    el.addEventListener('request', e => {
+      sendResponse(el, e.detail.requestId);
     }, false);
   }
 
