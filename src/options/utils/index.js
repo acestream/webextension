@@ -1,25 +1,15 @@
-import Modal from 'vueleton/lib/modal';
-import { route } from '#/common/router';
-import Message from '../views/message';
+import { reactive } from 'vue';
+import { route } from '@/common/router';
 
-export const store = {
+export const store = reactive({
   route,
-};
-
-export function showMessage(message) {
-  const modal = Modal.show(h => h(Message, {
-    props: { message },
-    on: {
-      dismiss() {
-        modal.close();
-      },
-    },
-  }), {
-    transition: 'in-out',
-  });
-  if (!message.buttons) {
-    setTimeout(() => {
-      modal.close();
-    }, 2000);
-  }
-}
+  scripts: [],
+  removedScripts: [],
+  importing: null,
+  loading: false,
+  /** Whether removed scripts need to be filtered from `store.scripts`. */
+  needRefresh: false,
+  storageSize: 0,
+  sync: [],
+  title: null,
+});

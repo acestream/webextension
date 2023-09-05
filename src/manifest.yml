@@ -12,18 +12,18 @@ default_locale: en
 browser_action:
   browser_style: true
   default_icon:
-    '19': public/images/icon19.png
-    '38': public/images/icon38.png
+    '16': public/images/icon16.png
+    '32': public/images/icon32.png
   default_title: __MSG_extName__
   default_popup: popup/index.html
 background:
   page: background/index.html
+  scripts: []
 options_ui:
   page: options/index.html
   open_in_tab: true
 content_scripts:
   - js:
-      - browser.js
       - injected-web.js
       - injected.js
     matches:
@@ -41,6 +41,19 @@ permissions:
   - clipboardWrite
   - contextMenus
   - nativeMessaging
-applications:
+  - cookies
+commands:
+  _execute_browser_action: {}
+  dashboard:
+    description: __MSG_menuDashboard__
+  settings:
+    description: __MSG_labelSettings__
+  newScript:
+    description: __MSG_menuNewScript__
+
+minimum_chrome_version: '57.0'
+
+browser_specific_settings:
   gecko:
-    id: acewebextension_dev@acestream.org
+    id: '{aecec67f-0d10-4fa7-b7c7-609a2db280cf}'
+    strict_min_version: '57.0'

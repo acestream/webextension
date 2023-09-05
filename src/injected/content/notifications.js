@@ -1,22 +1,33 @@
-import { sendMessage } from '../utils';
-import bridge from './bridge';
+import bridge, { addBackgroundHandlers, addHandlers } from './bridge';
+import { sendCmd } from './util';
 
-const notifications = {};
+const notifications = createNullObj();
 
-export function onNotificationCreate(options) {
-  sendMessage({ cmd: 'Notification', data: options })
-  .then(nid => { notifications[nid] = options.id; });
-}
+addHandlers({
+  async Notification(options, realm) {
+    const nid = await sendCmd('Notification', options);
+    notifications[nid] = { id: options.id, realm };
+  },
+  RemoveNotification(id) {
+    for (const nid in notifications) {
+      if (notifications[nid].id === id) {
+        delete notifications[nid];
+        return sendCmd('RemoveNotification', nid);
+      }
+    }
+  },
+});
 
-export function onNotificationClick(nid) {
-  const id = notifications[nid];
-  if (id) bridge.post({ cmd: 'NotificationClicked', data: id });
-}
-
-export function onNotificationClose(nid) {
-  const id = notifications[nid];
-  if (id) {
-    bridge.post({ cmd: 'NotificationClosed', data: id });
-    delete notifications[nid];
-  }
-}
+addBackgroundHandlers({
+  NotificationClick(nid) {
+    const n = notifications[nid];
+    if (n) bridge.post('NotificationClicked', n.id, n.realm);
+  },
+  NotificationClose(nid) {
+    const n = notifications[nid];
+    if (n) {
+      bridge.post('NotificationClosed', n.id, n.realm);
+      delete notifications[nid];
+    }
+  },
+});

@@ -7,9 +7,9 @@
 </template>
 
 <script>
-import { i18n } from '#/common';
+import { i18n } from '@/common';
 
-const SEP = '￥￥';
+const SEP = '\x02';
 
 export default {
   props: ['i18nKey'],

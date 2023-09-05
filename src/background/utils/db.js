@@ -1,574 +1,657 @@
 import {
-  i18n, request, buffer2string, getFullUrl, isRemote, getRnd4,
-} from '#/common';
-import { objectGet, objectSet } from '#/common/object';
-import {
-  getNameURI, parseMeta, newScript, makeScriptId,
-} from './script';
-import { testScript, testBlacklist } from './tester';
-import { register } from './init';
+  compareVersion, dataUri2text, i18n, getScriptHome, isDataUri, makeDataUri,
+  getFullUrl, getScriptName, getScriptUpdateUrl, isRemote, sendCmd, trueJoin,
+  getScriptPrettyUrl, getScriptRunAt, makePause, isHttpOrHttps, noop,
+} from '@/common';
+import { INFERRED, TIMEOUT_WEEK } from '@/common/consts';
+import { deepSize, forEachEntry, forEachKey, forEachValue } from '@/common/object';
+import pluginEvents from '../plugin/events';
+import { getDefaultCustom, getNameURI, inferScriptProps, newScript, parseMeta, makeScriptId } from './script';
+import { testScript, testBlacklist, testerBatch } from './tester';
+import { preInitialize } from './init';
+import { addOwnCommands, addPublicCommands, commands } from './message';
 import patchDB from './patch-db';
 import { setOption } from './options';
-import { sendMessageOrIgnore } from './message';
-import pluginEvents from '../plugin/events';
-import getEventEmitter from './events';
+import storage, {
+  S_CACHE, S_CODE, S_REQUIRE, S_SCRIPT, S_VALUE,
+  S_CACHE_PRE, S_CODE_PRE, S_MOD_PRE, S_REQUIRE_PRE, S_SCRIPT_PRE, S_VALUE_PRE,
+} from './storage';
 
+import getEventEmitter from './events';
 export const eventEmitter = getEventEmitter();
 
-function cacheOrFetch(handle) {
-  const requests = {};
-  return function cachedHandle(url, ...args) {
-    let promise = requests[url];
-    if (!promise) {
-      promise = handle.call(this, url, ...args)
-      .catch(err => {
-        console.error(`Error fetching: ${url}`, err);
-      })
-      .then(() => {
-        delete requests[url];
-      });
-      requests[url] = promise;
-    }
-    return promise;
-  };
-}
-function ensureListArgs(handle) {
-  return function handleList(data) {
-    let items = Array.isArray(data) ? data : [data];
-    items = items.filter(Boolean);
-    if (!items.length) return Promise.resolve();
-    return handle.call(this, items);
-  };
-}
+let maxScriptId = 0;
+let maxScriptPosition = 0;
+/** @type {{ [url:string]: number }} */
+export let scriptSizes = {};
+/** @type {Object<string,VMScript[]>} */
+export const scriptMap = {};
+/** @type {VMScript[]} */
+const aliveScripts = [];
+/** @type {VMScript[]} */
+const removedScripts = [];
+/** Same order as in SIZE_TITLES and getSizes */
+export const sizesPrefixRe = RegExp(
+  `^(${S_CODE_PRE}|${S_SCRIPT_PRE}|${S_VALUE_PRE}|${S_REQUIRE_PRE}|${S_CACHE_PRE}${S_MOD_PRE})`);
 
-const store = {};
-const storage = {
-  base: {
-    prefix: '',
-    getKey(id) {
-      return `${this.prefix}${id}`;
-    },
-    getOne(id) {
-      const key = this.getKey(id);
-      return browser.storage.local.get(key).then(data => data[key]);
-    },
-    getMulti(ids, def) {
-      return browser.storage.local.get(ids.map(id => this.getKey(id)))
-      .then(data => {
-        const result = {};
-        ids.forEach(id => { result[id] = data[this.getKey(id)] || def; });
-        return result;
-      });
-    },
-    set(id, value) {
-      if (!id) return Promise.resolve();
-      return browser.storage.local.set({
-        [this.getKey(id)]: value,
-      });
-    },
-    remove(id) {
-      if (!id) return Promise.resolve();
-      return browser.storage.local.remove(this.getKey(id));
-    },
-    removeMulti(ids) {
-      return browser.storage.local.remove(ids.map(id => this.getKey(id)));
-    },
-  },
-};
-storage.script = Object.assign({}, storage.base, {
-  prefix: 'scr:',
-  dump: ensureListArgs(function dump(items) {
-    const updates = {};
-    items.forEach(item => {
-      updates[this.getKey(item.props.id)] = item;
-      store.scriptMap[item.props.id] = item;
-    });
-    return browser.storage.local.set(updates)
-    .then(() => items);
-  }),
-});
-storage.code = Object.assign({}, storage.base, {
-  prefix: 'code:',
-});
-storage.value = Object.assign({}, storage.base, {
-  prefix: 'val:',
-  dump(dict) {
-    const updates = {};
-    Object.keys(dict)
-    .forEach(id => {
-      const value = dict[id];
-      updates[this.getKey(id)] = value;
-    });
-    return browser.storage.local.set(updates);
+addPublicCommands({
+  GetScriptVer(opts) {
+    const script = getScript(opts);
+    return script
+      ? script.meta.version
+      : null;
   },
 });
-storage.require = Object.assign({}, storage.base, {
-  prefix: 'req:',
-  fetch: cacheOrFetch(function fetch(uri) {
-    return request(uri).then(({ data }) => this.set(uri, data));
-  }),
-});
-storage.cache = Object.assign({}, storage.base, {
-  prefix: 'cac:',
-  fetch: cacheOrFetch(function fetch(uri, check) {
-    return request(uri, { responseType: 'arraybuffer' })
-    .then(({ data: buffer, xhr }) => {
-      const contentType = (xhr.getResponseHeader('content-type') || '').split(';')[0];
-      const data = {
-        contentType,
-        buffer,
-        blob: options => new Blob([buffer], Object.assign({ type: contentType }, options)),
-        string: () => buffer2string(buffer),
-        base64: () => window.btoa(data.string()),
-      };
-      return (check ? Promise.resolve(check(data)) : Promise.resolve())
-      .then(() => this.set(uri, `${contentType},${data.base64()}`));
-    });
-  }),
-});
 
-register(initialize());
-
-function initialize() {
-  return browser.storage.local.get('version')
-  .then(({ version: lastVersion }) => {
-    const { version } = browser.runtime.getManifest();
-    return (lastVersion ? Promise.resolve() : patchDB())
-    .then(() => {
-      if (version !== lastVersion) return browser.storage.local.set({ version });
-    });
-  })
-  .then(() => browser.storage.local.get())
-  .then(data => {
-    const scripts = [];
-    const storeInfo = {
-      id: 0,
-      position: 0,
+addOwnCommands({
+  CheckPosition: sortScripts,
+  CheckRemove: checkRemove,
+  RemoveScripts: removeScripts,
+  /** @return {VMScript} */
+  GetScript: getScript,
+  /** @return {Promise<{ items: VMScript[], values? }>} */
+  async ExportZip({ values }) {
+    const scripts = getScripts();
+    const ids = scripts.map(getPropsId);
+    const codeMap = await storage[S_CODE].getMulti(ids);
+    return {
+      items: scripts.map(script => ({ script, code: codeMap[script.props.id] })),
+      values: values ? await storage[S_VALUE].getMulti(ids) : undefined,
     };
-    Object.keys(data).forEach(key => {
-      const value = data[key];
-      if (key.startsWith('scr:')) {
-        // {
-        //   meta,
-        //   custom,
-        //   props: { id, position, uri },
-        //   config: { enabled, shouldUpdate },
-        // }
-        scripts.push(value);
-        storeInfo.id = Math.max(storeInfo.id, getInt(objectGet(value, 'props.id')));
-        storeInfo.position = Math.max(storeInfo.position, getInt(objectGet(value, 'props.position')));
-      }
-    });
-    Object.assign(store, {
-      scripts,
-      storeInfo,
-      scriptMap: scripts.reduce((map, item) => {
-        map[item.props.id] = item;
-        return map;
-      }, {}),
-    });
-    if (process.env.DEBUG) {
-      console.log('store:', store); // eslint-disable-line no-console
+  },
+  /** @return {Promise<string>} */
+  GetScriptCode(id) {
+    return storage[S_CODE][Array.isArray(id) ? 'getMulti' : 'getOne'](id);
+  },
+  /** @return {Promise<void>} */
+  async MarkRemoved({ id, removed }) {
+    if (!removed) {
+      const script = getScriptById(id);
+      const conflict = getScript({ meta: script.meta });
+      if (conflict) throw i18n('msgNamespaceConflictRestore');
     }
-    return sortScripts();
-  });
-}
+    await updateScriptInfo(id, {
+      config: { removed: removed ? 1 : 0 },
+      props: { lastModified: Date.now() },
+    });
+    const list = removed ? aliveScripts : removedScripts;
+    const i = list.findIndex(script => script.props.id === id);
+    const [script] = list.splice(i, 1);
+    (removed ? removedScripts : aliveScripts).push(script);
+  },
+  /** @return {Promise<number>} */
+  Move({ id, offset }) {
+    const script = getScriptById(id);
+    const index = aliveScripts.indexOf(script);
+    aliveScripts.splice(index, 1);
+    aliveScripts.splice(index + offset, 0, script);
+    return normalizePosition();
+  },
+  ParseMeta: parseMetaWithErrors,
+  ParseScript: parseScript,
+  /** @return {Promise<void>} */
+  UpdateScriptInfo({ id, config, custom }) {
+    return updateScriptInfo(id, {
+      config,
+      custom,
+      props: { lastModified: Date.now() },
+    });
+  },
+  /** @return {Promise<number>} */
+  Vacuum: vacuum,
+});
 
+preInitialize.push(async () => {
+  const lastVersion = await storage.base.getOne('version');
+  const version = process.env.VM_VER;
+  if (!lastVersion) await patchDB();
+  if (version !== lastVersion) storage.base.set({ version });
+  const data = await storage.base.getMulti();
+  const uriMap = {};
+  data::forEachEntry(([key, script]) => {
+    const id = +storage[S_SCRIPT].toId(key);
+    if (id && script) {
+      const uri = getNameURI(script);
+      // Only check ID/namespace conflicts for scripts not removed
+      if (!script.config.removed) {
+        if (scriptMap[id] && scriptMap[id] !== script) {
+          // ID conflicts!
+          // Should not happen, discard duplicates.
+          return;
+        }
+        if (uriMap[uri]) {
+          // Namespace conflicts!
+          // Should not happen, discard duplicates.
+          return;
+        }
+        uriMap[uri] = script;
+      }
+      script.props = {
+        ...script.props,
+        id,
+        uri,
+      };
+      script.custom = {
+        ...getDefaultCustom(),
+        ...script.custom,
+      };
+      maxScriptId = Math.max(maxScriptId, id);
+      maxScriptPosition = Math.max(maxScriptPosition, getInt(script.props.position));
+      (script.config.removed ? removedScripts : aliveScripts).push(script);
+      // listing all known resource urls in order to remove unused mod keys
+      const {
+        meta = script.meta = {},
+      } = script;
+      if (!meta.require) meta.require = [];
+      if (!meta.resources) meta.resources = {};
+      meta.grant = [...new Set(meta.grant || [])]; // deduplicate
+    }
+  });
+  // Switch defaultInjectInto from `page` to `auto` when upgrading VM2.12.7 or older
+  if (version !== lastVersion
+  && IS_FIREFOX
+  && data.options?.defaultInjectInto === PAGE
+  && compareVersion(lastVersion, '2.12.7') <= 0) {
+    setOption('defaultInjectInto', AUTO);
+  }
+  if (process.env.DEBUG) {
+    console.info('store:', {
+      aliveScripts, removedScripts, maxScriptId, maxScriptPosition, scriptMap, scriptSizes,
+    });
+  }
+  sortScripts();
+  vacuum(data);
+});
+
+/** @return {number} */
 function getInt(val) {
   return +val || 0;
 }
 
+/** @return {?number} */
+function getPropsId(script) {
+  return script?.props.id;
+}
+
+/** @return {void} */
 function updateLastModified() {
   setOption('lastModified', Date.now());
 }
 
-export function normalizePosition() {
-  const updates = [];
-  const positionKey = 'props.position';
-  store.scripts.forEach((item, index) => {
+/** @return {Promise<boolean>} */
+export async function normalizePosition() {
+  const updates = aliveScripts.reduce((res, script, index) => {
+    const { props } = script;
     const position = index + 1;
-    if (objectGet(item, positionKey) !== position) {
-      objectSet(item, positionKey, position);
-      updates.push(item);
+    if (props.position !== position) {
+      props.position = position;
+      (res || (res = {}))[props.id] = script;
     }
-    // XXX patch v2.8.0
-    if (typeof item.custom.origInclude === 'undefined') {
-      item.custom = Object.assign({
-        origInclude: true,
-        origExclude: true,
-        origMatch: true,
-        origExcludeMatch: true,
-      }, item.custom);
-      if (!updates.includes(item)) updates.push(item);
-    }
-  });
-  store.storeInfo.position = store.scripts.length;
-  const { length } = updates;
-  if (!length) return Promise.resolve();
-  return storage.script.dump(updates)
-  .then(() => {
+    return res;
+  }, null);
+  maxScriptPosition = aliveScripts.length;
+  if (updates) {
+    await storage[S_SCRIPT].set(updates);
     updateLastModified();
-    return length;
-  });
-}
-
-export function sortScripts() {
-  store.scripts.sort((a, b) => {
-    const [pos1, pos2] = [a, b].map(item => getInt(objectGet(item, 'props.position')));
-    return pos1 - pos2;
-  });
-  return normalizePosition()
-  .then(changed => {
-    sendMessageOrIgnore({ cmd: 'ScriptsUpdated' });
-    return changed;
-  });
-}
-
-export function getScript(where) {
-  let script;
-  if (store.scripts) {
-    if (where.id) {
-      script = store.scriptMap[where.id];
-    } else {
-      const uri = where.uri || getNameURI({ meta: where.meta, id: '@@should-have-name' });
-      const predicate = item => uri === objectGet(item, 'props.uri');
-      script = store.scripts.find(predicate);
-    }
   }
-  return Promise.resolve(script);
+  return !!updates;
 }
 
+/** @return {Promise<number>} */
+export async function sortScripts() {
+  aliveScripts.sort((a, b) => getInt(a.props.position) - getInt(b.props.position));
+  const changed = await normalizePosition();
+  sendCmd('ScriptsUpdated', null);
+  return changed;
+}
+
+/** @return {?VMScript} */
+export function getScriptById(id) {
+  return scriptMap[id];
+}
+
+export function getScriptsByIdsOrAll(ids) {
+  return ids?.map(getScriptById) ?? [...aliveScripts, ...removedScripts];
+}
+
+/** @return {?VMScript} */
+export function getScript({ id, uri, meta, removed }) {
+  let script;
+  if (id) {
+    script = getScriptById(id);
+  } else {
+    if (!uri) uri = getNameURI({ meta, id: '@@should-have-name' });
+    script = (removed ? removedScripts : aliveScripts).find(({ props }) => uri === props.uri);
+  }
+  return script;
+}
+
+/** @return {VMScript[]} */
 export function getScripts() {
-  return Promise.resolve(store.scripts)
-  .then(scripts => scripts.filter(script => !script.config.removed));
+  return [...aliveScripts];
 }
 
 export function getInstalledScripts() {
+  //ASTODO: return promise?
   return new Promise(resolve => {
     const installed = [];
-    getScripts().then(scripts => {
-      if (scripts) {
-        scripts.forEach(script => {
-          installed.push(script.props.scriptId);
-        });
-      }
+    const scripts = getScripts();
+    if (scripts) {
+      scripts.forEach(script => {
+        installed.push(script.props.scriptId);
+      });
+    }
 
-      resolve(installed);
-    });
+    resolve(installed);
   });
 }
 
 export function getScriptByIds(ids) {
-  return Promise.all(ids.map(id => getScript({ id })))
-  .then(scripts => scripts.filter(Boolean));
+  //ASTODO: return promise?
+  const scripts = ids.map(id => getScript({ id }));
+  return scripts.filter(Boolean);
 }
 
-export function getScriptCode(id) {
-  return storage.code.getOne(id);
-}
-
-/**
- * @desc Load values for batch updates.
- * @param {Array} ids
- */
-export function getValueStoresByIds(ids) {
-  return storage.value.getMulti(ids);
-}
-
-/**
- * @desc Dump values for batch updates.
- * @param {Object} valueDict { id1: value1, id2: value2, ... }
- */
-export function dumpValueStores(valueDict) {
-  if (process.env.DEBUG) {
-    console.info('Update value stores', valueDict);
-  }
-  return storage.value.dump(valueDict).then(() => valueDict);
-}
-
-export function dumpValueStore(where, valueStore) {
-  return (where.id
-    ? Promise.resolve(where.id)
-    : getScript(where).then(script => objectGet(script, 'props.id')))
-  .then(id => {
-    if (id) return dumpValueStores({ [id]: valueStore });
-  });
-}
+export const CACHE_KEYS = 'cacheKeys';
+export const REQ_KEYS = 'reqKeys';
+export const VALUE_IDS = 'valueIds';
+export const PROMISE = 'promise';
+const makeEnv = () => ({
+  depsMap: {},
+  [RUN_AT]: {},
+  [SCRIPTS]: [],
+});
+const GMCLIP_RE = /^GM[_.]setClipboard$/;
+const GMVALUES_RE = /^GM[_.](listValues|([gs]et|delete)Value)$/;
+const STORAGE_ROUTES = {
+  [S_CACHE]: CACHE_KEYS,
+  [S_CODE]: IDS,
+  [S_REQUIRE]: REQ_KEYS,
+  [S_VALUE]: VALUE_IDS,
+};
+const STORAGE_ROUTES_ENTRIES = Object.entries(STORAGE_ROUTES);
+const notifiedBadScripts = new Set();
 
 /**
  * @desc Get scripts to be injected to page with specific URL.
+ * @param {string} url
+ * @param {boolean} isTop
+ * @param {Array} [errors] - omit to enable EnvDelayed mode
+ * @return {VMInjection.EnvStart|Promise<VMInjection.EnvDelayed>}
  */
-export function getScriptsByURL(url, isTop = true) {
-  const scripts = testBlacklist(url)
+export function getScriptsByURL(url, isTop, errors) {
+  testerBatch(errors || true);
+  const allScripts = testBlacklist(url)
     ? []
-    : store.scripts.filter(script => {
-      if (script.config.removed) {
-        return false;
+    : aliveScripts.filter(script => (
+      (isTop || !(script.custom.noframes ?? script.meta.noframes))
+      && testScript(url, script)
+    ));
+  testerBatch();
+  if (!allScripts[0]) return;
+  let clipboardChecked = !IS_FIREFOX;
+  const allIds = {};
+  /** @type {VMInjection.EnvStart} */
+  const envStart = makeEnv();
+  /** @type {VMInjection.EnvDelayed} */
+  const envDelayed = makeEnv();
+  for (const [areaName, listName] of STORAGE_ROUTES_ENTRIES) {
+    envStart[areaName] = {}; envDelayed[areaName] = {};
+    envStart[listName] = []; envDelayed[listName] = [];
+  }
+  allScripts.forEach((script) => {
+    const { id } = script.props;
+    if (!(allIds[id] = +!!script.config.enabled)) {
+      return;
+    }
+    const { meta, custom } = script;
+    const { pathMap = buildPathMap(script) } = custom;
+    const runAt = getScriptRunAt(script);
+    const env = runAt === 'start' || runAt === 'body' ? envStart : envDelayed;
+    const { depsMap } = env;
+    env[IDS].push(id);
+    env[RUN_AT][id] = runAt;
+    if (meta.grant.some(GMVALUES_RE.test, GMVALUES_RE)) {
+      env[VALUE_IDS].push(id);
+    }
+    if (!clipboardChecked && meta.grant.some(GMCLIP_RE.test, GMCLIP_RE)) {
+      clipboardChecked = envStart.clipFF = true;
+    }
+    for (const [list, name, dataUriDecoder] of [
+      [meta.require, S_REQUIRE, dataUri2text],
+      [Object.values(meta.resources), S_CACHE],
+    ]) {
+      const listName = STORAGE_ROUTES[name];
+      const envCheck = name === S_CACHE ? envStart : env; // envStart cache is reused in injected
+      for (let url of list) {
+        url = pathMap[url] || url;
+        if (url) {
+          if (isDataUri(url)) {
+            if (dataUriDecoder) {
+              env[name][url] = dataUriDecoder(url);
+            }
+          } else if (!envCheck[listName].includes(url)) {
+            env[listName].push(url);
+            (depsMap[url] || (depsMap[url] = [])).push(id);
+          }
+        }
       }
-      if (!testScript(url, script)) {
-        return false;
-      }
-      if ('noframes' in script.meta && !isTop) {
-        return false;
-      }
-      return true;
-    });
+    }
+    env[SCRIPTS].push(script);
+  });
+  if (!errors) {
+    envDelayed[PROMISE] = readEnvironmentData(envDelayed);
+    return envDelayed;
+  }
+  if (envStart[IDS].length) {
+    envStart[PROMISE] = readEnvironmentData(envStart);
+  }
+  if (envDelayed[IDS].length) {
+    envDelayed[PROMISE] = makePause().then(readEnvironmentData.bind(null, envDelayed));
+  }
+  return Object.assign(envStart, { allIds, [MORE]: envDelayed });
+}
 
-  const reqKeys = {};
-  const cacheKeys = {};
-  scripts.forEach(script => {
-    if (script.config.enabled) {
-      if (!script.custom.pathMap) buildPathMap(script);
-      const { pathMap } = script.custom;
-      script.meta.require.forEach(key => {
-        reqKeys[pathMap[key] || key] = 1;
-      });
-      Object.values(script.meta.resources).forEach(key => {
-        cacheKeys[pathMap[key] || key] = 1;
-      });
+async function readEnvironmentData(env) {
+  const keys = [];
+  for (const [area, listName] of STORAGE_ROUTES_ENTRIES) {
+    for (const id of env[listName]) {
+      keys.push(storage[area].toKey(id));
+    }
+  }
+  const data = await storage.base.getMulti(keys);
+  const badScripts = new Set();
+  for (const [area, listName] of STORAGE_ROUTES_ENTRIES) {
+    for (const id of env[listName]) {
+      let val = data[storage[area].toKey(id)];
+      if (!val && area === S_VALUE) val = {};
+      env[area][id] = val;
+      if (val == null) {
+        if (area === S_CODE) {
+          badScripts.add(id);
+        } else {
+          env.depsMap[id]?.forEach(scriptId => badScripts.add(scriptId));
+        }
+      }
+    }
+  }
+  if (badScripts.size) {
+    reportBadScripts(badScripts);
+  }
+  env[PROMISE] = null; // indicating it's been processed
+  return env;
+}
+
+/** @param {Set<number>} ids */
+function reportBadScripts(ids) {
+  const unnotifiedIds = [];
+  const title = i18n('msgMissingResources');
+  let toLog = i18n('msgReinstallScripts');
+  let toNotify = toLog;
+  let str;
+  ids.forEach(id => {
+    str = `\n#${id}: ${getScriptName(getScriptById(id))}`;
+    toLog += str;
+    if (!notifiedBadScripts.has(id)) {
+      notifiedBadScripts.add(id);
+      unnotifiedIds.push(id);
+      toNotify += str;
     }
   });
-  const enabledScripts = scripts
-  .filter(script => script.config.enabled);
-  const gmValues = {
-    GM_getValue: 1,
-    GM_setValue: 1,
-    GM_listValues: 1,
-    GM_deleteValue: 1,
-  };
-  const scriptsWithValue = enabledScripts
-  .filter(script => {
-    const grant = objectGet(script, 'meta.grant');
-    return grant && grant.some(gm => gmValues[gm]);
+  console.error(`${title} ${toLog}`);
+  if (unnotifiedIds.length) {
+    notifyToOpenScripts(title, toNotify, unnotifiedIds);
+  }
+}
+
+export function notifyToOpenScripts(title, text, ids) {
+  // FF doesn't show notifications of type:'list' so we'll use `text` everywhere
+  commands.Notification({ title, text }, undefined, isClick => {
+    if (isClick) ids.forEach(id => commands.OpenEditor(id));
   });
-  return Promise.all([
-    storage.require.getMulti(Object.keys(reqKeys)),
-    storage.cache.getMulti(Object.keys(cacheKeys)),
-    storage.value.getMulti(scriptsWithValue.map(script => script.props.id), {}),
-    storage.code.getMulti(enabledScripts.map(script => script.props.id)),
-  ])
-  .then(([require, cache, values, code]) => ({
-    scripts,
-    require,
-    cache,
-    values,
-    code,
-  }));
 }
 
 /**
  * @desc Get data for dashboard.
+ * @return {Promise<{ scripts: VMScript[], cache: Object }>}
  */
-export function getData() {
-  const cacheKeys = {};
-  const { scripts } = store;
-  scripts.forEach(script => {
-    const icon = objectGet(script, 'meta.icon');
-    if (isRemote(icon)) {
-      const pathMap = objectGet(script, 'custom.pathMap') || {};
-      const fullUrl = pathMap[icon] || icon;
-      cacheKeys[fullUrl] = 1;
+export async function getData({ ids, sizes }) {
+  const isPopup = ids && !sizes;
+  const scripts = isPopup // the popup may show a subsequently removed script
+    ? ids.map(id => scriptMap[id] || removedScripts.find(r => r.props.id === id)).filter(Boolean)
+    : getScriptsByIdsOrAll(ids);
+  scripts.forEach(inferScriptProps);
+  return {
+    scripts,
+    cache: await getIconCache(scripts),
+    sizes: sizes && getSizes(ids),
+  };
+}
+
+/**
+ * @param {VMScript[]} scripts
+ * @return {Promise<{}>}
+ */
+async function getIconCache(scripts) {
+  const urls = [];
+  for (const { custom, meta: { icon } } of scripts) {
+    if (isHttpOrHttps(icon)) {
+      urls.push(custom.pathMap[icon] || icon);
     }
-  });
-  return storage.cache.getMulti(Object.keys(cacheKeys))
-  .then(cache => ({ scripts, cache }));
-}
-
-export function checkRemove() {
-  const toRemove = store.scripts.filter(script => script.config.removed);
-  if (toRemove.length) {
-    store.scripts = store.scripts.filter(script => !script.config.removed);
-    const ids = toRemove.map(script => script.props.id);
-    storage.script.removeMulti(ids);
-    storage.code.removeMulti(ids);
-    storage.value.removeMulti(ids);
   }
-  return Promise.resolve(toRemove.length);
+  // Getting a data uri for own icon to load it instantly in Chrome when there are many images
+  const ownPath = `${ICON_PREFIX}38.png`;
+  const [res, ownUri] = await Promise.all([
+    storage[S_CACHE].getMulti(urls, makeDataUri),
+    commands.GetImageData(ownPath).catch(noop),
+  ]);
+  if (ownUri) res[ownPath] = ownUri;
+  return res;
 }
 
-export function removeScript(id) {
-  let scriptId = null;
-  const i = store.scripts.findIndex(item => id === objectGet(item, 'props.id'));
-  if (i >= 0) {
-    scriptId = store.scripts[i].props.scriptId;
-    store.scripts.splice(i, 1);
-    storage.script.remove(id);
-    storage.code.remove(id);
-    storage.value.remove(id);
+/**
+ * @param {number[]} [ids]
+ * @return {number[][]}
+ */
+export function getSizes(ids) {
+  const scripts = getScriptsByIdsOrAll(ids);
+  return scripts.map(({
+    meta,
+    custom: { pathMap = {} },
+    props: { id },
+  }, i) => [
+    // Same order as SIZE_TITLES and sizesPrefixRe
+    scriptSizes[S_CODE_PRE + id] || 0,
+    deepSize(scripts[i]),
+    scriptSizes[S_VALUE_PRE + id] || 0,
+    meta.require.reduce(getSizeForRequires, { len: 0, pathMap }).len,
+    Object.values(meta.resources).reduce(getSizeForResources, { len: 0, pathMap }).len,
+  ]);
+}
+
+function getSizeForRequires(accum, url) {
+  accum.len += (scriptSizes[S_REQUIRE_PRE + (accum.pathMap[url] || url)] || 0) + url.length;
+  return accum;
+}
+
+function getSizeForResources(accum, url) {
+  accum.len += (scriptSizes[S_CACHE_PRE + (accum.pathMap[url] || url)] || 0) + url.length;
+  return accum;
+}
+
+export async function removeScripts(ids) {
+  const idsToRemove = [];
+  // Only those marked as removed can be removed permanently
+  const newLen = 1 + removedScripts.reduce((iAlive, script, i) => {
+    const id = getPropsId(script);
+    if (ids.includes(id)) {
+
+      //ASTODO: check how this works
+      const scriptId = script?.props.scriptId;
+      if (scriptId) {
+        eventEmitter.fire('scriptRemoved', scriptId);
+      }
+
+      idsToRemove.push(S_CODE_PRE + id, S_SCRIPT_PRE + id, S_VALUE_PRE + id);
+      delete scriptMap[id];
+    } else if (++iAlive < i) removedScripts[iAlive] = script;
+    return iAlive;
+  }, -1);
+  if (removedScripts.length !== newLen) {
+    removedScripts.length = newLen; // live scripts were moved to the beginning
+    await storage.base.remove(idsToRemove);
+    return sendCmd('RemoveScripts', ids);
   }
-
-  if (scriptId) {
-    eventEmitter.fire('scriptRemoved', scriptId);
-  }
-
-  sendMessageOrIgnore({
-    cmd: 'RemoveScript',
-    data: id,
-  });
-  return Promise.resolve();
 }
 
-export function moveScript(id, offset) {
-  const index = store.scripts.findIndex(item => id === objectGet(item, 'props.id'));
-  const step = offset > 0 ? 1 : -1;
-  const indexStart = index;
-  const indexEnd = index + offset;
-  const offsetI = Math.min(indexStart, indexEnd);
-  const offsetJ = Math.max(indexStart, indexEnd);
-  const updated = store.scripts.slice(offsetI, offsetJ + 1);
-  if (step > 0) {
-    updated.push(updated.shift());
-  } else {
-    updated.unshift(updated.pop());
-  }
-  store.scripts = [
-    ...store.scripts.slice(0, offsetI),
-    ...updated,
-    ...store.scripts.slice(offsetJ + 1),
-  ];
-  return normalizePosition();
+export function checkRemove({ force } = {}) {
+  const now = Date.now();
+  const ids = removedScripts.filter(script => {
+    const { lastModified } = script.props;
+    return script.config.removed && (force || now - getInt(lastModified) > TIMEOUT_WEEK);
+  }).map(script => script.props.id);
+  return removeScripts(ids);
 }
 
-function getUUID(id) {
-  const idSec = (id + 0x10bde6a2).toString(16).slice(-8);
-  return `${idSec}-${getRnd4()}-${getRnd4()}-${getRnd4()}-${getRnd4()}${getRnd4()}${getRnd4()}`;
+/** @return {string} */
+function getUUID() {
+  const rnd = new Uint16Array(8);
+  window.crypto.getRandomValues(rnd);
+  // xxxxxxxx-xxxx-Mxxx-Nxxx-xxxxxxxxxxxx
+  // We're using UUIDv4 variant 1 so N=4 and M=8
+  // See format_uuid_v3or5 in https://tools.ietf.org/rfc/rfc4122.txt
+  rnd[3] = rnd[3] & 0x0FFF | 0x4000; // eslint-disable-line no-bitwise
+  rnd[4] = rnd[4] & 0x3FFF | 0x8000; // eslint-disable-line no-bitwise
+  return '01-2-3-4-567'.replace(/\d/g, i => (rnd[i] + 0x1_0000).toString(16).slice(-4));
 }
 
-function saveScript(script, code) {
+/**
+ * @param {VMScript} script
+ * @param {string} code
+ * @return {Promise<VMScript[]>}
+ */
+async function saveScript(script, code) {
   const config = script.config || {};
   config.enabled = getInt(config.enabled);
   config.shouldUpdate = getInt(config.shouldUpdate);
   const props = script.props || {};
   let oldScript;
   if (!props.id) {
-    store.storeInfo.id += 1;
-    props.id = store.storeInfo.id;
+    maxScriptId += 1;
+    props.id = maxScriptId;
   } else {
-    oldScript = store.scriptMap[props.id];
+    oldScript = scriptMap[props.id];
   }
   props.uri = getNameURI(script);
   props.scriptId = makeScriptId(script);
-  props.uuid = props.uuid || getUUID(props.id);
+  props.uuid = props.uuid || crypto.randomUUID?.() || getUUID();
   // Do not allow script with same name and namespace
-  if (store.scripts.some(item => {
-    const itemProps = item.props || {};
-    return props.id !== itemProps.id && props.uri === itemProps.uri;
-  })) {
+  if (aliveScripts.some(({ props: { id, uri } = {} }) => props.id !== id && props.uri === uri)) {
     throw i18n('msgNamespaceConflict');
   }
   if (oldScript) {
-    script.config = Object.assign({}, oldScript.config, config);
-    script.props = Object.assign({}, oldScript.props, props);
-    const index = store.scripts.indexOf(oldScript);
-    store.scripts[index] = script;
+    script.config = { ...oldScript.config, ...config };
+    script.props = { ...oldScript.props, ...props };
+    const index = aliveScripts.indexOf(oldScript);
+    aliveScripts[index] = script;
   } else {
     if (!props.position) {
-      store.storeInfo.position += 1;
-      props.position = store.storeInfo.position;
-    } else if (store.storeInfo.position < props.position) {
-      store.storeInfo.position = props.position;
+      maxScriptPosition += 1;
+      props.position = maxScriptPosition;
+    } else if (maxScriptPosition < props.position) {
+      maxScriptPosition = props.position;
     }
     script.config = config;
     script.props = props;
-    store.scripts.push(script);
-  }
-  return Promise.all([
-    storage.script.dump(script),
-    storage.code.set(props.id, code),
-  ]).then(() => {
+    aliveScripts.push(script);
     eventEmitter.fire('scriptSaved', props.scriptId);
+  }
+  return storage.base.set({
+    [storage[S_SCRIPT].toKey(props.id)]: script,
+    [storage[S_CODE].toKey(props.id)]: code,
   });
 }
 
-export function updateScriptInfo(id, data) {
-  const script = store.scriptMap[id];
-  if (!script) return Promise.reject();
-  script.props = Object.assign({}, script.props, data.props);
-  script.config = Object.assign({}, script.config, data.config);
+/** @return {Promise<void>} */
+export async function updateScriptInfo(id, data) {
+  const script = scriptMap[id];
+  if (!script) throw null;
+  script.props = { ...script.props, ...data.props };
+  script.config = { ...script.config, ...data.config };
+  script.custom = { ...script.custom, ...data.custom };
   eventEmitter.fire('scriptUpdated', script.props.scriptId);
-  // script.custom = Object.assign({}, script.custom, data.custom);
-  return storage.script.dump(script);
+  await storage[S_SCRIPT].setOne(id, script);
+  return sendCmd('UpdateScript', { where: { id }, update: script });
 }
 
-export function getExportData(ids, withValues) {
-  const availableIds = ids.filter(id => {
-    const script = store.scriptMap[id];
-    return script && !script.config.removed;
-  });
-  return Promise.all([
-    Promise.all(availableIds.map(id => getScript({ id }))),
-    storage.code.getMulti(availableIds),
-  ])
-  .then(([scripts, codeMap]) => {
-    const data = {};
-    data.items = scripts.map(script => ({ script, code: codeMap[script.props.id] }));
-    if (withValues) {
-      return storage.value.getMulti(ids)
-      .then(values => {
-        data.values = values;
-        return data;
-      });
-    }
-    return data;
-  });
+/**
+ * @param {string | {code:string, custom:VMScript.Custom}} src
+ * @return {{ meta: VMScript.Meta, errors: string[] }}
+ */
+function parseMetaWithErrors(src) {
+  const isObj = isObject(src);
+  const custom = isObj && src.custom || getDefaultCustom();
+  const meta = parseMeta(isObj ? src.code : src);
+  const errors = [];
+  testerBatch(errors);
+  testScript('', { meta, custom });
+  testerBatch();
+  return {
+    meta,
+    errors: errors.length ? errors : null,
+  };
 }
 
-const CMD_UPDATE = 'UpdateScript';
-const CMD_ADD = 'AddScript';
-export function parseScript(data) {
-  const {
-    id, code, message, isNew, config, custom, props, update,
-  } = data;
-  const meta = parseMeta(code);
-  if (!meta.name) return Promise.reject(i18n('msgInvalidScript'));
+/** @return {Promise<{ isNew?, update, where }>} */
+export async function parseScript(src) {
+  const { meta, errors } = parseMetaWithErrors(src);
+  if (!meta.name) throw `${i18n('msgInvalidScript')}\n${i18n('labelNoName')}`;
   const result = {
-    cmd: CMD_UPDATE,
-    data: {
-      update: {
-        message: message == null ? i18n('msgUpdated') : message || '',
-      },
+    errors,
+    update: {
+      message: src.message == null ? i18n('msgUpdated') : src.message || '',
     },
   };
-  return getScript({ id, meta })
-  .then(oldScript => {
-    let script;
-    if (oldScript) {
-      if (isNew) throw i18n('msgNamespaceConflict');
-      script = Object.assign({}, oldScript);
-    } else {
-      ({ script } = newScript());
-      result.cmd = CMD_ADD;
-      result.data.isNew = true;
-      result.data.update.message = i18n('msgInstalled');
-    }
-    script.config = Object.assign({}, script.config, config, {
-      removed: 0, // force reset `removed` since this is an installation
+  let script;
+  const oldScript = getScript({ id: src.id, meta });
+  if (oldScript) {
+    if (src.isNew) throw i18n('msgNamespaceConflict');
+    script = { ...oldScript };
+    delete script[INFERRED];
+  } else {
+    ({ script } = newScript());
+    result.isNew = true;
+    result.update.message = i18n('msgInstalled');
+  }
+  // Overwriting inner data by `src`, deleting keys for which `src` specifies `null`
+  for (const key of ['config', 'custom', 'props']) {
+    let dst = script[key];
+    if (!isObject(dst)) dst = script[key] = {};
+    if (key === 'props') dst.lastModified = dst.lastUpdated = Date.now();
+    src[key]::forEachEntry(([srcKey, srcVal]) => {
+      if (srcVal == null) delete dst[srcKey];
+      else dst[srcKey] = srcVal;
     });
-    script.custom = Object.assign({}, script.custom, custom);
-    script.props = Object.assign({}, script.props, {
-      lastModified: Date.now(),
-      lastUpdated: Date.now(),
-    }, props);
-    script.meta = meta;
-    if (!meta.homepageURL && !script.custom.homepageURL && isRemote(data.from)) {
-      script.custom.homepageURL = data.from;
-    }
-    if (isRemote(data.url)) script.custom.lastInstallURL = data.url;
-    const position = +data.position;
-    if (position) objectSet(script, 'props.position', position);
-    buildPathMap(script, data.url);
-    return saveScript(script, code).then(() => script);
-  })
-  .then(script => {
-    fetchScriptResources(script, data);
-    Object.assign(result.data.update, script, update);
-    result.data.where = { id: script.props.id };
-    sendMessageOrIgnore(result);
-    pluginEvents.emit('scriptChanged', result.data);
-    return result;
-  });
+  }
+  script.config.removed = 0; // force-resetting `removed` since this is an installation
+  script.meta = meta;
+  if (!getScriptHome(script) && isRemote(src.from)) {
+    script.custom.homepageURL = src.from;
+  }
+  if (isRemote(src.url)) script.custom.lastInstallURL = src.url;
+  if (src.position) script.props.position = +src.position;
+  if (!src.update) storage.mod.remove(getScriptUpdateUrl(script, true) || []);
+  buildPathMap(script, src.url);
+  await saveScript(script, src.code);
+  fetchResources(script, src);
+  Object.assign(result.update, script, src.update);
+  result.where = { id: script.props.id };
+  sendCmd('UpdateScript', result);
+  pluginEvents.emit('scriptChanged', result);
+  return result;
 }
 
+/** @return {Object} */
 function buildPathMap(script, base) {
   const { meta } = script;
   const baseUrl = base || script.custom.lastInstallURL;
@@ -587,106 +670,154 @@ function buildPathMap(script, base) {
   return pathMap;
 }
 
-function fetchScriptResources(script, cache) {
-  const { meta, custom: { pathMap } } = script;
-  // @require
-  meta.require.forEach(key => {
-    const fullUrl = pathMap[key] || key;
-    const cached = objectGet(cache, ['require', fullUrl]);
-    if (cached) {
-      storage.require.set(fullUrl, cached);
-    } else {
-      storage.require.fetch(fullUrl);
+/** @return {Promise<?string>} resolves to error text if `resourceCache` is absent */
+export async function fetchResources(script, resourceCache, reqOptions) {
+  const { custom: { pathMap }, meta } = script;
+  const snatch = (url, type, validator) => {
+    if (!url || isDataUri(url)) return;
+    url = pathMap[url] || url;
+    const contents = resourceCache?.[type]?.[url];
+    return contents != null && !validator
+      ? storage[type].setOne(url, contents) && null
+      : storage[type].fetch(url, reqOptions, validator).catch(err => err);
+  };
+  const errors = await Promise.all([
+    ...meta.require.map(url => snatch(url, S_REQUIRE)),
+    ...Object.values(meta.resources).map(url => snatch(url, S_CACHE)),
+    isRemote(meta.icon) && snatch(meta.icon, S_CACHE, validateImage),
+  ]);
+  if (!resourceCache?.ignoreDepsErrors) {
+    const error = errors.map(formatHttpError)::trueJoin('\n');
+    if (error) {
+      const message = i18n('msgErrorFetchingResource');
+      sendCmd('UpdateScript', {
+        update: { error, message },
+        where: { id: script.props.id },
+      });
+      return `${message}\n${error}`;
     }
-  });
-  // @resource
-  Object.values(meta.resources).forEach(url => {
-    const fullUrl = pathMap[url] || url;
-    const cached = objectGet(cache, ['resources', fullUrl]);
-    if (cached) {
-      storage.cache.set(fullUrl, cached);
-    } else {
-      storage.cache.fetch(fullUrl);
-    }
-  });
-  // @icon
-  if (isRemote(meta.icon)) {
-    const fullUrl = pathMap[meta.icon] || meta.icon;
-    storage.cache.fetch(fullUrl, ({ blob: getBlob }) => new Promise((resolve, reject) => {
-      const blob = getBlob();
-      const url = URL.createObjectURL(blob);
-      const image = new Image();
-      const free = () => URL.revokeObjectURL(url);
-      image.onload = () => {
-        free();
-        resolve();
-      };
-      image.onerror = () => {
-        free();
-        reject({ type: 'IMAGE_ERROR', url });
-      };
-      image.src = url;
-    }));
   }
 }
 
-export function vacuum() {
-  const valueKeys = {};
-  const cacheKeys = {};
-  const requireKeys = {};
-  const codeKeys = {};
-  const mappings = [
-    [storage.value, valueKeys],
-    [storage.cache, cacheKeys],
-    [storage.require, requireKeys],
-    [storage.code, codeKeys],
-  ];
-  return browser.storage.local.get()
-  .then(data => {
-    Object.keys(data).forEach(key => {
-      mappings.some(([substore, map]) => {
-        const { prefix } = substore;
-        if (key.startsWith(prefix)) {
-          // -1 for untouched, 1 for touched, 2 for missing
-          map[key.slice(prefix.length)] = -1;
-          return true;
-        }
-        return false;
-      });
-    });
-    const touch = (obj, key) => {
-      if (obj[key] < 0) obj[key] = 1;
-      else if (!obj[key]) obj[key] = 2;
+/** @return {Promise<void>} resolves on success, rejects on error */
+function validateImage(url, buf, type) {
+  return new Promise((resolve, reject) => {
+    const blobUrl = URL.createObjectURL(new Blob([buf], { type }));
+    const onDone = (e) => {
+      URL.revokeObjectURL(blobUrl);
+      if (e.type === 'load') resolve();
+      else reject(`IMAGE_ERROR: ${url}`);
     };
-    store.scripts.forEach(script => {
-      const { id } = script.props;
-      touch(codeKeys, id);
-      touch(valueKeys, id);
-      if (!script.custom.pathMap) buildPathMap(script);
-      const { pathMap } = script.custom;
-      script.meta.require.forEach(url => {
-        touch(requireKeys, pathMap[url] || url);
-      });
-      Object.values(script.meta.resources).forEach(url => {
-        touch(cacheKeys, pathMap[url] || url);
-      });
-      const { icon } = script.meta;
-      if (isRemote(icon)) {
-        const fullUrl = pathMap[icon] || icon;
-        touch(cacheKeys, fullUrl);
-      }
-    });
-    mappings.forEach(([substore, map]) => {
-      Object.keys(map).forEach(key => {
-        const value = map[key];
-        if (value < 0) {
-          // redundant value
-          substore.remove(key);
-        } else if (value === 2 && substore.fetch) {
-          // missing resource
-          substore.fetch(key);
-        }
-      });
-    });
+    const image = new Image();
+    image.onload = onDone;
+    image.onerror = onDone;
+    image.src = blobUrl;
   });
+}
+
+function formatHttpError(e) {
+  return e && [e.status && `HTTP${e.status}`, e.url]::trueJoin(' ') || e;
+}
+
+let _vacuuming;
+/**
+ * @param {Object} [data]
+ * @return {Promise<{errors:string[], fixes:number}>}
+ */
+export async function vacuum(data) {
+  if (_vacuuming) return _vacuuming;
+  let resolveSelf;
+  _vacuuming = new Promise(r => { resolveSelf = r; });
+  const noFetch = data && [];
+  const sizes = {};
+  const result = {};
+  const toFetch = [];
+  const keysToRemove = [];
+  /** -1=untouched, 1=touched, 2(+scriptId)=missing */
+  const status = {};
+  const prefixRe = RegExp(`^(${[
+    S_VALUE_PRE,
+    S_CACHE_PRE,
+    S_REQUIRE_PRE,
+    S_CODE_PRE,
+    S_MOD_PRE,
+  ].join('|')})`);
+  const prefixIgnoreMissing = [
+    S_VALUE_PRE,
+    S_MOD_PRE,
+  ];
+  const downloadUrls = {};
+  const touch = (prefix, id, scriptId, pathMap) => {
+    if (!id || pathMap && isDataUri(id)) {
+      return 0;
+    }
+    const key = prefix + (pathMap?.[id] || id);
+    const val = status[key];
+    if (val < 0) {
+      status[key] = 1;
+      if (id !== scriptId) {
+        status[S_MOD_PRE + id] = 1;
+      }
+      if (prefix !== S_MOD_PRE) {
+        sizes[key] = deepSize(data[key]) + (prefix === S_VALUE_PRE ? 0 : key.length);
+      }
+    } else if (!val && !prefixIgnoreMissing.includes(prefix)) {
+      status[key] = 2 + scriptId;
+    }
+  };
+  if (!data) data = await storage.base.getMulti();
+  data::forEachKey((key) => {
+    if (prefixRe.test(key)) {
+      status[key] = -1;
+    }
+  });
+  scriptSizes = sizes;
+  getScriptsByIdsOrAll().forEach((script) => {
+    const { meta, props } = script;
+    const { icon } = meta;
+    const { id } = props;
+    const pathMap = script.custom.pathMap || buildPathMap(script);
+    const updUrls = getScriptUpdateUrl(script, true);
+    if (updUrls) {
+      updUrls.forEach(url => touch(S_MOD_PRE, url, id));
+      downloadUrls[id] = updUrls[0];
+    }
+    touch(S_CODE_PRE, id, id);
+    touch(S_VALUE_PRE, id, id);
+    meta.require.forEach(url => touch(S_REQUIRE_PRE, url, id, pathMap));
+    meta.resources::forEachValue(url => touch(S_CACHE_PRE, url, id, pathMap));
+    if (isRemote(icon)) touch(S_CACHE_PRE, icon, id, pathMap);
+  });
+  status::forEachEntry(([key, value]) => {
+    if (value < 0) {
+      // Removing redundant value
+      keysToRemove.push(key);
+    } else if (value >= 2) {
+      // Downloading the missing code or resource
+      const area = storage.forKey(key);
+      const id = area.toId(key);
+      const url = area.name === S_CODE ? downloadUrls[id] : id;
+      if (noFetch) {
+        noFetch.push(url || +id && getScriptPrettyUrl(getScriptById(id)) || key);
+      } else if (url && area.fetch) {
+        keysToRemove.push(S_MOD_PRE + url);
+        toFetch.push(area.fetch(url).catch(err => `${
+          getScriptName(getScriptById(+id || value - 2))
+        }: ${
+          formatHttpError(err)
+        }`));
+      }
+    }
+  });
+  if (keysToRemove.length) {
+    await storage.base.remove(keysToRemove); // Removing `mod` before fetching
+    result.errors = (await Promise.all(toFetch)).filter(Boolean);
+  }
+  if (noFetch && noFetch.length) {
+    console.warn('Missing required resources. Try vacuuming database in options.', noFetch);
+  }
+  _vacuuming = null;
+  result.fixes = toFetch.length + keysToRemove.length;
+  resolveSelf(result);
+  return result;
 }

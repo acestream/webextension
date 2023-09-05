@@ -1,30 +1,37 @@
-anchorAuthor:
-  description: Author shown on about tab.
+buttonApply:
+  description: Apply button on dialog that applies changes without closing the dialog.
   message: ''
-anchorTranslator:
-  description: Translator shown on about tab.
-  message: >-
-    <a
-    href="https://www.transifex.com/user/profile/100%E3%81%AE%E4%BA%BA/">100の人</a>,
-    Takute, <a href="https://github.com/ScrachBuild">ScratchBuild</a>
-buttonAllNone:
-  description: Button to select all scripts or none.
-  message: すべて選択 / 解除
 buttonCancel:
   description: Cancel button on dialog.
   message: キャンセル
+buttonCheckForUpdates:
+  description: Button to check a script for updates.
+  message: 更新を確認
 buttonClose:
   description: Button to close window.
-  message: キャンセル
+  message: 閉じる
 buttonConfirmInstallation:
   description: Button to confirm installation of a script.
   message: インストール
+buttonConfirmReinstallation:
+  description: Button to confirm re-installation when the script is already installed.
+  message: 再インストール
 buttonDisable:
   description: Button to disable a script.
   message: 無効化
+buttonDownloadThemes:
+  description: Button in Violentmonkey settings for editor.
+  message: ''
+  touched: false
 buttonEdit:
   description: Button to edit a script.
   message: 編集
+buttonEditClickHint:
+  description: Tooltip for the Edit button in popup.
+  message: スクリプト名を右クリック、 [Ctrl] キーを押しながらクリック、ホイールでクリックすることもできます。
+buttonEmptyRecycleBin:
+  description: Button to empty the recycle bin.
+  message: 今すぐゴミ箱を空にする
 buttonEnable:
   description: Button to enable a script.
   message: 有効化
@@ -34,6 +41,7 @@ buttonExportData:
 buttonFilter:
   description: Button to show filters menu.
   message: 条件指定
+  touched: false
 buttonHome:
   description: Button to open homepage.
   message: ホームページ
@@ -46,12 +54,16 @@ buttonInstallFromURL:
 buttonInstallOptions:
   description: Button to show options of installation confirm page.
   message: オプション
+  touched: false
 buttonNew:
   description: Button to create a new script.
   message: 新規作成
 buttonOK:
   description: OK button on dialog.
   message: OK
+buttonRecycleBin:
+  description: Button to list scripts in recycle bin.
+  message: ゴミ箱
 buttonRemove:
   description: Button to remove a script.
   message: 削除
@@ -63,28 +75,29 @@ buttonReplaceAll:
   message: すべて置換
 buttonReset:
   description: Button to reset to default values.
-  message: ''
+  message: リセット
+buttonRestore:
+  description: Button to restore a removed script.
+  message: 復元
 buttonSave:
   description: Button to save modifications of a script.
-  message: 保存
-buttonSaveBlacklist:
-  description: Button to save global blacklist.
   message: 保存
 buttonSaveClose:
   description: Button to save modifications of a script and then close the editing page.
   message: 保存して閉じる
-buttonSaveCustomCSS:
-  description: Label for button to save custom CSS.
-  message: 保存
+buttonShowEditorState:
+  description: Button to show the list of currently used CodeMirror options.
+  message: エディタの設定を表示
 buttonSupport:
   description: Button to open support page.
   message: サポートページ
 buttonUndo:
   description: Button to undo removement of a script.
-  message: 戻す
+  message: 元に戻す
+  touched: false
 buttonUpdate:
-  description: Check a script for updates.
-  message: 更新を確認
+  description: Button to update a script.
+  message: ''
 buttonUpdateAll:
   description: Check all scripts for updates.
   message: すべての更新を確認
@@ -108,12 +121,38 @@ descBlacklist:
 descCustomCSS:
   description: Description of custom CSS section.
   message: オプションページ、およびスクリプトのインストールページ用のカスタムCSSです。この項目が何であるか把握していない場合は、編集しないようお願いします。
+descEditorOptions:
+  description: Description of editor options JSON section.
+  message: >-
+    CodeMirrorやアドオンのカスタムオプションとして、JSONオブジェクトを <code>{"indentUnit":2,
+    "smartIndent":true}</code> の様に指定します。 いくつかのオプションは Violentmonkey
+    では動作しない可能性があります。 完全なリストは <a
+    href="https://codemirror.net/doc/manual.html#config" target="_blank"
+    rel="noopener noreferrer">こちら</a> を参照してください。
+editHelpDocumention:
+  description: Label in the editor help tab for the documentation link.
+  message: 'ユーザースクリプトのメタデータブロックと <code>GM</code> API に関するドキュメント:'
+editHelpKeyboard:
+  description: Label in the editor help tab for the keyboard shortcuts.
+  message: キーボード ショートカット
+editHowToHint:
+  description: The text of the how-to link in the editor header.
+  message: 別のエディタを使用しますか？
 editLabelMeta:
   description: Metadata section in settings tab of script editor.
   message: カスタムメタデータ
 editLabelSettings:
   description: Settings section in settings tab of script editor.
   message: スクリプト別の設定
+editLongLine:
+  description: Shown in the editor in lines that were cut due to being too long
+  message: 行が長すぎます
+editLongLineTooltip:
+  description: Tooltip shown in the editor in lines that were cut due to being too long
+  message: |-
+    この行は長すぎるため、編集時の遅延を避けるためにテキストが折りたたまれています。
+    次のような詳細設定で制限を調整できます。
+    "maxDisplayLength": 20000
 editNavCode:
   description: Label of code tab in script editor.
   message: コード
@@ -123,27 +162,71 @@ editNavSettings:
 editNavValues:
   description: Label of values tab in script editor.
   message: 値
-editValueCancel:
-  description: Button to cancel modification of a script value.
-  message: キャンセル
-editValueSave:
-  description: Button to save modification of a script value.
-  message: 保存
+editValueAll:
+  description: Button to show/edit the entire script value storage.
+  message: すべて
+  touched: false
+editValueAllHint:
+  description: Tooltip for the 'all' button.
+  message: スクリプトの値の保存全体を表示／編集する
 extDescription:
-  description: Description for this extension.
-  message: ブラウザでユーザースクリプトを利用できるようにします。
+  description: Description for this extension, will be displayed in web store
+  message: 多くのブラウザをサポートする、オープンソースの UserScript マネージャー
 extName:
   description: Name of this extension.
-  message: Ace Script
+  message: Violentmonkey
+failureReasonBlacklisted:
+  description: Shown for blacklisted URLs (in the extension icon tooltip, in the popup)
+  message: 設定によりブロックリストに登録されています
+failureReasonNoninjectable:
+  description: >-
+    Shown for URLs that cannot be processed (same places as
+    failureBlacklistedUrl)
+  message: |-
+    Violentmonkeyはこのページでユーザースクリプトを実行できません
+    (一般的な例: ブラウザーUI、拡張機能、ポリシーによってブロックされている、検索サイト(Opera)など)
 filterAlphabeticalOrder:
   description: Label for option to sort scripts in alphabetical order.
-  message: アルファベット順序
+  message: アルファベット順
 filterExecutionOrder:
   description: Label for option to sort scripts in execution order.
-  message: 実行順序
+  message: 実行順
+filterLastUpdateOrder:
+  description: Label for option to sort scripts by last update time.
+  message: 最終更新日順
+filterScopeAll:
+  description: Option in dashboard's search scope filter.
+  message: すべて
+filterScopeCode:
+  description: Option in dashboard's search scope filter.
+  message: コード
+filterScopeName:
+  description: Option in dashboard's search scope filter.
+  message: 名前
+filterSize:
+  description: Label for option to sort scripts by size.
+  message: ''
+genericError:
+  description: Label for generic error.
+  message: エラー
+genericOff:
+  description: To indicate something is turned off or disabled, similar to "no".
+  message: オフ
+genericOn:
+  description: To indicate something is turned on or enabled, similar to "yes".
+  message: オン
+genericUseGlobal:
+  description: To indicate some per-script option will use its analog in global settings.
+  message: グローバル設定を使用
+headerRecycleBin:
+  description: Text shown in the header when scripts in recycle bin are listed.
+  message: ゴミ箱
 hintInputURL:
   description: Hint for a prompt box to input URL of a user script.
   message: URLを入力してください。
+hintRecycleBin:
+  description: Hint for recycle bin.
+  message: 削除されたスクリプトはここに一覧表示され、7日間保持されます。
 hintUseDownloadURL:
   description: Shown as a place holder for @updateURL when it is not assigned
   message: '@downloadURL を使用'
@@ -159,9 +242,15 @@ installOptionClose:
 installOptionTrack:
   description: Option to track the loading local file before window is closed.
   message: このページを閉じるまでローカルファイルの変更を監視する
+installOptionTrackTooltip:
+  description: >-
+    Tooltip in Firefox 68+ for the option to track the loading local file before
+    window is closed.
+  message: Firefox 68 以降では、ソースファイルタブを開いたままにしておく必要があります。
 labelAbout:
   description: Label shown on top of the about page.
-  message: Ace Script について
+  message: Violentmonkey について
+  touched: false
 labelAdvanced:
   description: Label for button to show advanced settings.
   message: 高度な設定
@@ -174,12 +263,23 @@ labelAuthor:
 labelAutoReloadCurrentTab:
   description: Option to reload current tab after a script is switched on or off from menu.
   message: メニューからスクリプトの有効/無効を切り替えたときに表示中のタブを更新する
+labelAutoReloadCurrentTabDisabled:
+  description: >-
+    Tooltip in menu after Violentmonkey is switched off if auto-reload is
+    disabled.
+  message: 現在のスクリプトは、タブを再ロードするまで実行され続けます。
 labelAutoUpdate:
-  description: Option to allow automatically checking scripts for updates every 24 hours.
-  message: スクリプトの更新を自動的に確認する (毎日)
+  description: Option to allow automatically checking scripts for updates
+  message: スクリプトの更新を $1 日ごとに確認 (0 を指定すると無効)
+labelBackup:
+  description: Label of the import/export section in settings.
+  message: ''
 labelBadge:
   description: Label for option to show number on badge.
   message: 'バッジの表示: '
+labelBadgeColors:
+  description: Label for option group to set badge colors.
+  message: 'バッジの色:'
 labelBadgeNone:
   description: Option to display nothing on badge.
   message: 何も表示しない
@@ -191,7 +291,10 @@ labelBadgeUnique:
   message: 一意な実行中のスクリプト数
 labelBlacklist:
   description: Label for global blacklist settings in security section.
-  message: ブラックリスト
+  message: ブロックリスト
+labelContributors:
+  description: Label for link to contributors.
+  message: 貢献者
 labelCurrentLang:
   description: Label of current language.
   message: '現在の言語: '
@@ -201,24 +304,30 @@ labelCustomCSS:
 labelDataExport:
   description: Section title of data export.
   message: エクスポート
+  touched: false
 labelDataImport:
   description: Section title of data import.
   message: インポート
+  touched: false
 labelDonate:
   description: Label of link to donate page.
   message: 寄付
+  touched: false
 labelDownloadURL:
   description: Label of script @downloadURL in custom meta data.
   message: '更新を取得するURL:'
 labelEditValue:
   description: Label shown in the panel to edit a script value.
   message: スクリプトの値を編集中
-labelEditing:
-  description: Label for current editing script
-  message: '編集中: '
+labelEditValueAll:
+  description: Label shown in the panel to edit the entire script value storage.
+  message: スクリプトストレージの編集
 labelEditor:
   description: Label for Editor settings
   message: エディタ
+labelEnabledScriptsOnly:
+  description: Sub-option for autoupdate option, begins with a lowercase letter.
+  message: ''
 labelExclude:
   description: Label of @exclude rules.
   message: 除外するページのURL (@exclude)
@@ -228,13 +337,21 @@ labelExcludeMatch:
 labelExportScriptData:
   description: Option to export script data along with scripts.
   message: スクリプトが保存したデータを含める
+labelExposeStatus:
+  description: Option in advanced settings.
+  message: ユーザスクリプトカタログサイトにインストールされているバージョンを公開する： $1
+labelFastFirefoxInject:
+  description: (`$1` will be shown as `page`) Option in Advanced settings.
+  message: ''
+labelFastFirefoxInjectHint:
+  description: Tooltip hint for the option in Advanced settings.
+  message: ''
 labelFeedback:
   description: Label of link to feedback page.
   message: フィードバック
-  touched: false
 labelFilterSort:
   description: Label for sort filter.
-  message: $1 によって
+  message: $1 で並べ替え
 labelGeneral:
   description: Label for general settings.
   message: 基本設定
@@ -244,19 +361,23 @@ labelHelpTranslate:
 labelHomepage:
   description: Label for home page in about tab.
   message: ホームページ
-  touched: false
 labelHomepageURL:
   description: Label of script @homepageURL in custom meta data.
   message: 'ホームページのURL:'
+labelImportScriptData:
+  description: Option to import script data along with scripts.
+  message: スクリプトデータのインポート
 labelImportSettings:
   description: Label for option to import settings from zip file.
-  message: Ace Script の設定もインポートする
+  message: Violentmonkey の設定もインポートする
 labelInclude:
   description: Label of @include rules.
   message: 実行するページのURL (@include)
-labelIndentUnit:
-  description: Label for editor option of indent unit size.
-  message: 'インデント幅:'
+labelInjectionMode:
+  description: >-
+    Label for option in advanced settings and in script settings. Don't forget
+    the space after ":" if the translated language separates words with spaces.
+  message: 'インジェクションモード: '
 labelInstall:
   description: Shown in the title of the confirm page while trying to install a script.
   message: スクリプトのインストール
@@ -269,33 +390,50 @@ labelLastUpdatedAt:
 labelLineNumber:
   description: Label for line number jumper.
   message: '指定行へ移動: '
-labelLineWrapping:
-  description: Label for editor option of line wrapping.
-  message: 長い行を折り返す
 labelMatch:
   description: Label of @match rules.
   message: 実行するページのURL (@match)
 labelName:
   description: Label of script name.
   message: 'スクリプト名:'
+labelNoFrames:
+  description: Label of script @noframes properties in custom meta data.
+  message: ''
 labelNoName:
   description: Text as the name of a script when no @name is assigned.
   message: 名前なし
-labelNoScripts:
-  description: Message shown when no script is installed.
-  message: スクリプトはインストールされていません。
 labelNoSearchScripts:
   description: Message shown when no script is found in search results.
   message: スクリプトは見つかりませんでした。
+labelNotifyThisUpdated:
+  description: >-
+    A per-script option in editor to enable notification when this script is
+    updated. The text follows "Allow update" checkbox option so it's like a
+    continuation of the phrase.
+  message: ', 更新時に通知:'
 labelNotifyUpdates:
   description: Option to show notification when script is updated.
   message: スクリプトの更新を通知する
+labelNotifyUpdatesGlobal:
+  description: Option to prioritize global notification option over script's setting.
+  message: スクリプトごとの通知を無視する (エディタの "設定" タブ内)
+labelPopupSort:
+  description: Label in the VM settings tab for script list sort order in popup
+  message: ポップアップ内のスクリプトを $1 で並べ替え
+labelPrivacyPolicy:
+  description: Label of link to privacy policy
+  message: プライバシーポリシー
+labelReinstall:
+  description: >-
+    Shown in the title of the confirm page while trying to install a script
+    that's already installed.
+  message: スクリプトの再インストール
 labelRelated:
   description: Label of related links.
   message: '関連リンク: '
-labelRemoved:
-  description: Label shown when a script is removed.
-  message: 【削除したもの】
+labelRemovedAt:
+  description: Label for the time when the script is removed.
+  message: $1 に削除されました
 labelReplace:
   description: Label for replace input in search box.
   message: '置換後の文字列: '
@@ -305,10 +443,6 @@ labelRunAt:
 labelRunAtDefault:
   description: Shown when custom @run-at is not assigned.
   message: (変更しない)
-labelScriptEditor:
-  description: Shown in the title of the script editing page.
-  message: スクリプトエディタ
-  touched: false
 labelScriptTemplate:
   description: Label for custom script template.
   message: カスタムスクリプト (テンプレート)
@@ -317,17 +451,19 @@ labelSearch:
   message: '検索する文字列: '
 labelSearchScript:
   description: Placeholder for script search box.
-  message: スクリプトを検索
+  message: スクリプトを検索…
 labelSettings:
   description: Label shown on the top of settings page
   message: 設定
-labelShowBadge:
-  description: Option to show number of running scripts on the badge.
-  message: ツールバーアイコンにページで実行中のスクリプト数を表示する
-  touched: false
+labelShowOrder:
+  description: Label for option in dashboard -> script list
+  message: 実行順で表示する
 labelSync:
   description: Label for sync options.
   message: 同期
+labelSyncAnonymous:
+  description: Label for using anonymous account.
+  message: 匿名アカウントを使用
 labelSyncAuthorize:
   description: Label for button to authorize a service.
   message: アクセス許可
@@ -337,6 +473,9 @@ labelSyncAuthorizing:
 labelSyncDisabled:
   description: Label for option to disable sync service.
   message: なし
+labelSyncPassword:
+  description: Label for input to hold password.
+  message: 'パスワード: '
 labelSyncReauthorize:
   description: Option to reauthorize sync service when expired.
   message: 期限が切れたとき、自動的に再認証する
@@ -347,30 +486,90 @@ labelSyncRevoke:
 labelSyncScriptStatus:
   description: Label for option to sync script status.
   message: スクリプトのステータスも同期する
+labelSyncServerUrl:
+  description: Label for input to hold server URL.
+  message: 'サーバURL: '
 labelSyncService:
   description: Label for sync service select.
   message: '同期に利用するサービス:'
+labelSyncUsername:
+  description: Label for input to hold username.
+  message: 'ユーザ名: '
+labelTheme:
+  description: Label for the visual theme option.
+  message: ''
 labelTranslator:
   description: Label of translator.
   message: '翻訳者: '
+  touched: false
 labelUpdateURL:
   description: Label of script @updateURL in custom meta data.
   message: '更新を確認するURL:'
+labelViewSingleColumn:
+  description: >-
+    Label for option in dashboard script list to show the scripts in single
+    column.
+  message: 単一列
+labelViewTable:
+  description: Label for option in dashboard script list to show the scripts as a table.
+  message: 表形式
+labelXhrInject:
+  description: >-
+    (`$1` will be shown as `page`) Option in Advanced settings to enable
+    synchronous injection.
+  message: ''
+labelXhrInjectHint:
+  description: Tooltip of the `Synchronous page mode` option in Advanced settings.
+  message: ''
 lastSync:
   description: Label for last sync timestamp.
   message: $1 に同期
 learnBlacklist:
   description: Refers to a link to introduce blacklist patterns.
   message: パターンの詳細
+learnInjectionMode:
+  description: Refers to a link to introduce injection modes.
+  message: インジェクションモードについての詳細
 menuCommands:
   description: Menu item to list script commands.
   message: ユーザスクリプトコマンド
+  touched: false
 menuDashboard:
   description: Label for menu item to open dashboard.
-  message: オプション
+  message: ダッシュボードを開く
+menuExclude:
+  description: >-
+    Shown in popup menu after clicking script's "..." dropdown so try to keep
+    the label short.
+  message: 除外…
+menuExcludeHint:
+  description: Shown in popup menu after clicking "Exclude..." in script's "..." dropdown.
+  message: |2-
+     一般設定でこのオプションを有効にすると、現在のタブが自動再ロードされます。
+    他のすべてのタブに変更を適用するには、手動で再ロードしてください。
+    柔軟性を高めるには、エディタの「設定」タブを使用します。
+menuFeedback:
+  description: >-
+    Menu item in popup to open the selected script's feedback page. Please use a
+    short word in translation to keep the menu narrow.
+  message: ''
 menuFindScripts:
   description: Menu item to find scripts for a site.
   message: 表示しているサイト用のスクリプトを探す
+menuInjectionFailed:
+  description: Injection error.
+  message: 一部のスクリプトを注入できませんでした。
+menuInjectionFailedFix:
+  description: Injection error fix, shown in case the default mode is "page".
+  message: 「自動」モードで再試行してください
+menuMatchedDisabledScripts:
+  description: >-
+    Label for menu listing matched disabled scripts when the option to group
+    disabled scripts is selected.
+  message: ''
+menuMatchedFrameScripts:
+  description: Label for menu listing matching scripts in sub-frames.
+  message: Sub-frames only scripts
 menuMatchedScripts:
   description: Label for menu listing matched scripts.
   message: このページで実行されるスクリプト
@@ -378,19 +577,27 @@ menuNewScript:
   description: Menu item to create a new script.
   message: 新しいスクリプトを作成
 menuScriptDisabled:
-  description: 'Menu item showing the status of Ace Script, when disabled.'
+  description: Menu item showing the status of Violentmonkey, when disabled.
   message: スクリプトは無効
 menuScriptEnabled:
-  description: 'Menu item showing the status of Ace Script, when enabled.'
+  description: Menu item showing the status of Violentmonkey, when enabled.
   message: スクリプトは有効
 msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
   message: 更新を確認中…
+msgDateFormatInfo:
+  description: Help text of the info icon in VM settings for the export file name.
+  message: ''
+msgErrorFetchingResource:
+  description: >-
+    Message shown when Violentmonkey fails fetching a resource/require/icon of
+    the script.
+  message: リソースの取得中にエラーが発生しました
 msgErrorFetchingScript:
-  description: Message shown when Ace Script fails fetching a new version of the script.
+  description: Message shown when Violentmonkey fails fetching a new version of the script.
   message: スクリプトの取得中にエラーが発生しました!
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Ace Script fails fetching version data of the script.
+  description: Message shown when Violentmonkey fails fetching version data of the script.
   message: 更新情報の取得に失敗しました。
 msgErrorLoadingData:
   description: >-
@@ -405,6 +612,11 @@ msgImported:
     Message shown after import. There is an argument referring to the count of
     scripts imported.
   message: $1個のスクリプトをインポートしました。
+msgIncognitoChanges:
+  description: >-
+    Message shown in popup and installation tab when opened in an incognito
+    window.
+  message: シークレットモードで行った変更は、メインプロファイルにも適用されます。
 msgInstalled:
   description: Message shown when a script is installed.
   message: スクリプトがインストールされました。
@@ -416,20 +628,32 @@ msgLoadedData:
     Message shown in the confirm page when a javascript file to be installed is
     loaded.
   message: スクリプトを取得しました。
+  touched: false
 msgLoading:
   description: Message shown in the options page before script list is loaded.
   message: 読み込み中…
+  touched: false
 msgLoadingData:
   description: Message shown on confirm page when the script to be installed is loading.
   message: スクリプトの取得中…
 msgLoadingDependency:
   description: Message shown on confirm page when the requirements are being downloaded.
-  message: 依存ライブラリを取得中… ($1⁄$2)
+  message: 依存ライブラリを取得中… ($1/$2)
+msgMissingResources:
+  description: >-
+    Notification title shown for a missing @require or other resource when
+    running such scripts.
+  message: ''
 msgNamespaceConflict:
   description: >-
     Message shown when namespace of the new script conflicts with an existent
     one.
   message: スクリプトの名前空間が衝突しています! @name か @namespace を変更してください。
+msgNamespaceConflictRestore:
+  description: >-
+    Message shown when namespace of the script to restore from recycle bin
+    conflicts with an existent one.
+  message: ''
 msgNewVersion:
   description: >-
     Message shown when a new version of script is found by @updateURL, but no
@@ -438,18 +662,35 @@ msgNewVersion:
 msgNoUpdate:
   description: Message shown when there is no new version of a script.
   message: 更新は見つかりませんでした。
+msgOpenUpdateErrors:
+  description: Shown at the beginning of a notification (Chrome) or in its title (Firefox).
+  message: ''
+msgReinstallScripts:
+  description: >-
+    Notification body shown for a missing @require or other resource when
+    running such scripts.
+  message: ''
+msgSameCode:
+  description: Shown inside the title when re-installing a script that's already installed.
+  message: (変更なし)
 msgSavedBlacklist:
   description: Message shown when blacklist are saved.
-  message: ブラックリストを更新しました。
+  message: ブロックリストを更新しました。
 msgSavedCustomCSS:
   description: Message shown when custom CSS is saved.
   message: カスタムスタイルが更新されました。
+msgSavedEditorOptions:
+  description: Message shown when editor options are saved.
+  message: エディタの設定が更新されました。
 msgSavedScriptTemplate:
   description: Message shown when custom script template is saved.
   message: カスタムスクリプト (テンプレート) が更新されました。
 msgScriptUpdated:
   description: Notification message for script updates.
   message: スクリプト「$1」が更新されました!
+msgShowHide:
+  description: Tooltip or text shown on a toggle that shows/hides stuff
+  message: 表示/非表示
 msgSyncError:
   description: Message shown when sync failed.
   message: 同期エラー!
@@ -459,12 +700,18 @@ msgSyncInit:
 msgSyncInitError:
   description: Message shown when sync fails in initialization.
   message: 初期化エラー!
+msgSyncNoAuthYet:
+  description: Message shown when the selected sync provider hasn't been authorized yet.
+  message: ''
 msgSyncReady:
   description: Message shown when sync will start soon.
   message: 同期を開始中…
 msgSyncing:
   description: Message shown when sync is in progress.
   message: 同期中…
+msgSyntaxError:
+  description: Shown in popup when a script didn't run and we don't know the exact reason.
+  message: ''
 msgUpdated:
   description: Message shown when a script is updated/reinstalled.
   message: スクリプトが更新されました。
@@ -474,15 +721,55 @@ msgUpdating:
 noValues:
   description: Label shown when there is no value for current script.
   message: 値は保存されていません
-notifDontShowAnymore:
-  description: Label for the second notification button
+optionEditorWindow:
+  description: Label for the option in settings
+  message: 新しいウィンドウのポップアップからエディターを開く
+optionEditorWindowHint:
+  description: >-
+    Tooltip for optionEditorWindow in case the browser doesn't support
+    onBoundsChanged
+  message: エディタウィンドウの位置は、サイズ変更または保存時にのみ記憶されます
+optionEditorWindowSimple:
+  description: Label for the editor window type
+  message: オムニボックスを表示しない
+optionPopup:
+  description: Label of the popup menu section in settings.
   message: ''
-notifShowMore:
-  description: Label for the first notification button
+optionPopupEnabledFirst:
+  description: Option to show enabled scripts first in popup.
+  message: 有効なものを先頭に表示
+optionPopupGroupDisabled:
+  description: Option to group disabled scripts in popup.
+  message: ''
+optionPopupGroupRunAt:
+  description: Option to group scripts in popup shown only when sorting by execution order.
+  message: ''
+optionPopupHideDisabled:
+  description: Option to hide disabled scripts in popup.
+  message: 無効なものを非表示
+optionPopupShowDisabled:
+  description: Option to show disabled scripts in popup.
   message: ''
 optionShowEnabledFirst:
   description: Option to show enabled scripts first in alphabetical order.
-  message: 有効にされたスクリプトを先に
+  message: 有効なスクリプトを先頭に表示
+optionUiTheme:
+  description: Label for the theme selector in Advanced settings.
+  message: ''
+optionUiThemeAuto:
+  description: Name of a theme selector value in settings.
+  message: ''
+optionUiThemeDark:
+  description: Name of a theme selector value in settings.
+  message: ''
+optionUiThemeLight:
+  description: Name of a theme selector value in settings.
+  message: ''
+optionUpdate:
+  description: >-
+    Label of the update section in settings and notification title for script
+    updates.
+  message: 更新
 searchCaseSensitive:
   description: Option to perform a case-sensitive search
   message: 大文字と小文字を区別する
@@ -491,22 +778,33 @@ searchUseRegex:
   message: 正規表現を使用する
 sideMenuAbout:
   description: 'Side menu: About'
-  message: Ace Script について
+  message: Violentmonkey について
 sideMenuInstalled:
   description: 'Side menu: Installed scripts'
   message: インストール済み
 sideMenuSettings:
   description: 'Side menu: Settings'
   message: 設定
-titleScriptUpdated:
-  description: Notification title for script updates.
-  message: 更新
+titleBadgeColor:
+  description: Tooltip for option to set badge color.
+  message: 通常のバッジの色
+titleBadgeColorBlocked:
+  description: Tooltip for option to set badge color of non-injectable tabs.
+  message: ブラックリストに登録されている、サポートされていない等の理由でサイトにインジェクションできない場合のバッジの色
+titleSearchHint:
+  description: Hover title for search icon in dashboard.
+  message: |-
+    * <Enter> キーでオートコンプリートの履歴にテキストを追加します。
+    * サポートしている正規表現の構文: /パターン/ 及び /パターン/フラグ
 valueLabelKey:
   description: Label for key of a script value.
   message: キー (文字列)
 valueLabelValue:
   description: Label for value of a script value.
-  message: 値 (JSONとしてシリアル化された)
-warnScriptLongLines:
-  description: Warning message shown when script has lines that are too long to be edited.
-  message: 一部の行が長すぎるため、読み取り専用モードで開きます。 外部エディタで編集してください。
+  message: 値 (JSONとしてシリアル化した)
+valueLabelValueAll:
+  description: Label for input of entire script value storage.
+  message: すべての値 (JSONとしてシリアル化した)
+visitWebsite:
+  description: Label for link to open Violentmonkey website.
+  message: ウェブサイトを開く

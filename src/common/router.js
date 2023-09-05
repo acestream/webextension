@@ -1,5 +1,9 @@
-function parse(pathInfo) {
-  const [pathname, search = ''] = pathInfo.split('?');
+import { reactive } from 'vue';
+import { showConfirmation } from '@/common/ui';
+import { i18n } from './util';
+
+function parse(hash) {
+  const [pathname, search = ''] = hash.split('?');
   const query = search.split('&').reduce((res, seq) => {
     if (seq) {
       const [key, val] = seq.split('=');
@@ -8,25 +12,64 @@ function parse(pathInfo) {
     return res;
   }, {});
   const paths = pathname.split('/');
-  return { pathname, query, paths };
+  return {
+    hash, pathname, paths, query,
+  };
 }
 
-export const route = {};
+const stack = [];
+export const route = reactive({});
+export const lastRoute = () => stack[stack.length - 1] || {};
+
 updateRoute();
 
-function updateRoute() {
-  Object.assign(route, parse(window.location.hash.slice(1)));
+function updateRoute(noConfirm) {
+  const hash = window.location.hash.slice(1);
+  if (noConfirm || !route.confirmChange) {
+    Object.assign(route, parse(hash));
+  } else if (route.hash !== hash) {
+    // restore the pinned route
+    setRoute(route.hash, false, true);
+    route.confirmChange(hash);
+  }
 }
 
-window.addEventListener('hashchange', updateRoute, false);
+// popstate should be the first to ensure hashchange listeners see the correct lastRoute
+window.addEventListener('popstate', () => stack.pop());
+window.addEventListener('hashchange', () => updateRoute(), false);
 
-export function setRoute(hash, replace) {
+export function setRoute(hash, replace, noConfirm) {
   let hashString = `${hash}`;
   if (hashString[0] !== '#') hashString = `#${hashString}`;
   if (replace) {
     window.history.replaceState('', null, hashString);
   } else {
+    stack.push(Object.assign({}, route));
     window.history.pushState('', null, hashString);
   }
-  updateRoute();
+  updateRoute(noConfirm);
+}
+
+export function getUnloadSentry(onConfirm, onCancel) {
+  async function confirmPopState(hash) {
+    if (await showConfirmation(i18n('confirmNotSaved'))) {
+      // popstate cannot be prevented so we pin current `route` and display a confirmation
+      setRoute(hash, false, true);
+      onConfirm?.();
+    } else {
+      onCancel?.();
+    }
+  }
+  function toggle(state) {
+    const onOff = `${state ? 'add' : 'remove'}EventListener`;
+    global[onOff]('beforeunload', onUnload);
+    route.confirmChange = state && confirmPopState;
+  }
+  return toggle;
+}
+
+function onUnload(e) {
+  e.preventDefault();
+  // modern browser show their own message text
+  e.returnValue = i18n('confirmNotSaved');
 }

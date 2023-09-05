@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    tags-ignore:
+      - 'v*' # version-tagged commits are releases which have their own workflow
+    paths-ignore:
+      - '.github/**' # this ci.yml is also excluded so you need to re-run it explicitly if necessary
+      - src/types.d.ts
+      - LICENSE
+      - README.md
+  pull_request:
+    branches: [master]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v1 # v1 keeps tags
+        with:
+          fetch-depth: 100 # for revision index in version and the `has-changed-path` action
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      - name: Build
+        env:
+          SYNC_DROPBOX_CLIENT_ID: ${{ secrets.SYNC_DROPBOX_CLIENT_ID }}
+          SYNC_GOOGLE_CLIENT_ID: ${{ secrets.SYNC_GOOGLE_CLIENT_ID }}
+          SYNC_GOOGLE_CLIENT_SECRET: ${{ secrets.SYNC_GOOGLE_CLIENT_SECRET }}
+          SYNC_GOOGLE_DESKTOP_ID: ${{ secrets.SYNC_GOOGLE_DESKTOP_ID }}
+          SYNC_GOOGLE_DESKTOP_SECRET: ${{ secrets.SYNC_GOOGLE_DESKTOP_SECRET }}
+          SYNC_ONEDRIVE_CLIENT_ID: ${{ secrets.SYNC_ONEDRIVE_CLIENT_ID }}
+          SYNC_ONEDRIVE_CLIENT_SECRET: ${{ secrets.SYNC_ONEDRIVE_CLIENT_SECRET }}
+        run: yarn && yarn build
+
+      - name: Get version and SHA
+        run: node scripts/action-helper.js ci
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        continue-on-error: true
+        with:
+          name: 'Violentmonkey-test-webext-${{ env.GIT_DESCRIBE }}'
+          path: 'dist/*'
+          if-no-files-found: error
+
+      - name: Upload to Transifex - check src
+        if: github.event_name == 'push' || github.event.pull_request.merged == true
+        uses: marceloprado/has-changed-path@v1
+        id: changed-path-src
+        with:
+          paths: src
+      - name: Upload to Transifex
+        if: steps.changed-path-src.outputs.changed == 'true'
+        run: node scripts/transifex.mjs update
+        env:
+          TRANSIFEX_TOKEN: ${{ secrets.TRANSIFEX_TOKEN }}

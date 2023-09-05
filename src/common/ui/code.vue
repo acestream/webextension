@@ -1,51 +1,59 @@
 <template>
   <div class="flex flex-col">
-    <div class="frame-block editor-search" v-show="search.show">
-      <button class="pull-right" @click="clearSearch">&times;</button>
-      <form class="inline-block mr-1" @submit.prevent="goToLine()">
+    <div class="editor-code flex-auto" ref="code"></div>
+    <div class="frame-block editor-search flex" v-show="search.show">
+      <form @submit.prevent="goToLine()">
         <span v-text="i18n('labelLineNumber')"></span>
-        <input class="w-1" v-model="search.line">
+        <input type="text" class="w-1" v-model="jumpPos">
       </form>
-      <form class="inline-block mr-1" @submit.prevent="findNext()">
+      <form class="flex-1" @submit.prevent="findNext()">
         <span v-text="i18n('labelSearch')"></span>
-        <tooltip title="Ctrl-F">
-          <input ref="search" v-model="search.state.query">
+        <tooltip :content="tooltip.find" class="flex-1">
+          <!-- id is required for the built-in autocomplete using entered values -->
+          <input
+            :class="{ 'is-error': !search.hasResult }"
+            :title="search.error"
+            type="search"
+            id="editor-search"
+            ref="search"
+            v-model="search.query"
+          />
         </tooltip>
-        <tooltip title="Shift-Ctrl-G">
+        <tooltip :content="tooltip.findPrev">
           <button type="button" @click="findNext(1)">&lt;</button>
         </tooltip>
-        <tooltip title="Ctrl-G">
+        <tooltip :content="tooltip.findNext">
           <button type="submit">&gt;</button>
         </tooltip>
       </form>
-      <form class="inline-block mr-1" @submit.prevent="replace()" v-if="!readonly">
+      <form class="flex-1" @submit.prevent="replace()" v-if="!readOnly">
         <span v-text="i18n('labelReplace')"></span>
-        <input v-model="search.state.replace">
-        <tooltip title="Shift-Ctrl-F">
+        <!-- id is required for the built-in autocomplete using entered values -->
+        <input class="flex-1" type="search" id="editor-replace" v-model="search.replace">
+        <tooltip :content="tooltip.replace">
           <button type="submit" v-text="i18n('buttonReplace')"></button>
         </tooltip>
-        <tooltip title="Shift-Ctrl-R">
+        <tooltip :content="tooltip.replaceAll">
           <button type="button" v-text="i18n('buttonReplaceAll')" @click="replace(1)"></button>
         </tooltip>
       </form>
-      <div class="inline-block">
-        <tooltip :title="i18n('searchUseRegex')">
-          <toggle-button v-model="searchOptions.useRegex">.*</toggle-button>
+      <div>
+        <tooltip :content="i18n('searchUseRegex')">
+          <toggle-button v-model="search.options.useRegex">.*</toggle-button>
         </tooltip>
-        <tooltip :title="i18n('searchCaseSensitive')">
-          <toggle-button v-model="searchOptions.caseSensitive">Aa</toggle-button>
+        <tooltip :content="i18n('searchCaseSensitive')">
+          <toggle-button v-model="search.options.caseSensitive">Aa</toggle-button>
         </tooltip>
       </div>
+      <button @click="clearSearch">&times;</button>
     </div>
-    <div class="editor-code flex-auto" ref="code"></div>
   </div>
 </template>
 
 <script>
 import 'codemirror/lib/codemirror.css';
-import 'codemirror/theme/eclipse.css';
-import 'codemirror/mode/javascript/javascript';
 import 'codemirror/addon/comment/continuecomment';
+import 'codemirror/addon/comment/comment';
 import 'codemirror/addon/edit/matchbrackets';
 import 'codemirror/addon/edit/closebrackets';
 import 'codemirror/addon/fold/foldcode';
@@ -56,121 +64,67 @@ import 'codemirror/addon/fold/comment-fold';
 import 'codemirror/addon/search/match-highlighter';
 import 'codemirror/addon/search/searchcursor';
 import 'codemirror/addon/selection/active-line';
+import 'codemirror/keymap/sublime';
+import 'codemirror/addon/hint/show-hint.css';
+import 'codemirror/addon/hint/show-hint';
+import 'codemirror/addon/hint/javascript-hint';
+import 'codemirror/addon/hint/anyword-hint';
 import CodeMirror from 'codemirror';
 import Tooltip from 'vueleton/lib/tooltip';
-import { debounce } from '#/common';
-import ToggleButton from '#/common/ui/toggle-button';
-import options from '#/common/options';
+import ToggleButton from '@/common/ui/toggle-button';
+import { debounce, getUniqId, i18n, sendCmdDirectly } from '@/common';
+import { deepEqual, forEachEntry, objectPick } from '@/common/object';
+import hookSetting from '@/common/hook-setting';
+import options from '@/common/options';
+import './code-autocomplete';
+import './code-js-mixed-mode';
+import { killTrailingSpaces } from './code-trailing-spaces';
 
 /* eslint-disable no-control-regex */
-const MAX_LINE_LENGTH = 50 * 1024;
+let maxDisplayLength;
 // Make sure this is still the longest line in the doc
-const CTRL_OPEN = '\x02'.repeat(256);
+const CTRL_OPEN = getUniqId('\x02'.repeat(256));
 const CTRL_CLOSE = '\x03'.repeat(256);
-
-function getHandler(key) {
-  return cm => {
-    const { commands } = cm.state;
-    const handle = commands && commands[key];
-    return handle && handle();
-  };
-}
-
-[
-  'save', 'cancel', 'close',
-  'find', 'findNext', 'findPrev', 'replace', 'replaceAll',
-].forEach(key => {
-  CodeMirror.commands[key] = getHandler(key);
-});
-Object.assign(CodeMirror.keyMap.default, {
-  Tab: 'indentMore',
-  'Shift-Tab': 'indentLess',
-});
-
-const cmOptions = {
+const CTRL_RE = new RegExp(`${CTRL_OPEN}(\\d+)${CTRL_CLOSE}`, 'g');
+const PLACEHOLDER_CLS = 'too-long-placeholder';
+// To identify our CodeMirror markers we're using a Symbol since it's always unique
+const PLACEHOLDER_SYM = Symbol(PLACEHOLDER_CLS);
+const cmDefaults = {
   continueComments: true,
   styleActiveLine: true,
   foldGutter: true,
   gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
-  theme: 'eclipse',
-  mode: 'javascript',
+  theme: 'default',
+  mode: 'javascript-mixed',
   lineNumbers: true,
   matchBrackets: true,
   autoCloseBrackets: true,
   highlightSelectionMatches: true,
+  keyMap: 'sublime',
+  /* Limiting the max length to avoid delays while CodeMirror tries to make sense of a long line.
+   * 100kB is fast enough for the main editor (moreover such long lines are rare in the main script),
+   * and is big enough to include most of popular minified libraries for the `@resource/@require` viewer. */
+  maxDisplayLength: 100_000,
 };
-const searchOptions = {
-  useRegex: false,
-  caseSensitive: false,
-};
-
-function findUnmarked(cursor, reversed) {
-  while (cursor.find(reversed)) {
-    const marks = cursor.doc.findMarksAt(cursor.from(), cursor.to());
-    if (!marks.length) return true;
-  }
-  return false;
-}
-
-function findNext(cm, state, reversed) {
-  cm.operation(() => {
-    let query = state.query || '';
-    if (query && searchOptions.useRegex) {
-      query = new RegExp(query, searchOptions.caseSensitive ? '' : 'i');
-    }
-    const cOptions = {
-      caseFold: !searchOptions.caseSensitive,
-    };
-    let cursor = cm.getSearchCursor(query, reversed ? state.posFrom : state.posTo, cOptions);
-    if (!findUnmarked(cursor, reversed)) {
-      cursor = cm.getSearchCursor(
-        query,
-        reversed ? CodeMirror.Pos(cm.lastLine()) : CodeMirror.Pos(cm.firstLine(), 0),
-        cOptions,
-      );
-      if (!findUnmarked(cursor, reversed)) return;
-    }
-    cm.setSelection(cursor.from(), cursor.to());
-    state.posFrom = cursor.from();
-    state.posTo = cursor.to();
-  });
-}
-function replaceOne(cm, state) {
-  const start = cm.getCursor('start');
-  const end = cm.getCursor('end');
-  state.posTo = state.posFrom;
-  findNext(cm, state);
-  const start2 = cm.getCursor('start');
-  const end2 = cm.getCursor('end');
-  if (
-    start.line === start2.line && start.ch === start2.ch
-    && end.line === end2.line && end.ch === end2.ch
-  ) {
-    cm.replaceRange(state.replace, start, end);
-    findNext(cm, state);
-  }
-}
-function replaceAll(cm, state) {
-  cm.operation(() => {
-    const query = state.query || '';
-    for (let cursor = cm.getSearchCursor(query); findUnmarked(cursor);) {
-      cursor.replace(state.replace);
-    }
-  });
-}
+const cmCommands = CodeMirror.commands;
 
 export default {
   props: {
-    readonly: {
+    active: Boolean,
+    readOnly: {
       type: Boolean,
       default: false,
     },
-    value: true,
-    commands: true,
-    global: {
-      type: Boolean,
-      default: true,
+    value: {
+      type: String,
+      default: '',
     },
+    mode: String,
+    commands: {
+      type: Object,
+      default: null,
+    },
+    cmOptions: Object,
   },
   components: {
     Tooltip,
@@ -178,152 +132,276 @@ export default {
   },
   data() {
     return {
-      cmOptions,
-      searchOptions,
+      cmDefaults,
       content: '',
+      jumpPos: '',
       search: {
         show: false,
-        state: {
-          query: null,
-          replace: null,
+        query: '',
+        replace: '',
+        hasResult: false,
+        options: {
+          useRegex: false,
+          caseSensitive: false,
         },
+      },
+      tooltip: {
+        find: '',
+        findPrev: '',
+        findNext: '',
+        replace: '',
+        replaceAll: '',
       },
     };
   },
   watch: {
-    value(value) {
-      if (value === this.cached) return;
-      this.cached = value;
-      const placeholders = [];
-      this.content = value.replace(/[\x02\x03]/g, '')
-      .split('\n')
-      .map((line, i) => {
-        if (line.length > MAX_LINE_LENGTH) {
-          const matches = line.match(/^(\s*)(.*)$/);
-          const prefix = matches[1];
-          const body = matches[2];
-          const id = placeholders.length;
-          const replaced = `${CTRL_OPEN}${id}${CTRL_CLOSE}`;
-          const placeholder = {
-            id,
-            body,
-            line: i,
-            start: prefix.length,
-            length: replaced.length,
-          };
-          placeholders.push(placeholder);
-          return `${prefix}${replaced}`;
-        }
-        return line;
-      })
-      .join('\n');
-      this.placeholders = placeholders;
-      const { cm } = this;
-      if (!cm) return;
-      cm.off('change', this.onChange);
-      cm.setValue(this.content || '');
-      placeholders.forEach(({
-        line, start, body, length,
-      }) => {
-        const span = document.createElement('span');
-        span.textContent = `${body.slice(0, MAX_LINE_LENGTH)}...`;
-        const mark = cm.markText({ line, ch: start }, { line, ch: start + length }, {
-          replacedWith: span,
-        });
-        span.addEventListener('click', debounce(() => {
-          if (!window.getSelection().toString()) {
-            const { from } = mark.find();
-            cm.setCursor(from);
-            cm.focus();
-          }
-        }));
-      });
-      cm.getDoc().clearHistory();
-      cm.focus();
-      cm.on('change', this.onChange);
+    active: 'onActive',
+    mode(value) {
+      this.cm.setOption('mode', value || cmDefaults.mode);
     },
-    'search.state.query'() {
-      this.debouncedFind();
-    },
-    searchOptions: {
-      deep: true,
-      handler() {
-        this.debouncedFind();
-      },
-    },
+    value: 'updateValue',
   },
   methods: {
-    onChange: debounce(function onChange() {
-      const content = this.getRealContent(this.cm.getValue());
-      this.cached = content;
-      this.$emit('input', content);
-    }, 200),
+    updateValue(value = this.value) {
+      const { cm } = this;
+      cm?.operation(() => {
+        cm.setValue(value);
+        cm.clearHistory();
+        cm.markClean();
+        cm.focus();
+      });
+    },
+    onBeforeChange(cm, change) {
+      if (this.createPlaceholders(change)) {
+        cm.on('change', this.onChange); // triggered before DOM is updated
+        change.update?.(null, null, change.text);
+      }
+      // TODO: remove placeholders that belong to a change beyond `undoDepth`
+    },
+    onChange(cm) {
+      cm.off('change', this.onChange);
+      this.renderPlaceholders();
+    },
+    onChanges(cm, [{ origin }]) {
+      // No need to report if changed externally via props.value
+      if (origin !== 'setValue') {
+        this.$emit('code-dirty', !cm.isClean());
+      }
+    },
+    createPlaceholders(change) {
+      const { line, ch } = change.from;
+      let res = false;
+      let len;
+      let prefix;
+      change.text.forEach((textLine, i) => {
+        if (textLine.includes(CTRL_OPEN)) {
+          textLine = this.getRealContent(textLine);
+        }
+        len = textLine.length - maxDisplayLength;
+        prefix = len > 0 ? textLine.match(/^\s*/)[0] : '';
+        len -= prefix.length;
+        if (len > 0 && len - textLine.match(/\s*$/)[0].length > 0) {
+          res = true;
+          this.placeholderId += 1;
+          const id = this.placeholderId;
+          const body = textLine.slice(prefix.length);
+          const replaced = `${CTRL_OPEN}${id}${CTRL_CLOSE}`;
+          this.placeholders.set(id, {
+            body,
+            el: null,
+            line: line + i,
+            ch: ch + prefix.length,
+            length: replaced.length,
+          });
+          change.text[i] = `${prefix}${replaced}`;
+        }
+      });
+      return res;
+    },
+    renderPlaceholders() {
+      this.placeholders.forEach(p => {
+        if (!p.el) {
+          const { line, ch, body, length } = p;
+          const { cm } = this;
+          const el = document.createElement('span');
+          const marker = cm.markText({ line, ch }, { line, ch: ch + length }, { replacedWith: el });
+          marker[PLACEHOLDER_SYM] = true;
+          el.className = PLACEHOLDER_CLS;
+          el.title = i18n('editLongLineTooltip');
+          el.textContent = `${body.slice(0, maxDisplayLength)}...[${i18n('editLongLine')}]`;
+          el.onclick = () => {
+            if (!`${window.getSelection()}`) {
+              cm.setCursor(marker.find().from);
+              cm.focus();
+            }
+          };
+          p.el = el;
+        }
+      });
+    },
     initialize(cm) {
       this.cm = cm;
-      cm.setOption('readOnly', this.readonly);
+      this.placeholders = new Map();
+      this.placeholderId = 0;
+      maxDisplayLength = cm.options.maxDisplayLength;
+      cm.setOption('readOnly', this.readOnly);
+      // these are active only in the code nav tab
       cm.state.commands = Object.assign({
+        // call own methods explicitly to strip `cm` parameter passed by CodeMirror
+        find: () => this.find(),
+        findNext: () => this.findNext(),
+        findPrev: () => this.findNext(1),
+        replace: () => this.replace(),
+        replaceAll: () => this.replace(1),
+      }, this.commands);
+      const cmOrigCommands = {};
+      const { insertTab, insertSoftTab } = cmCommands;
+      for (const cmds of [cm.state.commands, {
+        autocomplete() {
+          cm.showHint({ hint: CodeMirror.hint.autoHintWithFallback });
+        },
         cancel: () => {
           if (this.search.show) {
             this.clearSearch();
           } else {
-            cm.execCommand('close');
+            cm.execCommand(cm.listSelections()[1] ? 'singleSelection' : 'close');
           }
         },
-        find: this.find,
-        findNext: this.findNext,
-        findPrev: () => {
-          this.findNext(1);
+        commentSelection() {
+          cm.blockComment(cm.getCursor('from'), cm.getCursor('to'), { fullLines: false });
         },
-        replace: this.replace,
-        replaceAll: () => {
-          this.replace(1);
+        insertTab() {
+          // pressing Tab key inside a line with no selection will reuse indent type (tabs/spaces)
+          (cm.options.indentWithTabs ? insertTab : insertSoftTab)(cm);
         },
-      }, this.commands);
+        showHelp: this.commands?.showHelp,
+      }]) {
+        cmds::forEachEntry(([key, val]) => {
+          cmOrigCommands[key] = cmCommands[key];
+          cmCommands[key] = val;
+        });
+      }
+      this.origCommands = cmOrigCommands;
+      // these are active in all nav tabs
       cm.setOption('extraKeys', {
         Esc: 'cancel',
+        F1: 'showHelp',
+        'Ctrl-Space': 'autocomplete',
+      });
+      Object.assign(CodeMirror.keyMap.sublime, {
+        'Shift-Ctrl-/': 'commentSelection',
       });
       cm.on('keyHandled', (_cm, _name, e) => {
         e.stopPropagation();
       });
+      this.cm.on('changes', this.onChanges);
+      this.cm.on('beforeChange', this.onBeforeChange);
+      if (this.value) this.updateValue();
       this.$emit('ready', cm);
+    },
+    onActive(state) {
+      const onOff = state ? 'on' : 'off';
+      this.cm[onOff]('blur', this.onKeyDownToggler);
+      this.cm[onOff]('focus', this.onKeyDownToggler);
+      if (state) {
+        this.cm?.focus();
+      } else {
+        window.removeEventListener('keydown', this.onKeyDown);
+      }
+    },
+    /* reroute hotkeys back to CM when it isn't focused,
+       but ignore `window` blur (`evt` param is absent) */
+    onKeyDownToggler(cm, evt) {
+      if (evt) {
+        window[`${evt.type === 'blur' ? 'add' : 'remove'}EventListener`]('keydown', this.onKeyDown);
+      }
     },
     onKeyDown(e) {
       const name = CodeMirror.keyName(e);
-      const { cm } = this;
-      if (!cm) return;
+      if (!this.cm) return;
       [
-        cm.options.extraKeys,
-        cm.options.keyMap,
-      ].some(keyMap => {
-        let stop = false;
-        if (keyMap) {
-          CodeMirror.lookupKey(name, keyMap, b => {
-            if (cm.state.commands[b]) {
-              e.preventDefault();
-              e.stopPropagation();
-              cm.execCommand(b);
-              stop = true;
-            }
-          }, cm);
+        this.cm.options.extraKeys,
+        this.cm.options.keyMap,
+      ].some(keyMap => keyMap && this.lookupKey(name, keyMap, e) === 'handled');
+    },
+    lookupKey(name, keyMap, e) {
+      return CodeMirror.lookupKey(name, keyMap, (b) => {
+        if (keyMap === this.cm.options.extraKeys || this.cm.state.commands[b]) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.cm.execCommand(b);
+          return true;
         }
-        return stop;
-      });
+      }, this.cm);
     },
-    doSearch(reversed) {
-      const { state } = this.search;
-      const { cm } = this;
-      if (state.query) {
-        findNext(cm, state, reversed);
+    findFillQuery(force) {
+      const { cm, search } = this;
+      if (!search.query || force) {
+        const sel = cm.listSelections();
+        // use the currently selected text if it's within one line
+        if (sel?.length === 1 && sel[0].anchor.line === sel[0].head.line && !sel[0].empty()) {
+          const query = cm.getSelection();
+          search.queryFilled = !!query;
+          search.query = query;
+        }
+        search.show = true;
       }
-      this.search.show = true;
     },
-    searchInPlace() {
-      const { state } = this.search;
-      state.posTo = state.posFrom;
-      this.doSearch();
+    /** @param {VMSearchOptions} opts */
+    doSearch(opts) {
+      const { search } = this;
+      search.hasResult = !search.query || !!this.doSearchInternal({ ...opts, wrapAround: true });
+    },
+    /**
+     * @param {VMSearchOptions} opts
+     * @returns {?true}
+     */
+    doSearchInternal({ reversed, wrapAround, pos, reuseCursor } = {}) {
+      const { cm, search } = this;
+      const { caseSensitive, useRegex } = search.options;
+      let retry = wrapAround ? 2 : 1;
+      if (!pos || typeof pos === 'string') {
+        pos = cm.getCursor(pos || (reversed ? 'from' : 'to'));
+      }
+      do {
+        let cur;
+        if (reuseCursor) {
+          cur = search.cursor;
+        } else {
+          let { query } = search;
+          if (useRegex) {
+            try {
+              query = new RegExp(query, caseSensitive ? '' : 'gi');
+              search.error = null;
+            } catch (err) {
+              search.error = err;
+              return;
+            }
+          }
+          cur = cm.getSearchCursor(query, pos, { caseFold: !caseSensitive });
+          search.cursor = cur;
+        }
+        while (cur.find(reversed)) {
+          const from = cur.from();
+          const to = cur.to();
+          if (!cm.findMarks(from, to, m => m[PLACEHOLDER_SYM]).length) {
+            this.reveal(from, to);
+            cm.setSelection(from, to, { scroll: false });
+            return true;
+          }
+        }
+        retry -= 1;
+        if (retry) {
+          pos = {
+            line: reversed ? cm.doc.size : 0,
+            ch: 0,
+          };
+        }
+      } while (retry);
     },
     find() {
-      this.searchInPlace();
+      this.findFillQuery(true);
+      this.doSearch({ pos: 'from' });
       this.$nextTick(() => {
         const { search } = this.$refs;
         search.select();
@@ -331,67 +409,175 @@ export default {
       });
     },
     findNext(reversed) {
-      this.doSearch(reversed);
-      this.$nextTick(() => {
-        this.$refs.search.focus();
-      });
+      const refocus = !this.search.query || !this.cm.hasFocus();
+      this.findFillQuery();
+      this.doSearch({ reversed });
+      if (refocus) this.$nextTick(() => this.$refs.search.focus());
     },
     clearSearch() {
-      const { cm } = this;
-      cm.operation(() => {
-        const { state } = this.search;
-        state.posFrom = null;
-        state.posTo = null;
-        this.search.show = false;
-      });
-      cm.focus();
+      this.search.show = false;
+      this.cm.focus();
     },
     replace(all) {
-      const { cm } = this;
-      const { state } = this.search;
-      if (!state.query) {
+      const { cm, search } = this;
+      const { replace, query } = search;
+      if (!query || !search.show) {
+        search.show = true;
         this.find();
         return;
       }
-      (all ? replaceAll : replaceOne)(cm, state);
+      if (all) {
+        cm.operation(() => {
+          let opts = { pos: { line: 0, ch: 0 } };
+          while (this.doSearchInternal(opts)) {
+            search.cursor.replace(replace);
+            opts = { reuseCursor: true };
+          }
+        });
+      } else {
+        const { sel } = cm.doc;
+        this.doSearch({ pos: 'from' });
+        if (sel.somethingSelected() && sel.equals(cm.doc.sel)) {
+          cm.replaceSelection(replace);
+          this.doSearch();
+        }
+      }
+    },
+    /** Centers the selection if it's outside of viewport so the surrounding context is visible */
+    reveal(from, to) {
+      const { cm } = this;
+      const vpm = cm.options.viewportMargin;
+      const { viewFrom, viewTo } = cm.display;
+      const inView = from.line >= viewFrom + vpm
+        && (to.line < viewTo - Math.min(cm.doc.size - viewTo, vpm));
+      cm.scrollIntoView({ from, to },
+        inView ? cm.defaultTextHeight() * 2 : cm.display.wrapper.clientHeight / 2);
     },
     goToLine() {
-      const { cm } = this;
-      const line = +this.search.line;
-      if (line > 0) cm.setCursor(line - 1, 0);
-      cm.focus();
+      const { cm, search, jumpPos } = this;
+      let [line, ch] = jumpPos.split(':').map(Number) || [];
+      if (line) {
+        line -= 1;
+        ch = ch ? ch - 1 : 0;
+        cm.operation(() => {
+          this.reveal({ line, ch }, { line, ch });
+          cm.setCursor(line, ch, { scroll: false });
+        });
+        search.show = false;
+        cm.focus();
+      }
     },
     onCopy(e) {
-      if (!this.cm || !this.cm.somethingSelected()) return;
-      const text = this.getRealContent(this.cm.getSelection());
+      // CM already prepared the correct text in DOM selection, which is particularly
+      // important when using its lineWiseCopyCut option (on by default)
+      const sel = `${window.getSelection()}` || this.cm?.getSelection();
+      if (!sel) return;
+      const text = this.getRealContent(sel);
       e.clipboardData.setData('text', text);
       e.preventDefault();
       e.stopImmediatePropagation();
     },
     getRealContent(text) {
-      return text.replace(/\x02+(\d+)\x03+/g, (_, id) => {
-        const placeholder = this.placeholders[id];
-        return placeholder && placeholder.body || '';
+      const { placeholders } = this;
+      if (text == null) {
+        text = killTrailingSpaces(this.cm, placeholders);
+      }
+      if (placeholders.size) {
+        text = text.replace(CTRL_RE, (_, id) => placeholders.get(+id)?.body || '');
+      }
+      return text;
+    },
+    expandKeyMap(res, ...maps) {
+      if (!res) {
+        const { keyMap, extraKeys } = this.cm.options;
+        maps = [extraKeys, keyMap];
+        res = {};
+      }
+      maps.forEach((map) => {
+        if (typeof map === 'string') map = CodeMirror.keyMap[map];
+        map::forEachEntry(([key, value]) => {
+          if (!res[key] && /^[a-z]+$/i.test(value) && CodeMirror.commands[value]) {
+            res[key] = value;
+          }
+        });
+        if (map.fallthrough) this.expandKeyMap(res, map.fallthrough);
       });
+      delete res.fallthrough;
+      return res;
     },
   },
   mounted() {
-    this.initialize(CodeMirror(
-      this.$refs.code,
-      Object.assign({}, this.cmOptions, options.get('editor')),
-    ));
-    this.debouncedFind = debounce(this.searchInPlace, 100);
-    if (this.global) window.addEventListener('keydown', this.onKeyDown, false);
-    document.addEventListener('copy', this.onCopy, false);
+    let userOpts = options.get('editor');
+    const theme = options.get('editorThemeName');
+    const internalOpts = this.cmOptions || {};
+    const opts = {
+      ...cmDefaults,
+      ...userOpts,
+      ...theme && { theme },
+      ...internalOpts, // internal options passed via `props` have the highest priority
+      mode: this.mode || cmDefaults.mode,
+    };
+    CodeMirror.registerHelper('hint', 'autoHintWithFallback', (cm, ...args) => {
+      const result = cm.getHelper(cm.getCursor(), 'hint')?.(cm, ...args);
+      // fallback to anyword if default returns nothing (or no default)
+      return result?.list.length ? result : CodeMirror.hint.anyword(cm, ...args);
+    });
+    this.initialize(CodeMirror(this.$refs.code, opts));
+    this.expandKeyMap()::forEachEntry(([key, cmd]) => {
+      const tt = this.tooltip[cmd];
+      if (tt != null) this.tooltip[cmd] += `${tt ? ', ' : ''}${key}`;
+    });
+    // pressing Tab key inside a line with no selection will reuse indent size
+    if (!opts.tabSize) this.cm.options.tabSize = this.cm.options.indentUnit;
+    this.$refs.code.addEventListener('copy', this.onCopy);
+    this.onActive(true);
+    hookSetting('editor', (newUserOpts) => {
+      // Use defaults for keys that were present in the old userOpts but got deleted in newUserOpts
+      ({ ...cmDefaults, ...newUserOpts })::forEachEntry(([key, val]) => {
+        if ((key in newUserOpts || key in userOpts)
+        && !(key in internalOpts)
+        && !deepEqual(this.cm.getOption(key), val)) {
+          this.cm.setOption(key, val);
+        }
+      });
+      userOpts = newUserOpts;
+    });
+    sendCmdDirectly('Storage', ['base', 'getOne', 'editorSearch']).then(prev => {
+      const { search } = this;
+      const saveSearchLater = debounce(() => {
+        sendCmdDirectly('Storage', ['base', 'setOne', 'editorSearch',
+          objectPick(search, ['query', 'replace', 'options'])]);
+      }, 500);
+      const searchAgain = () => {
+        saveSearchLater();
+        this.doSearch({ pos: 'from' });
+      };
+      if (prev) Object.assign(search, prev);
+      this.$watch('search.query', () => {
+        if (!search.queryFilled) searchAgain();
+        else search.queryFilled = null;
+      });
+      this.$watch('search.options', searchAgain, { deep: true });
+      this.$watch('search.replace', saveSearchLater);
+    });
+    hookSetting('editorThemeName', val => {
+      if (val != null && val !== this.cm.options.theme) {
+        this.cm.setOption('theme', val);
+      }
+    });
+    this.updateValue();
   },
-  beforeDestroy() {
-    if (this.global) window.removeEventListener('keydown', this.onKeyDown, false);
-    document.removeEventListener('copy', this.onCopy, false);
+  beforeUnmount() {
+    Object.assign(cmCommands, this.origCommands);
+    this.onActive(false);
   },
 };
 </script>
 
 <style>
+$selectionBg: #d7d4f0; /* copied from codemirror.css */
+$selectionDarkBg: rgba(80, 75, 65, .99);
+
 /* compatible with old browsers, e.g. Maxthon 4.4, Chrome 50- */
 .editor-code.flex-auto {
   position: relative;
@@ -401,7 +587,202 @@ export default {
   }
 }
 
-.editor-search > .inline-block > * {
-  vertical-align: middle;
+.editor-search {
+  white-space: pre;
+  flex-wrap: wrap; // wrap fields in a narrow window
+  > form,
+  > div {
+    display: flex;
+    align-items: center;
+    margin-right: .5rem;
+  }
+  input[type=search] {
+    min-width: 8em;
+  }
+  span > input { // a tooltip'ed input
+    width: 100%;
+  }
+  .is-error, .is-error:focus {
+    border-color: #e85600;
+    background: #e8560010;
+  }
+}
+
+.too-long-placeholder {
+  font-style: italic;
+}
+
+/* CodeMirror show-hints fix to work here */
+.CodeMirror-hints {
+  z-index: 9999;
+}
+
+/* fix contenteditable selection color bug */
+.CodeMirror .CodeMirror-line {
+  ::selection {
+    background: $selectionBg;
+  }
+  /* must be used separately otherwise the entire rule is ignored in Chrome */
+  ::-moz-selection {
+    background: $selectionBg;
+  }
+}
+
+.cm-matchhighlight {
+  background-color: hsla(168, 100%, 50%, 0.15);
+}
+.cm-trailingspace {
+  background: radial-gradient(cornflowerblue, transparent 1px) 0 50% / 1ch 1ch repeat-x;
+}
+div.CodeMirror span.CodeMirror-matchingbracket { /* the same selector used in codemirror.css */
+  color: unset;
+  background-color: hsla(102, 80%, 50%, 0.3);
+}
+.cm-s-default {
+  .cm-comment {
+    color: #918982;
+  }
+  .cm-string-2 { // template literal: `example`
+    color: #870;
+  }
+  .cm-string-2.cm-regexp {
+    color: #d60;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .cm-matchhighlight {
+    background-color: hsla(40, 100%, 50%, 0.1);
+    border-bottom-color: hsla(40, 100%, 50%, 0.25);
+  }
+  .CodeMirror-hints {
+    background: var(--bg);
+  }
+  .CodeMirror-hint {
+    color: var(--fg);
+  }
+  li.CodeMirror-hint-active {
+    background: var(--fg);
+    color: var(--bg);
+  }
+  .CodeMirror {
+    color: var(--fg);
+    background: var(--bg);
+    & &-scrollbar-filler,
+    & &-gutter-filler {
+      background: none;
+    }
+    & &-gutters {
+      border-color: var(--fill-2);
+      background-color: var(--fill-0-5);
+    }
+    & &-selected {
+      background: $selectionDarkBg;
+    }
+    & &-line {
+      ::selection {
+        background: $selectionDarkBg;
+      }
+      /* must be used separately otherwise the entire rule is ignored in Chrome */
+      ::-moz-selection {
+        background: $selectionDarkBg;
+      }
+    }
+    & &-guttermarker {
+      color: white;
+      &-subtle {
+        color: #d0d0d0;
+      }
+    }
+    & &-linenumber {
+      color: #666;
+    }
+    & &-cursor {
+      border-color: #f8f8f0;
+    }
+    & &-activeline-background {
+      background: #1a1a1a;
+    }
+    & &-matchingbracket {
+      outline: none;
+      background: #444;
+      color: yellow !important;
+    }
+  }
+  .cm-s-default {
+    // mostly copied from Monokai theme
+    .cm-comment {
+      color: #75715e;
+    }
+    .cm-atom {
+      color: #ae81ff;
+    }
+    .cm-number {
+      color: #ae81ff;
+    }
+    .cm-comment.cm-attribute {
+      color: #97b757;
+    }
+    .cm-comment.cm-def {
+      color: #bc9262;
+    }
+    .cm-comment.cm-tag {
+      color: #bc6283;
+    }
+    .cm-comment.cm-type {
+      color: #5998a6;
+    }
+    .cm-property,
+    .cm-attribute {
+      color: #a6e22e;
+    }
+    .cm-keyword {
+      color: #f92672;
+    }
+    .cm-builtin {
+      color: #66d9ef;
+    }
+    .cm-string {
+      color: #e6db74;
+    }
+    .cm-string-2 {
+      color: #bcb149;
+    }
+    .cm-string-2.cm-regexp {
+      color: #ff00f7;
+    }
+    .cm-variable {
+      color: #f8f8f2;
+    }
+    .cm-variable-2 {
+      color: #9effff;
+    }
+    .cm-variable-3,
+    .cm-type {
+      color: #66d9ef;
+    }
+    .cm-def {
+      color: #fd971f;
+    }
+    .cm-bracket {
+      color: #f8f8f2;
+    }
+    .cm-tag {
+      color: #f92672;
+    }
+    .cm-header {
+      color: #ae81ff;
+    }
+    .cm-link {
+      color: #ae81ff;
+    }
+    .cm-error {
+      color: #f8f8f0;
+      background: #f92672;
+    }
+    .cm-operator {
+      color: #999
+    }
+  }
 }
 </style>

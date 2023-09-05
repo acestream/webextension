@@ -1,302 +1,276 @@
-import {
-  getUniqId, request, i18n, buffer2string,
-} from '#/common';
+import { blob2base64, getFullUrl, sendTabCmd, string2uint8array } from '@/common';
+import { CHARSET_UTF8, FORM_URLENCODED } from '@/common/consts';
+import { forEachEntry, forEachValue, objectPick } from '@/common/object';
+import ua from '@/common/ua';
 import cache from './cache';
-import { isUserScript, parseMeta } from './script';
+import { addPublicCommands, commands } from './message';
+import {
+  FORBIDDEN_HEADER_RE, VM_VERIFY, requests, toggleHeaderInjector, verify,
+} from './requests-core';
 
-const requests = {};
-const verify = {};
-const specialHeaders = [
-  'user-agent',
-  'referer',
-  'origin',
-  'host',
-  'cookie',
-];
-// const tasks = {};
+addPublicCommands({
+  /**
+   * @param {GMReq.Message.Web} opts
+   * @param {MessageSender} src
+   * @return {Promise<void>}
+   */
+  HttpRequest(opts, src) {
+    const { tab: { id: tabId }, frameId } = src;
+    const { id, events } = opts;
+    const cb = res => requests[id] && (
+      sendTabCmd(tabId, 'HttpRequested', res, { frameId })
+    );
+    /** @type {GMReq.BG} */
+    requests[id] = {
+      id,
+      tabId,
+      frameId,
+      xhr: new XMLHttpRequest(),
+    };
+    return httpRequest(opts, events, src, cb)
+    .catch(events.includes('error') && (err => cb({
+      id,
+      error: err.message,
+      data: null,
+      type: 'error',
+    })));
+  },
+  /** @return {void} */
+  AbortRequest(id) {
+    const req = requests[id];
+    if (req) {
+      req.xhr.abort();
+      clearRequest(req);
+    }
+  },
+  RevokeBlob(url) {
+    const timer = cache.pop(`xhrBlob:${url}`);
+    if (timer) {
+      clearTimeout(timer);
+      URL.revokeObjectURL(url);
+    }
+  },
+});
 
-export function getRequestId() {
-  const id = getUniqId();
-  requests[id] = {
-    id,
-    xhr: new XMLHttpRequest(),
-  };
-  return id;
+/* 1MB takes ~20ms to encode/decode so it doesn't block the process of the extension and web page,
+ * which lets us and them be responsive to other events or user input. */
+const CHUNK_SIZE = 1e6;
+const BLOB_LIFE = 60e3;
+const SEND_XHR_PROPS = ['readyState', 'status', 'statusText'];
+const SEND_PROGRESS_PROPS = ['lengthComputable', 'loaded', 'total'];
+
+function blob2chunk(response, index) {
+  return blob2base64(response, index * CHUNK_SIZE, CHUNK_SIZE);
 }
 
-function xhrCallbackWrapper(req) {
+function blob2objectUrl(response) {
+  const url = URL.createObjectURL(response);
+  cache.put(`xhrBlob:${url}`, setTimeout(URL.revokeObjectURL, BLOB_LIFE, url), BLOB_LIFE);
+  return url;
+}
+
+/**
+ * @param {GMReq.BG} req
+ * @param {GMReq.EventType[]} events
+ * @param {boolean} blobbed
+ * @param {boolean} chunked
+ * @param {boolean} isJson
+ */
+function xhrCallbackWrapper(req, events, blobbed, chunked, isJson) {
   let lastPromise = Promise.resolve();
-  const { xhr } = req;
-  return evt => {
-    const res = {
-      id: req.id,
-      type: evt.type,
-      resType: xhr.responseType,
-    };
-    const data = {
-      finalUrl: xhr.responseURL,
-      readyState: xhr.readyState,
-      responseHeaders: xhr.getAllResponseHeaders(),
-      status: xhr.status,
-      statusText: xhr.statusText,
-    };
-    res.data = data;
-    try {
-      data.responseText = xhr.responseText;
-    } catch (e) {
-      // ignore if responseText is unreachable
+  let contentType;
+  let dataSize;
+  let numChunks = 0;
+  let response = null;
+  let responseText;
+  let responseHeaders;
+  let sent = true;
+  let tmp;
+  const { id, xhr } = req;
+  const getChunk = blobbed && blob2objectUrl || chunked && blob2chunk;
+  const getResponseHeaders = () => req[kResponseHeaders] || xhr.getAllResponseHeaders();
+  const eventQueue = [];
+  const sequentialize = async () => {
+    if (!contentType) {
+      contentType = xhr.getResponseHeader('Content-Type') || '';
     }
-    if (evt.type === 'progress') {
-      ['lengthComputable', 'loaded', 'total'].forEach(key => {
-        data[key] = evt[key];
-      });
-    }
-    if (evt.type === 'loadend') clearRequest(req);
-    lastPromise = lastPromise.then(() => {
-      if (xhr.response && xhr.responseType === 'arraybuffer') {
-        const contentType = xhr.getResponseHeader('Content-Type') || 'application/octet-stream';
-        const binstring = buffer2string(xhr.response);
-        data.response = `data:${contentType};base64,${window.btoa(binstring)}`;
-      } else {
-        // default `null` for blob and '' for text
-        data.response = xhr.response;
+    if (xhr[kResponse] !== response) {
+      response = xhr[kResponse];
+      sent = false;
+      try {
+        responseText = xhr[kResponseText];
+        if (responseText === response) responseText = ['same'];
+      } catch (e) {
+        // ignore if responseText is unreachable
       }
-    })
-    .then(() => {
-      if (req.cb) req.cb(res);
+      if ((blobbed || chunked) && response) {
+        dataSize = response.size;
+        numChunks = chunked && Math.ceil(dataSize / CHUNK_SIZE) || 1;
+      }
+    }
+    const evt = eventQueue.shift();
+    const { type } = evt;
+    const shouldNotify = events.includes(type);
+    // TODO: send partial delta since last time in onprogress?
+    const shouldSendResponse = shouldNotify && (!isJson || xhr.readyState === 4) && !sent;
+    if (!shouldNotify && type !== 'loadend') {
+      return;
+    }
+    if (shouldSendResponse) {
+      sent = true;
+      for (let i = 1; i < numChunks; i += 1) {
+        await req.cb({
+          id,
+          chunk: i * CHUNK_SIZE,
+          data: await getChunk(response, i),
+          size: dataSize,
+        });
+      }
+    }
+    /* WARNING! We send `null` in the mandatory props because Chrome can't send `undefined`,
+     * and for simple destructuring and `prop?.foo` in the receiver without getOwnProp checks. */
+    await req.cb({
+      blobbed,
+      chunked,
+      contentType,
+      id,
+      type,
+      /** @type {VMScriptResponseObject} */
+      data: shouldNotify ? {
+        finalUrl: req.url || xhr.responseURL,
+        ...objectPick(xhr, SEND_XHR_PROPS),
+        ...objectPick(evt, SEND_PROGRESS_PROPS),
+        [kResponse]: shouldSendResponse
+          ? numChunks && await getChunk(response, 0) || response
+          : null,
+        [kResponseHeaders]: responseHeaders !== (tmp = getResponseHeaders())
+          ? (responseHeaders = tmp)
+          : null,
+        [kResponseText]: shouldSendResponse
+          ? responseText
+          : null,
+      } : null,
     });
+    if (type === 'loadend') {
+      clearRequest(req);
+    }
+  };
+  return (evt) => {
+    eventQueue.push(evt);
+    lastPromise = lastPromise.then(sequentialize);
   };
 }
 
-export function httpRequest(details, cb) {
-  const req = requests[details.id];
+/**
+ * @param {GMReq.Message.Web} opts
+ * @param {GMReq.EventType[]} events
+ * @param {MessageSender} src
+ * @param {function} cb
+ * @returns {Promise<void>}
+ */
+async function httpRequest(opts, events, src, cb) {
+  const { tab } = src;
+  const { incognito } = tab;
+  const { anonymous, id, overrideMimeType, xhrType, url: unsafeUrl } = opts;
+  const url = unsafeUrl.startsWith('blob:')
+    ? unsafeUrl // TODO: process blob and data URLs in `injected` without sending anything to bg
+    : getFullUrl(unsafeUrl, src.url);
+  const req = requests[id];
   if (!req || req.cb) return;
   req.cb = cb;
   const { xhr } = req;
-  try {
-    xhr.open(details.method, details.url, true, details.user || '', details.password || '');
-    xhr.setRequestHeader('VM-Verify', details.id);
-    if (details.headers) {
-      Object.keys(details.headers).forEach(key => {
-        const lowerKey = key.toLowerCase();
-        // `VM-` headers are reserved
-        if (lowerKey.startsWith('vm-')) return;
-        xhr.setRequestHeader(
-          specialHeaders.includes(lowerKey) ? `VM-${key}` : key,
-          details.headers[key],
-        );
-      });
-    }
-    if (details.timeout) xhr.timeout = details.timeout;
-    if (details.responseType) xhr.responseType = 'arraybuffer';
-    if (details.overrideMimeType) xhr.overrideMimeType(details.overrideMimeType);
-    const callback = xhrCallbackWrapper(req);
-    [
-      'abort',
-      'error',
-      'load',
-      'loadend',
-      'progress',
-      'readystatechange',
-      'timeout',
-    ]
-    .forEach(evt => { xhr[`on${evt}`] = callback; });
-    // req.finalUrl = details.url;
-    const { data } = details;
-    const body = data ? decodeBody(data) : null;
-    xhr.send(body);
-  } catch (e) {
-    console.warn(e);
-  }
-}
-
-function clearRequest(req) {
-  if (req.coreId) delete verify[req.coreId];
-  delete requests[req.id];
-}
-
-export function abortRequest(id) {
-  const req = requests[id];
-  if (req) {
-    req.xhr.abort();
-    clearRequest(req);
-  }
-}
-
-function decodeBody(obj) {
-  const { cls, value } = obj;
-  if (cls === 'formdata') {
-    const result = new FormData();
-    if (value) {
-      Object.keys(value).forEach(key => {
-        value[key].forEach(item => {
-          result.append(key, decodeBody(item));
-        });
-      });
-    }
-    return result;
-  }
-  if (['blob', 'file'].includes(cls)) {
-    const { type, name, lastModified } = obj;
-    const array = new Uint8Array(value.length);
-    for (let i = 0; i < value.length; i += 1) array[i] = value.charCodeAt(i);
-    const data = [array.buffer];
-    if (cls === 'file') return new File(data, name, { type, lastModified });
-    return new Blob(data, { type });
-  }
-  if (value) return JSON.parse(value);
-}
-
-// Watch URL redirects
-// browser.webRequest.onBeforeRedirect.addListener(details => {
-//   const reqId = verify[details.requestId];
-//   if (reqId) {
-//     const req = requests[reqId];
-//     if (req) req.finalUrl = details.redirectUrl;
-//   }
-// }, {
-//   urls: ['<all_urls>'],
-//   types: ['xmlhttprequest'],
-// });
-
-// Modifications on headers
-browser.webRequest.onBeforeSendHeaders.addListener(details => {
-  const headers = details.requestHeaders;
-  const newHeaders = [];
-  const vmHeaders = {};
-  headers.forEach(header => {
-    // if (header.name === 'VM-Task') {
-    //   tasks[details.requestId] = header.value;
-    // } else
-    if (header.name.startsWith('VM-')) {
-      vmHeaders[header.name.slice(3)] = header.value;
+  const vmHeaders = [];
+  // Firefox can send Blob/ArrayBuffer directly
+  const willStringifyBinaries = xhrType && !IS_FIREFOX;
+  // Chrome can't fetch Blob URL in incognito so we use chunks
+  const chunked = willStringifyBinaries && incognito;
+  const blobbed = willStringifyBinaries && !incognito;
+  const [body, contentType] = decodeBody(opts.data);
+  // Firefox doesn't send cookies, https://github.com/violentmonkey/violentmonkey/issues/606
+  // Both Chrome & FF need explicit routing of cookies in containers or incognito
+  const shouldSendCookies = !anonymous && (incognito || IS_FIREFOX);
+  req.noNativeCookie = shouldSendCookies || anonymous;
+  xhr.open(opts.method || 'GET', url, true, opts.user || '', opts.password || '');
+  xhr.setRequestHeader(VM_VERIFY, id);
+  if (contentType) xhr.setRequestHeader('Content-Type', contentType);
+  opts.headers::forEachEntry(([name, value]) => {
+    if (FORBIDDEN_HEADER_RE.test(name)) {
+      vmHeaders.push({ name, value });
     } else {
-      newHeaders.push(header);
+      xhr.setRequestHeader(name, value);
     }
   });
-  const reqId = vmHeaders.Verify;
-  if (reqId) {
-    const req = requests[reqId];
-    if (req) {
-      delete vmHeaders.Verify;
-      verify[details.requestId] = reqId;
-      req.coreId = details.requestId;
-      Object.keys(vmHeaders).forEach(name => {
-        if (specialHeaders.includes(name.toLowerCase())) {
-          newHeaders.push({ name, value: vmHeaders[name] });
+  xhr[kResponseType] = willStringifyBinaries && 'blob' || xhrType || 'text';
+  xhr.timeout = Math.max(0, Math.min(0x7FFF_FFFF, opts.timeout)) || 0;
+  if (overrideMimeType) xhr.overrideMimeType(overrideMimeType);
+  if (shouldSendCookies) {
+    for (const store of await browser.cookies.getAllCookieStores()) {
+      if (store.tabIds.includes(tab.id)) {
+        if (IS_FIREFOX ? !store.id.endsWith('-default') : store.id !== '0') {
+          /* Cookie routing. For the main store we rely on the browser.
+           * The ids are hard-coded as `stores` may omit the main store if no such tabs are open. */
+          req.storeId = store.id;
         }
+        break;
+      }
+    }
+    const now = Date.now() / 1000;
+    const cookies = (await browser.cookies.getAll({
+      url,
+      storeId: req.storeId,
+      ...ua.firefox >= 59 && { firstPartyDomain: null },
+    })).filter(c => c.session || c.expirationDate > now); // FF reports expired cookies!
+    if (cookies.length) {
+      vmHeaders.push({
+        name: 'cookie',
+        value: cookies.map(c => `${c.name}=${c.value};`).join(' '),
       });
     }
   }
-  return { requestHeaders: newHeaders };
-}, {
-  urls: ['<all_urls>'],
-  types: ['xmlhttprequest'],
-}, ['blocking', 'requestHeaders']);
+  toggleHeaderInjector(id, vmHeaders);
+  // Sending as params to avoid storing one-time init data in `requests`
+  const callback = xhrCallbackWrapper(req, events, blobbed, chunked, opts[kResponseType] === 'json');
+  events.forEach(evt => { xhr[`on${evt}`] = callback; });
+  xhr.onloadend = callback; // always send it for the internal cleanup
+  xhr.send(body);
+}
 
-// tasks are not necessary now, turned off
-// Stop redirects
-// browser.webRequest.onHeadersReceived.addListener(details => {
-//   const task = tasks[details.requestId];
-//   if (task) {
-//     delete tasks[details.requestId];
-//     if (task === 'Get-Location' && [301, 302, 303].includes(details.statusCode)) {
-//       const locationHeader = details.responseHeaders.find(
-//         header => header.name.toLowerCase() === 'location');
-//       const base64 = locationHeader && locationHeader.value;
-//       return {
-//         redirectUrl: `data:text/plain;charset=utf-8,${base64 || ''}`,
-//       };
-//     }
-//   }
-// }, {
-//   urls: ['<all_urls>'],
-//   types: ['xmlhttprequest'],
-// }, ['blocking', 'responseHeaders']);
-// browser.webRequest.onCompleted.addListener(details => {
-//   delete tasks[details.requestId];
-// }, {
-//   urls: ['<all_urls>'],
-//   types: ['xmlhttprequest'],
-// });
-// browser.webRequest.onErrorOccurred.addListener(details => {
-//   delete tasks[details.requestId];
-// }, {
-//   urls: ['<all_urls>'],
-//   types: ['xmlhttprequest'],
-// });
+/** @param {GMReq.BG} req */
+function clearRequest({ id, coreId }) {
+  delete verify[coreId];
+  delete requests[id];
+  toggleHeaderInjector(id, false);
+}
 
-export function confirmInstall(info) {
-  return (info.code
-    ? Promise.resolve(info.code)
-    : request(info.url).then(({ data }) => {
-      if (!isUserScript(data)) return Promise.reject(i18n('msgInvalidScript'));
-      return data;
-    })
-  )
-  .then(code => {
-    cache.put(info.url, code, 3000);
-    const confirmKey = getUniqId();
-    cache.put(`confirm-${confirmKey}`, {
-      url: info.url,
-      from: info.from,
-    });
-    const optionsURL = browser.runtime.getURL('/confirm/index.html');
-    browser.tabs.create({ url: `${optionsURL}#${confirmKey}` });
+export function clearRequestsByTabId(tabId, frameId) {
+  requests::forEachValue(req => {
+    if ((tabId == null || req.tabId === tabId)
+    && (!frameId || req.frameId === frameId)) {
+      commands.AbortRequest(req.id);
+    }
   });
 }
 
-const reUserScript = /\.(user|acestream)\.js([?#]|$)/;
-const whitelist = [
-  '^https://greasyfork.org/scripts/[^/]*/code/[^/]*?\\.user\\.js([?#]|$)',
-  '^https://openuserjs.org/install/[^/]*/[^/]*?\\.user\\.js([?#]|$)',
-  '^https://github.com/[^/]*/[^/]*/raw/[^/]*/[^/]*?\\.user\\.js([?#]|$)',
-  '^https://gist.github.com/.*?/[^/]*?.user.js([?#]|$)',
-].map(re => new RegExp(re));
-const blacklist = [
-  '//(?:(?:gist.|)github.com|greasyfork.org|openuserjs.org)/',
-].map(re => new RegExp(re));
-const bypass = {};
-
-browser.webRequest.onBeforeRequest.addListener(req => {
-  // onBeforeRequest fired for `file:`
-  // - works on Chrome
-  // - does not work on Firefox
-  const { url } = req;
-  if (req.method === 'GET' && reUserScript.test(url)) {
-    if (!bypass[url] && (
-      whitelist.some(re => re.test(url)) || !blacklist.some(re => re.test(url))
-    )) {
-      Promise.all([
-        request(url).catch(() => ({ data: '' })),
-        req.tabId < 0 ? Promise.resolve() : browser.tabs.get(req.tabId),
-      ])
-      .then(([{ data: code }, tab]) => {
-        const meta = parseMeta(code);
-        if (meta.name) {
-          confirmInstall({
-            code,
-            url,
-            from: tab && tab.url,
-          });
-        } else {
-          if (!bypass[url]) {
-            bypass[url] = {
-              timer: setTimeout(() => {
-                delete bypass[url];
-              }, 10000),
-            };
-          }
-          if (tab && tab.id) {
-            browser.tabs.update(tab.id, { url });
-          }
-        }
-      });
-      // { cancel: true } will redirect to a blocked view
-      return { redirectUrl: 'javascript:history.back()' }; // eslint-disable-line no-script-url
+/** Polyfill for browser's inability to send complex types over extension messaging */
+function decodeBody([body, type, wasBlob]) {
+  if (type === 'fd') {
+    // FF supports FormData over messaging
+    // Chrome doesn't - we use this code only with an empty FormData just to create the object
+    const res = new FormData();
+    body.forEach(entry => res.set(...entry));
+    body = res;
+    type = '';
+  } else if (type === 'usp') {
+    type = FORM_URLENCODED + ';' + CHARSET_UTF8;
+  } else if (type != null) {
+    // 5x times faster than fetch() which wastes time on inter-process communication
+    const res = string2uint8array(atob(body.slice(body.indexOf(',') + 1)));
+    if (!wasBlob) {
+      type = body.match(/^data:(.+?);base64/)[1].replace(/(boundary=)[^;]+/,
+        // using a function so it runs only if "boundary" was found
+        (_, p1) => p1 + String.fromCharCode(...res.slice(2, res.indexOf(13))));
     }
+    body = res;
   }
-}, {
-  urls: ['<all_urls>'],
-  types: ['main_frame'],
-}, ['blocking']);
+  return [body, type];
+}

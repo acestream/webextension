@@ -1,29 +1,28 @@
-import {
-  parseScript,
-  getScripts,
-  getScriptCode,
-  removeScript,
-} from '../utils/db';
+import { commands } from '../utils/message';
+import { getScripts } from '../utils/db';
 
-// eslint-disable-next-line import/prefer-default-export
 export const script = {
-  update(data) {
-    // Update an existing script by ID
-    // data: {
-    //   id, code, message, isNew, config, custom, props, update,
-    // }
-    return parseScript(data);
-  },
-  list() {
-    // List all available scripts, without script code
-    return getScripts();
-  },
-  get(id) {
-    // Get script code of an existing script
-    return getScriptCode(id);
-  },
-  remove(id) {
-    // Remove script by id
-    return removeScript(id);
-  },
+  /**
+   * Update an existing script identified by the provided id
+   * @param {{ id, code, message, isNew, config, custom, props, update }} data
+   * @return {Promise<{ isNew?, update, where }>}
+   */
+  update: commands.ParseScript,
+  /**
+   * List all available scripts, without script code
+   * @return {Promise<VMScript[]>}
+   */
+  list: async () => getScripts(),
+  /**
+   * Get script code of an existing script
+   * @param {number} id
+   * @return {Promise<string>}
+   */
+  get: commands.GetScriptCode,
+  /**
+   * Remove script
+   * @param {number} id
+   * @return {Promise<void>}
+   */
+  remove: id => commands.MarkRemoved({ id, removed: true }),
 };

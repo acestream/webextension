@@ -1,64 +1,63 @@
-import { inject, getUniqId, sendMessage } from './utils';
-import initialize from './content';
+import browser from '@/common/browser'; // eslint-disable-line no-restricted-imports
+import { sendCmd } from '@/common'; // eslint-disable-line no-restricted-imports
+import { USERSCRIPT_META_INTRO } from './util';
+import './content';
 
-(function main() {
-  // Avoid running repeatedly due to new `document.documentElement`
-  if (window.VM) return;
-  window.VM = 1;
-
-  // Firefox bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1408996
-  const VMInitInjection = window[process.env.INIT_FUNC_NAME];
-
-  function initBridge() {
-    const contentId = getUniqId();
-    const webId = getUniqId();
-    initialize(contentId, webId).then(needInject => {
-      if (needInject) {
-        doInject(contentId, webId);
-      }
-    });
-  }
-
-  function doInject(contentId, webId) {
-    const props = {};
-    [
-      Object.getOwnPropertyNames(window),
-      Object.getOwnPropertyNames(global),
-    ].forEach(keys => {
-      keys.forEach(key => { props[key] = 1; });
-    });
-    const args = [
-      webId,
-      contentId,
-      Object.keys(props),
-    ];
-    // Avoid using Function::apply in case it is shimmed
-    inject(`(${VMInitInjection.toString()}())(${args.map(arg => JSON.stringify(arg)).join(',')})`);
-  }
-
-  initBridge();
-
-  // For installation
-  // Firefox does not support `onBeforeRequest` for `file:`
-  function checkJS() {
-    if (!document.querySelector('title')) {
-      // plain text
-      sendMessage({
-        cmd: 'ConfirmInstall',
-        data: {
-          code: document.body.textContent,
-          url: window.location.href,
-          from: document.referrer,
-        },
-      })
-      .then(() => {
-        if (window.history.length > 1) window.history.go(-1);
-        else sendMessage({ cmd: 'TabClose' });
-      });
+// Script installation in Firefox as it does not support `onBeforeRequest` for `file:`
+// Using pathname and a case-sensitive check to match webRequest `urls` filter behavior
+if (IS_FIREFOX && window === top
+&& location.protocol === 'file:'
+&& (location.pathname.endsWith('.user.js') || location.pathname.endsWith('.acestream.js'))
+&& document.contentType === 'application/x-javascript' // FF uses this for file: scheme
+) {
+  (async () => {
+    const {
+      fetch,
+      history,
+    } = global;
+    const { referrer } = document;
+    const { text: getText } = ResponseProto;
+    const isFF68 = 'cookie' in Document[PROTO];
+    const url = location.href;
+    const fetchCode = async () => (await fetch(url, { mode: 'same-origin' }))::getText();
+    let code = await fetchCode();
+    let oldCode;
+    if (code::stringIndexOf(USERSCRIPT_META_INTRO) < 0) {
+      return;
     }
-  }
-  if (/\.(user|acestream)\.js$/.test(window.location.pathname)) {
-    if (document.readyState === 'complete') checkJS();
-    else window.addEventListener('load', checkJS, false);
-  }
-}());
+    await sendCmd('ConfirmInstall', { code, url, from: referrer });
+    // FF68+ doesn't allow extension pages to get file: URLs anymore so we need to track it here
+    // (detecting FF68 by a feature because we can't use getBrowserInfo here and UA may be altered)
+    if (isFF68) {
+      /** @param {chrome.runtime.Port} */
+      browser.runtime.onConnect.addListener(port => {
+        if (port.name !== 'FetchSelf') return;
+        port.onMessage.addListener(async () => {
+          code = await fetchCode();
+          if (code === oldCode) {
+            code = null;
+          } else {
+            oldCode = code;
+          }
+          port.postMessage(code);
+        });
+        port.onDisconnect.addListener(async () => {
+          oldCode = null;
+          // The user may have reloaded the Confirm page so let's check
+          if (!await sendCmd('CheckInstallerTab', port.sender.tab.id)) {
+            closeSelf();
+          }
+        });
+      });
+    } else {
+      closeSelf();
+    }
+    function closeSelf() {
+      if (history.length > 1) {
+        history.go(-1);
+      } else {
+        sendCmd('TabClose');
+      }
+    }
+  })().catch(logging.error); // FF doesn't show exceptions in content scripts
+}

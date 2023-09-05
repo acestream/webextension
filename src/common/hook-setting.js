@@ -1,11 +1,10 @@
 import options from './options';
-import { objectGet } from './object';
+import { forEachEntry, objectGet } from './object';
 
 const hooks = {};
 
-options.hook(data => {
-  Object.keys(hooks).forEach(key => {
-    const list = hooks[key];
+options.hook((data) => {
+  hooks::forEachEntry(([key, list]) => {
     if (list) {
       const value = objectGet(data, key);
       if (value !== undefined) list.forEach(update => update(value));
@@ -13,12 +12,9 @@ options.hook(data => {
   });
 });
 
-export default function hook(key, update) {
-  let list = hooks[key];
-  if (!list) {
-    list = [];
-    hooks[key] = list;
-  }
+export default function hookSetting(key, update) {
+  options.ready.then(() => update(options.get(key)));
+  const list = hooks[key] || (hooks[key] = []);
   list.push(update);
   return () => {
     const i = list.indexOf(update);

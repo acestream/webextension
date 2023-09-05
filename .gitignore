@@ -1,8 +1,9 @@
 /dist/
 node_modules/
 *.log
+.eslintcache
 /stats.json
-/firefox/
-/chrome/
-/releases/
 /tmp/
+/dist-assets/
+.eslintcache
+.env

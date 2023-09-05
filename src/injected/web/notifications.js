@@ -1,35 +1,29 @@
-import bridge from './bridge';
+import bridge, { addHandlers } from './bridge';
 
 let lastId = 0;
-const notifications = {};
+const notifications = createNullObj();
+
+addHandlers({
+  NotificationClicked(id) {
+    notifications[id]?.onclick?.();
+  },
+  NotificationClosed(id) {
+    const options = notifications[id];
+    if (options) {
+      delete notifications[id];
+      options.ondone?.();
+    }
+  },
+});
 
 export function onNotificationCreate(options) {
   lastId += 1;
   notifications[lastId] = options;
-  bridge.post({
-    cmd: 'Notification',
-    data: {
-      id: lastId,
-      text: options.text,
-      title: options.title,
-      image: options.image,
-    },
+  bridge.post('Notification', {
+    id: lastId,
+    text: options.text,
+    title: options.title,
+    image: options.image,
   });
-}
-
-export function onNotificationClicked(id) {
-  const options = notifications[id];
-  if (options) {
-    const { onclick } = options;
-    if (onclick) onclick();
-  }
-}
-
-export function onNotificationClosed(id) {
-  const options = notifications[id];
-  if (options) {
-    delete notifications[id];
-    const { ondone } = options;
-    if (ondone) ondone();
-  }
+  return lastId;
 }

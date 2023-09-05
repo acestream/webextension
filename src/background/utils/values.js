@@ -1,105 +1,127 @@
-import { noop } from '#/common';
-import { getValueStoresByIds, dumpValueStores, dumpValueStore } from './db';
+import { isEmpty, sendTabCmd } from '@/common';
+import { forEachEntry, objectGet, objectSet } from '@/common/object';
+import { getScript } from './db';
+import { addOwnCommands, addPublicCommands } from './message';
+import storage from './storage';
 
-const openers = {}; // scriptId: { openerId: 1, ... }
-const tabScripts = {}; // openerId: { scriptId: 1, ... }
-let cache;
-let timer;
+const nest = (obj, key) => obj[key] || (obj[key] = {}); // eslint-disable-line no-return-assign
+/** { scriptId: { tabId: { frameId: {key: raw}, ... }, ... } } */
+const openers = {};
+let chain = Promise.resolve();
+let toSend = {};
 
-browser.tabs.onRemoved.addListener(id => {
-  resetValueOpener(id);
+addOwnCommands({
+  async GetValueStore(id, { tab }) {
+    const frames = nest(nest(openers, id), tab.id);
+    const values = frames[0] || (frames[0] = await storage.value.getOne(id));
+    return values;
+  },
+  /**
+   * @param {Object} data - key can be an id or a uri
+   * @return {Promise<void>}
+   */
+  SetValueStores(data) {
+    const toWrite = {};
+    data::forEachEntry(([id, store = {}]) => {
+      id = getScript({ id: +id, uri: id })?.props.id;
+      if (id) {
+        toWrite[id] = store;
+        toSend[id] = store;
+      }
+    });
+    commit(toWrite);
+    return chain;
+  },
 });
 
-export function updateValueStore(id, update) {
-  updateLater();
-  const { key, value } = update;
-  if (!cache) cache = {};
-  let updates = cache[id];
-  if (!updates) {
-    updates = {};
-    cache[id] = updates;
-  }
-  updates[key] = value || null;
-}
-
-export function setValueStore(where, value) {
-  return dumpValueStore(where, value)
-  .then(broadcastUpdates);
-}
-
-export function resetValueOpener(openerId) {
-  const scriptMap = tabScripts[openerId];
-  if (scriptMap) {
-    Object.keys(scriptMap).forEach(scriptId => {
-      const map = openers[scriptId];
-      if (map) delete map[openerId];
-    });
-    delete tabScripts[openerId];
-  }
-}
-
-export function addValueOpener(openerId, scriptIds) {
-  let scriptMap = tabScripts[openerId];
-  if (!scriptMap) {
-    scriptMap = {};
-    tabScripts[openerId] = scriptMap;
-  }
-  scriptIds.forEach(scriptId => {
-    scriptMap[scriptId] = 1;
-    let openerMap = openers[scriptId];
-    if (!openerMap) {
-      openerMap = {};
-      openers[scriptId] = openerMap;
+addPublicCommands({
+  /**
+   * @return {?Promise<void>}
+   */
+  UpdateValue({ id, key, raw }, { tab, frameId }) {
+    const values = objectGet(openers, [id, tab.id, frameId]);
+    if (values) { // preventing the weird case of message arriving after the page navigated
+      if (raw) values[key] = raw; else delete values[key];
+      nest(toSend, id)[key] = raw || null;
+      commit({ [id]: values });
+      return chain;
     }
-    openerMap[openerId] = 1;
+  },
+});
+
+export function clearValueOpener(tabId, frameId) {
+  if (tabId == null) {
+    toSend = {};
+  }
+  openers::forEachEntry(([id, tabs]) => {
+    const frames = tabs[tabId];
+    if (frames) {
+      if (frameId) {
+        delete frames[frameId];
+        if (isEmpty(frames)) delete tabs[tabId];
+      } else {
+        delete tabs[tabId];
+      }
+    }
+    if (tabId == null || isEmpty(tabs)) {
+      delete openers[id];
+    }
   });
 }
 
-function updateLater() {
-  if (!timer) {
-    timer = Promise.resolve().then(doUpdate);
-    // timer = setTimeout(doUpdate);
-  }
+/**
+ * @param {VMInjection.Script[]} injectedScripts
+ * @param {number} tabId
+ * @param {number} frameId
+ */
+export function addValueOpener(injectedScripts, tabId, frameId) {
+  injectedScripts.forEach(script => {
+    const { id, [VALUES]: values } = script;
+    if (values) objectSet(openers, [id, tabId, frameId], Object.assign({}, values));
+    else delete openers[id];
+  });
 }
 
-function doUpdate() {
-  const currentCache = cache;
-  cache = null;
-  const ids = Object.keys(currentCache);
-  getValueStoresByIds(ids)
-  .then(valueStores => {
-    ids.forEach(id => {
-      const valueStore = valueStores[id] || {};
-      valueStores[id] = valueStore;
-      const updates = currentCache[id] || {};
-      Object.keys(updates).forEach(key => {
-        const value = updates[key];
-        if (!value) delete valueStore[key];
-        else valueStore[key] = value;
+function commit(data) {
+  storage.value.set(data);
+  chain = chain.catch(console.warn).then(broadcast);
+}
+
+async function broadcast() {
+  const tasks = [];
+  const toTabs = {};
+  toSend::forEachEntry(groupByTab, toTabs);
+  toSend = {};
+  for (const [tabId, frames] of Object.entries(toTabs)) {
+    for (const [frameId, toFrame] of Object.entries(frames)) {
+      if (!isEmpty(toFrame)) {
+        tasks.push(sendToFrame(+tabId, +frameId, toFrame));
+        if (tasks.length === 20) await Promise.all(tasks.splice(0)); // throttling
+      }
+    }
+  }
+  await Promise.all(tasks);
+}
+
+/** @this {Object} accumulator */
+function groupByTab([id, valuesToSend]) {
+  const entriesToSend = Object.entries(valuesToSend);
+  openers[id]::forEachEntry(([tabId, frames]) => {
+    if (tabId < 0) return; // script values editor watches for changes differently
+    const toFrames = nest(this, tabId);
+    frames::forEachEntry(([frameId, last]) => {
+      const toScript = nest(nest(toFrames, frameId), id);
+      entriesToSend.forEach(([key, raw]) => {
+        if (raw !== last[key]) {
+          if (raw) last[key] = raw; else delete last[key];
+          toScript[key] = raw;
+        }
       });
     });
-    return dumpValueStores(valueStores);
-  })
-  .then(broadcastUpdates)
-  .catch(err => {
-    console.error('Values error:', err);
-  })
-  .then(() => {
-    timer = null;
-    if (cache) updateLater();
   });
 }
 
-function broadcastUpdates(updates) {
-  if (updates) {
-    const updatedOpeners = Object.keys(updates)
-    .reduce((map, scriptId) => Object.assign(map, openers[scriptId]), {});
-    Object.keys(updatedOpeners).forEach(openerId => {
-      browser.tabs.sendMessage(+openerId, {
-        cmd: 'UpdatedValues',
-        data: updates,
-      })
-      .catch(noop);
-    });
-  }
+function sendToFrame(tabId, frameId, data) {
+  return sendTabCmd(tabId, 'UpdatedValues', data, { frameId }).catch(console.warn);
+  // must use catch() to keep Promise.all going
 }

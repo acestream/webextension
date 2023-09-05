@@ -1,7 +1,18 @@
-import bridge from './bridge';
+import bridge, { addHandlers } from './bridge';
 
 let lastId = 0;
-const tabs = {};
+const tabs = createNullObj();
+
+addHandlers({
+  TabClosed(key) {
+    const item = tabs[key];
+    if (item) {
+      item.closed = true;
+      delete tabs[key];
+      item.onclose?.();
+    }
+  },
+});
 
 export function onTabCreate(data) {
   lastId += 1;
@@ -10,20 +21,10 @@ export function onTabCreate(data) {
     onclose: null,
     closed: false,
     close() {
-      bridge.post({ cmd: 'TabClose', data: key });
+      bridge.post('TabClose', key);
     },
   };
   tabs[key] = item;
-  bridge.post({ cmd: 'TabOpen', data: { key, data } });
+  bridge.post('TabOpen', { key, data });
   return item;
-}
-
-export function onTabClosed(key) {
-  const item = tabs[key];
-  if (item) {
-    item.closed = true;
-    const { onclose } = item;
-    if (onclose) onclose();
-    delete tabs[key];
-  }
 }

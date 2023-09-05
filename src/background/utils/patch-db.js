@@ -1,4 +1,5 @@
 import { parseMeta } from './script';
+import storage, { S_CACHE, S_CODE, S_REQUIRE, S_SCRIPT, S_VALUE } from './storage';
 
 export default () => new Promise((resolve, reject) => {
   console.info('Upgrade database...');
@@ -21,128 +22,66 @@ export default () => new Promise((resolve, reject) => {
     };
   }
   function transform(db) {
-    const tx = db.transaction(['scripts', 'require', 'cache', 'values']);
+    const tx = db.transaction([SCRIPTS, S_REQUIRE, S_CACHE, VALUES]);
     const updates = {};
     let processing = 3;
-    const onCallback = () => {
+    const done = () => {
       processing -= 1;
-      if (!processing) resolve(browser.storage.local.set(updates));
+      if (!processing) resolve(storage.base.set(updates));
     };
-    getAllScripts(tx, items => {
+    const getAll = (storeName, callback) => {
+      const req = tx.objectStore(storeName).getAll();
+      req.onsuccess = () => callback(req.result);
+      req.onerror = reject;
+    };
+    getAll(SCRIPTS, (allScripts) => {
       const uriMap = {};
-      items.forEach(({ script, code }) => {
-        updates[`scr:${script.props.id}`] = script;
-        updates[`code:${script.props.id}`] = code;
-        uriMap[script.props.uri] = script.props.id;
+      allScripts.forEach((script) => {
+        const { code, id, uri } = script;
+        updates[storage[S_SCRIPT].toKey(id)] = transformScript(script);
+        updates[storage[S_CODE].toKey(id)] = code;
+        uriMap[uri] = id;
       });
-      getAllValues(tx, data => {
-        data.forEach(({ id, values }) => {
-          updates[`val:${id}`] = values;
+      getAll(VALUES, (allValues) => {
+        allValues.forEach(({ uri, [VALUES]: values }) => {
+          const id = uriMap[uri];
+          if (id) updates[storage[S_VALUE].toKey(id)] = values;
         });
-        onCallback();
-      }, uriMap);
-    });
-    getAllCache(tx, cache => {
-      cache.forEach(({ uri, data }) => {
-        updates[`cac:${uri}`] = data;
+        done();
       });
-      onCallback();
     });
-    getAllRequire(tx, data => {
-      data.forEach(({ uri, code }) => {
-        updates[`req:${uri}`] = code;
+    getAll(S_CACHE, (allCache) => {
+      allCache.forEach(({ uri, data }) => {
+        updates[storage[S_CACHE].toKey(uri)] = data;
       });
-      onCallback();
+      done();
     });
-  }
-  function getAllScripts(tx, callback) {
-    const os = tx.objectStore('scripts');
-    const list = [];
-    const req = os.openCursor();
-    req.onsuccess = e => {
-      const cursor = e.target.result;
-      if (cursor) {
-        const { value } = cursor;
-        list.push(transformScript(value));
-        cursor.continue();
-      } else {
-        callback(list);
-      }
-    };
-    req.onerror = reject;
-  }
-  function getAllCache(tx, callback) {
-    const os = tx.objectStore('cache');
-    const list = [];
-    const req = os.openCursor();
-    req.onsuccess = e => {
-      const cursor = e.target.result;
-      if (cursor) {
-        const { value: { uri, data } } = cursor;
-        list.push({ uri, data });
-        cursor.continue();
-      } else {
-        callback(list);
-      }
-    };
-    req.onerror = reject;
-  }
-  function getAllRequire(tx, callback) {
-    const os = tx.objectStore('require');
-    const list = [];
-    const req = os.openCursor();
-    req.onsuccess = e => {
-      const cursor = e.target.result;
-      if (cursor) {
-        const { value: { uri, code } } = cursor;
-        list.push({ uri, code });
-        cursor.continue();
-      } else {
-        callback(list);
-      }
-    };
-    req.onerror = reject;
-  }
-  function getAllValues(tx, callback, uriMap) {
-    const os = tx.objectStore('values');
-    const list = [];
-    const req = os.openCursor();
-    req.onsuccess = e => {
-      const cursor = e.target.result;
-      if (cursor) {
-        const { value: { uri, values } } = cursor;
-        const id = uriMap[uri];
-        if (id) list.push({ id, values });
-        cursor.continue();
-      } else {
-        callback(list);
-      }
-    };
-    req.onerror = reject;
+    getAll(S_REQUIRE, (allRequire) => {
+      allRequire.forEach(({ uri, code }) => {
+        updates[storage[S_REQUIRE].toKey(uri)] = code;
+      });
+      done();
+    });
   }
   function transformScript(script) {
-    const item = {
-      script: {
-        meta: parseMeta(script.code),
-        custom: Object.assign({
-          origInclude: true,
-          origExclude: true,
-          origMatch: true,
-          origExcludeMatch: true,
-        }, script.custom),
-        props: {
-          id: script.id,
-          uri: script.uri,
-          position: script.position,
-        },
-        config: {
-          enabled: script.enabled,
-          shouldUpdate: script.update,
-        },
+    return {
+      meta: parseMeta(script.code),
+      custom: Object.assign({
+        origInclude: true,
+        origExclude: true,
+        origMatch: true,
+        origExcludeMatch: true,
+      }, script.custom),
+      props: {
+        id: script.id,
+        uri: script.uri,
+        position: script.position,
       },
-      code: script.code,
+      config: {
+        enabled: script.enabled,
+        shouldUpdate: script.update,
+      },
     };
-    return item;
   }
 })
 // Ignore error

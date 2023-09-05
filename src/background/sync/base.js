@@ -1,11 +1,12 @@
 import {
-  debounce, normalizeKeys, request, noop,
-} from '#/common';
+  debounce, normalizeKeys, request, noop, makePause, ensureArray, sendCmd, blob2base64, getRandomString,
+} from '@/common';
+import { TIMEOUT_HOUR } from '@/common/consts';
 import {
-  objectGet, objectSet, objectPick, objectPurify,
-} from '#/common/object';
+  forEachEntry, objectSet, objectPick,
+} from '@/common/object';
 import {
-  getEventEmitter, getOption, setOption, hookOptions, sendMessageOrIgnore,
+  getEventEmitter, getOption, setOption, hookOptions,
 } from '../utils';
 import {
   sortScripts,
@@ -16,28 +17,39 @@ import { script as pluginScript } from '../plugin';
 const serviceNames = [];
 const serviceClasses = [];
 const services = {};
-const autoSync = debounce(sync, 60 * 60 * 1000);
+const autoSync = debounce(sync, TIMEOUT_HOUR);
 let working = Promise.resolve();
 let syncConfig;
 
-export function getItemFilename({ name: filename, uri }) {
-  return uri ? getFilename(uri) : filename;
-}
-export function getFilename(uri) {
-  return `vm-${encodeURIComponent(uri)}`;
+export function getItemFilename({ name, uri }) {
+  // When get or remove, current name should be prefered
+  if (name) return name;
+  // otherwise uri derived name should be prefered
+  // uri is already encoded by `encodeFilename`
+  return `vm@2-${uri}`;
 }
 export function isScriptFile(name) {
-  return /^vm-/.test(name);
+  return /^vm(?:@\d+)?-/.test(name);
 }
 export function getURI(name) {
-  return decodeURIComponent(name.slice(3));
+  const i = name.indexOf('-');
+  const [, version] = name.slice(0, i).split('@');
+  if (version === '2') {
+    // uri is encoded by `encodedFilename`, so we should not decode it here
+    return name.slice(i + 1);
+  }
+  try {
+    return decodeURIComponent(name.slice(3));
+  } catch (err) {
+    return name.slice(3);
+  }
 }
 
 function initConfig() {
   function get(key, def) {
     const keys = normalizeKeys(key);
     keys.unshift('sync');
-    return getOption(keys, def);
+    return getOption(keys) ?? def;
   }
   function set(key, value) {
     const keys = normalizeKeys(key);
@@ -66,10 +78,9 @@ function serviceConfig(name) {
     return syncConfig.get(getKeys(key), def);
   }
   function set(key, val) {
-    if (typeof key === 'object') {
-      const data = key;
-      Object.keys(data).forEach(k => {
-        syncConfig.set(getKeys(k), data[k]);
+    if (isObject(key)) {
+      key::forEachEntry(([k, v]) => {
+        syncConfig.set(getKeys(k), v);
       });
     } else {
       syncConfig.set(getKeys(key), val);
@@ -95,13 +106,12 @@ function serviceState(validStates, initialState, onChange) {
     return get();
   }
   function is(states) {
-    const stateArray = Array.isArray(states) ? states : [states];
-    return stateArray.includes(state);
+    return ensureArray(states).includes(state);
   }
   return { get, set, is };
 }
 export function getStates() {
-  return serviceNames.map(name => {
+  return serviceNames.map((name) => {
     const service = services[name];
     return {
       name: service.name,
@@ -110,6 +120,8 @@ export function getStates() {
       syncState: service.syncState.get(),
       lastSync: service.config.get('meta', {}).lastSync,
       progress: service.progress,
+      properties: service.properties,
+      userConfig: service.getUserConfig(),
     };
   });
 }
@@ -163,6 +175,19 @@ function parseScriptData(raw) {
   return data;
 }
 
+function objectPurify(obj) {
+  // Remove keys with undefined values
+  if (Array.isArray(obj)) {
+    obj.forEach(objectPurify);
+  } else if (isObject(obj)) {
+    obj::forEachEntry(([key, value]) => {
+      if (typeof value === 'undefined') delete obj[key];
+      else objectPurify(value);
+    });
+  }
+  return obj;
+}
+
 function serviceFactory(base) {
   const Service = function constructor() {
     this.initialize();
@@ -176,10 +201,7 @@ function extendService(options) {
 }
 
 const onStateChange = debounce(() => {
-  sendMessageOrIgnore({
-    cmd: 'UpdateSync',
-    data: getStates(),
-  });
+  sendCmd('UpdateSync', getStates());
 });
 
 export const BaseService = serviceFactory({
@@ -188,6 +210,11 @@ export const BaseService = serviceFactory({
   delayTime: 1000,
   urlPrefix: '',
   metaFile: 'AceScript',
+  properties: {
+    authType: 'oauth',
+  },
+  getUserConfig: noop,
+  setUserConfig: noop,
   initialize() {
     this.progress = {
       finished: 0,
@@ -196,6 +223,7 @@ export const BaseService = serviceFactory({
     this.config = serviceConfig(this.name);
     this.authState = serviceState([
       'idle',
+      'no-auth',
       'initializing',
       'authorizing', // in case some services require asynchronous requests to get access_tokens
       'authorized',
@@ -212,7 +240,7 @@ export const BaseService = serviceFactory({
     this.startSync = this.syncFactory();
     const events = getEventEmitter();
     ['on', 'off', 'fire']
-    .forEach(key => {
+    .forEach((key) => {
       this[key] = (...args) => { events[key](...args); };
     });
   },
@@ -227,7 +255,7 @@ export const BaseService = serviceFactory({
       if (!shouldSync()) return Promise.resolve();
       this.log('Ready to sync:', this.displayName);
       this.syncState.set('ready');
-      working = working.then(() => new Promise(resolve => {
+      working = working.then(() => new Promise((resolve) => {
         debouncedResolve = debounce(resolve, 10 * 1000);
         debouncedResolve();
       }))
@@ -235,7 +263,7 @@ export const BaseService = serviceFactory({
         if (shouldSync()) return this.sync();
         this.syncState.set('idle');
       })
-      .catch(err => { console.error(err); })
+      .catch((err) => { console.error(err); })
       .then(() => {
         promise = null;
         debouncedResolve = null;
@@ -252,16 +280,17 @@ export const BaseService = serviceFactory({
   prepareHeaders() {
     this.headers = {};
   },
-  prepare() {
+  prepare(promise) {
     this.authState.set('initializing');
-    return (this.initToken() ? Promise.resolve(this.user()) : Promise.reject({
-      type: 'unauthorized',
+    return Promise.resolve(promise)
+    .then(() => this.initToken() ? this.user() : Promise.reject({
+      type: 'no-auth',
     }))
     .then(() => {
       this.authState.set('authorized');
-    }, err => {
-      if (err && err.type === 'unauthorized') {
-        this.authState.set('unauthorized');
+    }, (err) => {
+      if (['no-auth', 'unauthorized'].includes(err?.type)) {
+        this.authState.set(err.type);
       } else {
         console.error(err);
         this.authState.set('error');
@@ -270,18 +299,24 @@ export const BaseService = serviceFactory({
       throw err;
     });
   },
-  checkSync() {
-    return this.prepare()
+  checkSync(promise) {
+    return this.prepare(promise)
     .then(() => this.startSync());
   },
   user: noop,
+  acquireLock: noop,
+  releaseLock: noop,
   handleMetaError(err) {
     throw err;
   },
   getMeta() {
     return this.get({ name: this.metaFile })
     .then(data => JSON.parse(data))
-    .catch(err => this.handleMetaError(err));
+    .catch(err => this.handleMetaError(err))
+    .then(data => ({
+      name: this.metaFile,
+      data,
+    }));
   },
   initToken() {
     this.prepareHeaders();
@@ -291,38 +326,22 @@ export const BaseService = serviceFactory({
   },
   loadData(options) {
     const { progress } = this;
-    let { delay } = options;
-    if (delay == null) {
-      delay = this.delayTime;
-    }
+    const { delay = this.delayTime } = options;
     let lastFetch = Promise.resolve();
     if (delay) {
       lastFetch = this.lastFetch
-      .then(ts => new Promise(resolve => {
-        const delta = delay - (Date.now() - ts);
-        if (delta > 0) {
-          setTimeout(resolve, delta);
-        } else {
-          resolve();
-        }
-      }))
+      .then(ts => makePause(delay - (Date.now() - ts)))
       .then(() => Date.now());
       this.lastFetch = lastFetch;
     }
     progress.total += 1;
     onStateChange();
     return lastFetch.then(() => {
-      let { prefix } = options;
-      if (prefix == null) prefix = this.urlPrefix;
-      const headers = Object.assign({}, this.headers, options.headers);
+      options = Object.assign({}, options);
+      options.headers = Object.assign({}, this.headers, options.headers);
       let { url } = options;
-      if (url.startsWith('/')) url = prefix + url;
-      return request(url, {
-        headers,
-        method: options.method,
-        body: options.body,
-        responseType: options.responseType,
-      });
+      if (url.startsWith('/')) url = (options.prefix ?? this.urlPrefix) + url;
+      return request(url, options);
     })
     .then(({ data }) => ({ data }), error => ({ error }))
     .then(({ data, error }) => {
@@ -337,8 +356,8 @@ export const BaseService = serviceFactory({
   },
   getSyncData() {
     return this.getMeta()
-    .then(remoteMetaData => Promise.all([
-      { name: this.metaFile, data: remoteMetaData },
+    .then(remoteMeta => Promise.all([
+      remoteMeta,
       this.list(),
       this.getLocalData(),
     ]));
@@ -352,8 +371,9 @@ export const BaseService = serviceFactory({
     // Avoid simultaneous requests
     return this.prepare()
     .then(() => this.getSyncData())
+    .then(data => Promise.resolve(this.acquireLock()).then(() => data))
     .then(([remoteMeta, remoteData, localData]) => {
-      const { data: remoteMetaData } = remoteMeta;
+      const remoteMetaData = remoteMeta.data || {};
       const remoteMetaInfo = remoteMetaData.info || {};
       const remoteTimestamp = remoteMetaData.timestamp || 0;
       let remoteChanged = !remoteTimestamp
@@ -385,11 +405,11 @@ export const BaseService = serviceFactory({
         }
         return info;
       }, {});
-      localData.forEach(item => {
+      localData.forEach((item) => {
         const { props: { uri, position, lastModified } } = item;
         const remoteInfo = remoteMetaData.info[uri];
-        if (remoteInfo) {
-          const remoteItem = remoteItemMap[uri];
+        const remoteItem = remoteItemMap[uri];
+        if (remoteInfo && remoteItem) {
           if (firstSync || !lastModified || remoteInfo.modified > lastModified) {
             putLocal.push({ local: item, remote: remoteItem, info: remoteInfo });
           } else {
@@ -414,8 +434,7 @@ export const BaseService = serviceFactory({
           delLocal.push({ local: item });
         }
       });
-      Object.keys(remoteItemMap).forEach(uri => {
-        const item = remoteItemMap[uri];
+      remoteItemMap::forEachEntry(([uri, item]) => {
         const info = remoteMetaData.info[uri];
         if (outdated) {
           putLocal.push({ remote: item, info });
@@ -427,7 +446,7 @@ export const BaseService = serviceFactory({
         ...putLocal.map(({ remote, info }) => {
           this.log('Download script:', remote.uri);
           return this.get(remote)
-          .then(raw => {
+          .then((raw) => {
             const data = parseScriptData(raw);
             // Invalid data
             if (!data.code) return;
@@ -443,7 +462,7 @@ export const BaseService = serviceFactory({
         ...putRemote.map(({ local, remote }) => {
           this.log('Upload script:', local.props.uri);
           return pluginScript.get(local.props.id)
-          .then(code => {
+          .then((code) => {
             // XXX use version 1 to be compatible with Violentmonkey on other platforms
             const data = getScriptData(local, 1, { code });
             remoteMetaData.info[local.props.uri] = {
@@ -452,7 +471,10 @@ export const BaseService = serviceFactory({
             };
             remoteChanged = true;
             return this.put(
-              Object.assign({}, remote, { uri: local.props.uri }),
+              Object.assign({}, remote, {
+                uri: local.props.uri,
+                name: null, // prefer using uri on PUT
+              }),
               JSON.stringify(data),
             );
           });
@@ -475,12 +497,12 @@ export const BaseService = serviceFactory({
           return updateScriptInfo(local.props.id, updates);
         }),
       ];
-      promiseQueue.push(Promise.all(promiseQueue).then(() => sortScripts()).then(changed => {
+      promiseQueue.push(Promise.all(promiseQueue).then(() => sortScripts()).then((changed) => {
         if (!changed) return;
         remoteChanged = true;
         return pluginScript.list()
-        .then(scripts => {
-          scripts.forEach(script => {
+        .then((scripts) => {
+          scripts.forEach((script) => {
             const remoteInfo = remoteMetaData.info[script.props.uri];
             if (remoteInfo) remoteInfo.position = script.props.position;
           });
@@ -500,15 +522,17 @@ export const BaseService = serviceFactory({
       // ignore errors to ensure all promises are fulfilled
       return Promise.all(promiseQueue.map(promise => promise.then(noop, err => err || true)))
       .then(errors => errors.filter(Boolean))
-      .then(errors => { if (errors.length) throw errors; });
+      .then((errors) => { if (errors.length) throw errors; });
     })
     .then(() => {
       this.syncState.set('idle');
-    }, err => {
+      this.log('Sync finished:', this.displayName);
+    }, (err) => {
       this.syncState.set('error');
-      this.log('Failed syncing:', this.name);
+      this.log('Failed syncing:', this.displayName);
       this.log(err);
-    });
+    })
+    .then(() => Promise.resolve(this.releaseLock()).catch(noop));
   },
 });
 
@@ -524,15 +548,14 @@ function getService(name) {
 export function initialize() {
   if (!syncConfig) {
     syncConfig = initConfig();
-    serviceClasses.forEach(Factory => {
+    serviceClasses.forEach((Factory) => {
       const service = new Factory();
       const { name } = service;
       serviceNames.push(name);
       services[name] = service;
     });
   }
-  const service = getService();
-  if (service) service.checkSync();
+  sync();
 }
 
 function syncOne(service) {
@@ -540,29 +563,96 @@ function syncOne(service) {
   if (service.authState.is(['idle', 'error'])) return service.checkSync();
   if (service.authState.is('authorized')) return service.startSync();
 }
+
 export function sync() {
   const service = getService();
   return service && Promise.resolve(syncOne(service)).then(autoSync);
-}
-
-export function checkAuthUrl(url) {
-  return serviceNames.some(name => {
-    const service = services[name];
-    const authorized = service.checkAuth && service.checkAuth(url);
-    return authorized;
-  });
 }
 
 export function authorize() {
   const service = getService();
   if (service) service.authorize();
 }
+
 export function revoke() {
   const service = getService();
   if (service) service.revoke();
 }
 
-hookOptions(data => {
-  const value = objectGet(data, 'sync.current');
+export function setConfig(config) {
+  const service = getService();
+  if (service) {
+    service.setUserConfig(config);
+    return service.checkSync();
+  }
+}
+
+let unregister;
+
+export async function openAuthPage(url, redirectUri) {
+  unregister?.(); // otherwise our new tabId will be ignored
+  const tabId = (await browser.tabs.create({ url })).id;
+  /**
+   * @param {chrome.webRequest.WebResponseDetails} info
+   * @returns {chrome.webRequest.BlockingResponse}
+   */
+  const handler = (info) => {
+    if (getService().checkAuth?.(info.url)) {
+      // When onBeforeRequest occurs for initial requests intercepted by service worker,
+      // info.tabId will be -1 on Chromium based browsers, use tabId instead.
+      // tested on Chrome / Edge / Brave
+      browser.tabs.remove(tabId);
+      // If we unregister without setTimeout, API will ignore { cancel: true }
+      setTimeout(unregister, 0);
+      return { cancel: true };
+    }
+  };
+  unregister = () => {
+    browser.webRequest.onBeforeRequest.removeListener(handler);
+  };
+  // Note: match pattern does not support port number
+  // - In Chrome, the port number is ignored and the pattern still works
+  // - In Firefox, the pattern is ignored and won't match any URL
+  redirectUri = redirectUri.replace(/:\d+/, '');
+  browser.webRequest.onBeforeRequest.addListener(handler, {
+    // Do not filter by tabId here, see above
+    urls: [`${redirectUri}*`],
+    types: ['main_frame', 'xmlhttprequest'], // fetch request in service worker
+  }, ['blocking']);
+}
+
+hookOptions((data) => {
+  const value = data?.['sync.current'];
   if (value) initialize();
 });
+
+const base64urlMapping = {
+  '+': '-',
+  '/': '_',
+};
+
+async function sha256b64url(code) {
+  const bin = new TextEncoder().encode(code);
+  const buffer = await crypto.subtle.digest('SHA-256', bin);
+  const blob = new Blob([buffer], { type: 'application/octet-binary' });
+  const b64 = await blob2base64(blob);
+  return b64.replace(/[+/=]/g, m => base64urlMapping[m] || '');
+}
+
+/**
+ * Create a unique string between 43 and 128 characters long.
+ *
+ * Ref: RFC 7636
+ */
+export function getCodeVerifier() {
+  return getRandomString(43, 128);
+}
+
+export async function getCodeChallenge(codeVerifier) {
+  const method = 'S256';
+  const challenge = await sha256b64url(codeVerifier);
+  return {
+    code_challenge: challenge,
+    code_challenge_method: method,
+  };
+}

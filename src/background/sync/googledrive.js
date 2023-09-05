@@ -1,19 +1,27 @@
 // Reference:
+// - https://developers.google.com/identity/protocols/oauth2/native-app
 // - https://developers.google.com/drive/v3/reference/files
-// - https://github.com/google/google-api-nodejs-client
-import { getUniqId } from '#/common';
-import { objectGet } from '#/common/object';
-import { dumpQuery, notify } from '../utils';
+import { getUniqId, noop } from '@/common';
+import { CHARSET_UTF8, FORM_URLENCODED } from '@/common/consts';
+import { objectGet } from '@/common/object';
+import { loadQuery, dumpQuery } from '../utils';
 import {
   getURI, getItemFilename, BaseService, register, isScriptFile,
+  openAuthPage,
+  getCodeVerifier,
+  getCodeChallenge,
 } from './base';
 
-const SECRET_KEY = JSON.parse(window.atob('eyJjbGllbnRfc2VjcmV0IjoiTjBEbTZJOEV3bkJaeE1xMUpuMHN3UER0In0='));
-const config = Object.assign({
-  client_id: '590447512361-05hjbhnf8ua3iha55e5pgqg15om0cpef.apps.googleusercontent.com',
-  redirect_uri: 'https://violentmonkey.github.io/auth_googledrive.html',
+const config = {
+  client_id: process.env.SYNC_GOOGLE_DESKTOP_ID,
+  client_secret: process.env.SYNC_GOOGLE_DESKTOP_SECRET,
+  // We use native app approach with code challenge for better security.
+  // Google OAuth for native app only allows loopback IP address for callback URL.
+  // The URL will be intercepted and blocked so the port doesn't matter.
+  redirect_uri: 'http://127.0.0.1:45678/',
+  // redirect_uri: 'https://violentmonkey.github.io/auth_googledrive.html',
   scope: 'https://www.googleapis.com/auth/drive.appdata',
-}, SECRET_KEY);
+};
 const UNAUTHORIZED = { status: 'UNAUTHORIZED' };
 
 const GoogleDrive = BaseService.extend({
@@ -37,28 +45,10 @@ const GoogleDrive = BaseService.extend({
       responseType: 'json',
     });
     return requestUser()
-    .then(info => {
-      // If access was granted with access_type=online, revoke it.
-      if (info.access_type === 'online') {
-        return this.loadData({
-          method: 'POST',
-          url: `https://accounts.google.com/o/oauth2/revoke?token=${this.config.get('token')}`,
-          prefix: '',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        })
-        .then(() => {
-          notify({
-            title: 'Sync Upgraded',
-            body: 'Please reauthorize access to your Google Drive to complete the upgradation.',
-          });
-          return Promise.reject('Online access revoked.');
-        });
-      }
+    .then((info) => {
       if (info.scope !== config.scope) return Promise.reject(UNAUTHORIZED);
     })
-    .catch(res => {
+    .catch((res) => {
       if (res === UNAUTHORIZED || res.status === 400 && objectGet(res, 'data.error_description') === 'Invalid Value') {
         return this.refreshToken().then(requestUser);
       }
@@ -79,7 +69,7 @@ const GoogleDrive = BaseService.extend({
     })
     .then(({ files }) => {
       let metaFile;
-      const remoteData = files.filter(item => {
+      const remoteData = files.filter((item) => {
         if (isScriptFile(item.name)) return true;
         if (!metaFile && item.name === this.metaFile) {
           metaFile = item;
@@ -89,7 +79,7 @@ const GoogleDrive = BaseService.extend({
         return false;
       })
       .map(normalize)
-      .filter(item => {
+      .filter((item) => {
         if (!item.size) {
           this.remove(item);
           return false;
@@ -101,35 +91,45 @@ const GoogleDrive = BaseService.extend({
       .then(data => JSON.parse(data))
       .catch(err => this.handleMetaError(err))
       .then(data => Object.assign({}, metaItem, {
-        data,
-        uri: null,
         name: this.metaFile,
+        uri: null,
+        data,
       }));
       return Promise.all([gotMeta, remoteData, this.getLocalData()]);
     });
   },
-  authorize() {
+  async authorize() {
+    this.session = {
+      state: getUniqId(),
+      codeVerifier: getCodeVerifier(),
+    };
     const params = {
       response_type: 'code',
-      access_type: 'offline',
       client_id: config.client_id,
       redirect_uri: config.redirect_uri,
       scope: config.scope,
+      state: this.session.state,
+      ...await getCodeChallenge(this.session.codeVerifier),
     };
     if (!this.config.get('refresh_token')) params.prompt = 'consent';
     const url = `https://accounts.google.com/o/oauth2/v2/auth?${dumpQuery(params)}`;
-    browser.tabs.create({ url });
+    openAuthPage(url, config.redirect_uri);
   },
   checkAuth(url) {
-    const redirectUri = `${config.redirect_uri}?code=`;
-    if (url.startsWith(redirectUri)) {
-      this.authState.set('authorizing');
-      this.authorized({
-        code: url.split('#')[0].slice(redirectUri.length),
-      })
-      .then(() => this.checkSync());
-      return true;
-    }
+    const redirectUri = `${config.redirect_uri}?`;
+    if (!url.startsWith(redirectUri)) return;
+    const query = loadQuery(url.slice(redirectUri.length));
+    const { state, codeVerifier } = this.session || {};
+    this.session = null;
+    if (query.state !== state || !query.code) return;
+    this.authState.set('authorizing');
+    this.checkSync(this.authorized({
+      code: query.code,
+      code_verifier: codeVerifier,
+      grant_type: 'authorization_code',
+      redirect_uri: config.redirect_uri,
+    }));
+    return true;
   },
   revoke() {
     this.config.set({
@@ -144,17 +144,15 @@ const GoogleDrive = BaseService.extend({
       url: 'https://www.googleapis.com/oauth2/v4/token',
       prefix: '',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': FORM_URLENCODED,
       },
       body: dumpQuery(Object.assign({}, {
         client_id: config.client_id,
         client_secret: config.client_secret,
-        redirect_uri: config.redirect_uri,
-        grant_type: 'authorization_code',
       }, params)),
       responseType: 'json',
     })
-    .then(data => {
+    .then((data) => {
       if (data.access_token) {
         const update = {
           token: data.access_token,
@@ -168,9 +166,7 @@ const GoogleDrive = BaseService.extend({
       }
     });
   },
-  handleMetaError() {
-    return {};
-  },
+  handleMetaError: noop,
   list() {
     throw new Error('Not supported');
   },
@@ -195,7 +191,7 @@ const GoogleDrive = BaseService.extend({
     };
     const body = [
       `--${boundary}`,
-      'Content-Type: application/json; charset=UTF-8',
+      'Content-Type: application/json; ' + CHARSET_UTF8,
       '',
       JSON.stringify(metadata),
       `--${boundary}`,
@@ -227,6 +223,7 @@ register(GoogleDrive);
 function normalize(item) {
   return {
     id: item.id,
+    name: item.name,
     size: +item.size,
     uri: getURI(item.name),
   };

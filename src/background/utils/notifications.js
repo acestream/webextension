@@ -1,40 +1,42 @@
-import { i18n, defaultImage, noop } from '#/common';
+import { i18n, defaultImage, sendTabCmd, trueJoin } from '@/common';
+import { addPublicCommands } from './message';
 
 const openers = {};
 
-browser.notifications.onClicked.addListener(id => {
-  const openerId = openers[id];
-  if (openerId) {
-    browser.tabs.sendMessage(openerId, {
-      cmd: 'NotificationClick',
-      data: id,
-    })
-    .catch(noop);
-  }
-});
-
-browser.notifications.onClosed.addListener(id => {
-  const openerId = openers[id];
-  if (openerId) {
-    browser.tabs.sendMessage(openerId, {
-      cmd: 'NotificationClose',
-      data: id,
-    })
-    .catch(noop);
-    delete openers[id];
-  }
-});
-
-export default function createNotification(data, src) {
-  const srcTab = src.tab || {};
-  return browser.notifications.create({
-    type: 'basic',
-    title: data.title || i18n('extName'),
-    message: data.text,
-    iconUrl: data.image || defaultImage,
-  })
-  .then(notificationId => {
-    openers[notificationId] = srcTab.id;
+addPublicCommands({
+  /** @return {Promise<string>} */
+  async Notification({ image, text, title }, src, bgCallback) {
+    const notificationId = await browser.notifications.create({
+      type: 'basic',
+      title: [title, IS_FIREFOX && i18n('extName')]::trueJoin(' - '), // Chrome already shows the name
+      message: text,
+      iconUrl: image || defaultImage,
+    });
+    const op = bgCallback || src && [src.tab.id, src.frameId];
+    if (op) openers[notificationId] = op;
     return notificationId;
-  });
+  },
+  RemoveNotification(notificationId) {
+    return browser.notifications.clear(notificationId);
+  },
+});
+
+browser.notifications.onClicked.addListener((id) => {
+  notifyOpener(id, true);
+});
+
+browser.notifications.onClosed.addListener((id) => {
+  notifyOpener(id, false);
+  delete openers[id];
+});
+
+function notifyOpener(id, isClick) {
+  const op = openers[id];
+  if (isFunction(op)) {
+    op(isClick);
+  } else if (op) {
+    sendTabCmd(op[0], isClick ? 'NotificationClick' : 'NotificationClose', id, {
+      frameId: op[1],
+    });
+  }
 }

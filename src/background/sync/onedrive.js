@@ -1,16 +1,18 @@
 // Reference: https://dev.onedrive.com/README.htm
-import { noop } from '#/common';
-import { objectGet } from '#/common/object';
+import { noop } from '@/common';
+import { FORM_URLENCODED } from '@/common/consts';
+import { objectGet } from '@/common/object';
 import { dumpQuery } from '../utils';
 import {
   getURI, getItemFilename, BaseService, isScriptFile, register,
+  openAuthPage,
 } from './base';
 
-const SECRET_KEY = JSON.parse(window.atob('eyJjbGllbnRfc2VjcmV0Ijoiajl4M09WRXRIdmhpSEtEV09HcXV5TWZaS2s5NjA0MEgifQ=='));
-const config = Object.assign({
-  client_id: '000000004418358A',
+const config = {
+  client_id: process.env.SYNC_ONEDRIVE_CLIENT_ID,
+  client_secret: process.env.SYNC_ONEDRIVE_CLIENT_SECRET,
   redirect_uri: 'https://violentmonkey.github.io/auth_onedrive.html',
-}, SECRET_KEY);
+};
 
 const OneDrive = BaseService.extend({
   name: 'onedrive',
@@ -30,13 +32,13 @@ const OneDrive = BaseService.extend({
       responseType: 'json',
     });
     return requestUser()
-    .catch(res => {
+    .catch((res) => {
       if (res.status === 401) {
         return this.refreshToken().then(requestUser);
       }
       throw res;
     })
-    .catch(res => {
+    .catch((res) => {
       if (res.status === 400 && objectGet(res, 'data.error') === 'invalid_grant') {
         return Promise.reject({
           type: 'unauthorized',
@@ -50,11 +52,11 @@ const OneDrive = BaseService.extend({
   },
   handleMetaError(res) {
     if (res.status === 404) {
-      const header = res.xhr.getResponseHeader('WWW-Authenticate') || '';
+      const header = res.headers.get('WWW-Authenticate')?.[0] || '';
       if (/^Bearer realm="OneDriveAPI"/.test(header)) {
         return this.refreshToken().then(() => this.getMeta());
       }
-      return {};
+      return;
     }
     throw res;
   },
@@ -106,16 +108,15 @@ const OneDrive = BaseService.extend({
       redirect_uri: config.redirect_uri,
     };
     const url = `https://login.live.com/oauth20_authorize.srf?${dumpQuery(params)}`;
-    browser.tabs.create({ url });
+    openAuthPage(url, config.redirect_uri);
   },
   checkAuth(url) {
     const redirectUri = `${config.redirect_uri}?code=`;
     if (url.startsWith(redirectUri)) {
       this.authState.set('authorizing');
-      this.authorized({
+      this.checkSync(this.authorized({
         code: url.slice(redirectUri.length),
-      })
-      .then(() => this.checkSync());
+      }));
       return true;
     }
   },
@@ -133,7 +134,7 @@ const OneDrive = BaseService.extend({
       url: 'https://login.live.com/oauth20_token.srf',
       prefix: '',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': FORM_URLENCODED,
       },
       body: dumpQuery(Object.assign({}, {
         client_id: config.client_id,
@@ -143,7 +144,7 @@ const OneDrive = BaseService.extend({
       }, params)),
       responseType: 'json',
     })
-    .then(data => {
+    .then((data) => {
       if (data.access_token) {
         this.config.set({
           uid: data.user_id,
@@ -160,6 +161,7 @@ register(OneDrive);
 
 function normalize(item) {
   return {
+    name: item.name,
     size: item.size,
     uri: getURI(item.name),
     // modified: new Date(item.lastModifiedDateTime).getTime(),

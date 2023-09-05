@@ -1,27 +1,37 @@
-anchorAuthor:
-  description: Author shown on about tab.
+buttonApply:
+  description: Apply button on dialog that applies changes without closing the dialog.
   message: ''
-anchorTranslator:
-  description: Translator shown on about tab.
-  message: raina
-buttonAllNone:
-  description: Button to select all scripts or none.
-  message: Kaikki/Ei mitään
 buttonCancel:
   description: Cancel button on dialog.
   message: Peruuta
+buttonCheckForUpdates:
+  description: Button to check a script for updates.
+  message: Tarkista päivitykset
 buttonClose:
   description: Button to close window.
   message: Sulje
 buttonConfirmInstallation:
   description: Button to confirm installation of a script.
   message: Vahvista asennus
+buttonConfirmReinstallation:
+  description: Button to confirm re-installation when the script is already installed.
+  message: ''
 buttonDisable:
   description: Button to disable a script.
   message: Poista käytöstä
+buttonDownloadThemes:
+  description: Button in Violentmonkey settings for editor.
+  message: ''
+  touched: false
 buttonEdit:
   description: Button to edit a script.
   message: Muokkaa
+buttonEditClickHint:
+  description: Tooltip for the Edit button in popup.
+  message: ''
+buttonEmptyRecycleBin:
+  description: Button to empty the recycle bin.
+  message: ''
 buttonEnable:
   description: Button to enable a script.
   message: Ota käyttöön
@@ -31,6 +41,7 @@ buttonExportData:
 buttonFilter:
   description: Button to show filters menu.
   message: Suodattimet
+  touched: false
 buttonHome:
   description: Button to open homepage.
   message: Kotisivu
@@ -43,12 +54,16 @@ buttonInstallFromURL:
 buttonInstallOptions:
   description: Button to show options of installation confirm page.
   message: Valinnat
+  touched: false
 buttonNew:
   description: Button to create a new script.
   message: Uusi
 buttonOK:
   description: OK button on dialog.
   message: OK
+buttonRecycleBin:
+  description: Button to list scripts in recycle bin.
+  message: ''
 buttonRemove:
   description: Button to remove a script.
   message: Poista
@@ -61,27 +76,28 @@ buttonReplaceAll:
 buttonReset:
   description: Button to reset to default values.
   message: ''
+buttonRestore:
+  description: Button to restore a removed script.
+  message: ''
 buttonSave:
   description: Button to save modifications of a script.
-  message: Tallenna
-buttonSaveBlacklist:
-  description: Button to save global blacklist.
   message: Tallenna
 buttonSaveClose:
   description: Button to save modifications of a script and then close the editing page.
   message: Tallenna & sulje
-buttonSaveCustomCSS:
-  description: Label for button to save custom CSS.
-  message: Tallenna
+buttonShowEditorState:
+  description: Button to show the list of currently used CodeMirror options.
+  message: ''
 buttonSupport:
   description: Button to open support page.
   message: Tukisivu
 buttonUndo:
   description: Button to undo removement of a script.
   message: Peruuta
+  touched: false
 buttonUpdate:
-  description: Check a script for updates.
-  message: Tarkista päivitykset
+  description: Button to update a script.
+  message: ''
 buttonUpdateAll:
   description: Check all scripts for updates.
   message: Tarkista kaikki päivitykset
@@ -107,12 +123,30 @@ descCustomCSS:
   message: >-
     Oma tyyli asetussivua ja skriptien asennussivua varten. Jos et ole varma,
     mitä olet tekemässä, älä muokkaa tätä.
+descEditorOptions:
+  description: Description of editor options JSON section.
+  message: ''
+editHelpDocumention:
+  description: Label in the editor help tab for the documentation link.
+  message: ''
+editHelpKeyboard:
+  description: Label in the editor help tab for the keyboard shortcuts.
+  message: ''
+editHowToHint:
+  description: The text of the how-to link in the editor header.
+  message: ''
 editLabelMeta:
   description: Metadata section in settings tab of script editor.
   message: Oma metadata
 editLabelSettings:
   description: Settings section in settings tab of script editor.
   message: Skriptin asetukset
+editLongLine:
+  description: Shown in the editor in lines that were cut due to being too long
+  message: ''
+editLongLineTooltip:
+  description: Tooltip shown in the editor in lines that were cut due to being too long
+  message: ''
 editNavCode:
   description: Label of code tab in script editor.
   message: Koodi
@@ -122,27 +156,69 @@ editNavSettings:
 editNavValues:
   description: Label of values tab in script editor.
   message: Arvot
-editValueCancel:
-  description: Button to cancel modification of a script value.
-  message: Peruuta
-editValueSave:
-  description: Button to save modification of a script value.
-  message: Tallenna
+editValueAll:
+  description: Button to show/edit the entire script value storage.
+  message: ''
+  touched: false
+editValueAllHint:
+  description: Tooltip for the 'all' button.
+  message: ''
 extDescription:
-  description: Description for this extension.
+  description: Description for this extension, will be displayed in web store
   message: Lisää selaimiin tuen käyttäjäskripteille.
 extName:
   description: Name of this extension.
-  message: Ace Script
+  message: Violentmonkey
+failureReasonBlacklisted:
+  description: Shown for blacklisted URLs (in the extension icon tooltip, in the popup)
+  message: ''
+failureReasonNoninjectable:
+  description: >-
+    Shown for URLs that cannot be processed (same places as
+    failureBlacklistedUrl)
+  message: ''
 filterAlphabeticalOrder:
   description: Label for option to sort scripts in alphabetical order.
   message: aakkosjärjestys
 filterExecutionOrder:
   description: Label for option to sort scripts in execution order.
   message: ajojärjestys
+filterLastUpdateOrder:
+  description: Label for option to sort scripts by last update time.
+  message: ''
+filterScopeAll:
+  description: Option in dashboard's search scope filter.
+  message: ''
+filterScopeCode:
+  description: Option in dashboard's search scope filter.
+  message: ''
+filterScopeName:
+  description: Option in dashboard's search scope filter.
+  message: ''
+filterSize:
+  description: Label for option to sort scripts by size.
+  message: ''
+genericError:
+  description: Label for generic error.
+  message: ''
+genericOff:
+  description: To indicate something is turned off or disabled, similar to "no".
+  message: ''
+genericOn:
+  description: To indicate something is turned on or enabled, similar to "yes".
+  message: ''
+genericUseGlobal:
+  description: To indicate some per-script option will use its analog in global settings.
+  message: ''
+headerRecycleBin:
+  description: Text shown in the header when scripts in recycle bin are listed.
+  message: ''
 hintInputURL:
   description: Hint for a prompt box to input URL of a user script.
   message: 'Syötä osoite:'
+hintRecycleBin:
+  description: Hint for recycle bin.
+  message: ''
 hintUseDownloadURL:
   description: Shown as a place holder for @updateURL when it is not assigned
   message: Käytä latausosoitetta (@downloadURL)
@@ -158,9 +234,15 @@ installOptionClose:
 installOptionTrack:
   description: Option to track the loading local file before window is closed.
   message: Seuraa paikallista tiedostoa ennen ikkunan sulkemista
+installOptionTrackTooltip:
+  description: >-
+    Tooltip in Firefox 68+ for the option to track the loading local file before
+    window is closed.
+  message: ''
 labelAbout:
   description: Label shown on top of the about page.
-  message: Tietoja Ace Scriptstä
+  message: Tietoja Violentmonkeystä
+  touched: false
 labelAdvanced:
   description: Label for button to show advanced settings.
   message: Lisäasetukset
@@ -173,12 +255,23 @@ labelAuthor:
 labelAutoReloadCurrentTab:
   description: Option to reload current tab after a script is switched on or off from menu.
   message: Lataa välilehti uudelleen kytkettäessä skripti päälle/pois päältä valikosta
+labelAutoReloadCurrentTabDisabled:
+  description: >-
+    Tooltip in menu after Violentmonkey is switched off if auto-reload is
+    disabled.
+  message: ''
 labelAutoUpdate:
-  description: Option to allow automatically checking scripts for updates every 24 hours.
-  message: Tarkista skriptien päivitykset joka päivä
+  description: Option to allow automatically checking scripts for updates
+  message: ''
+labelBackup:
+  description: Label of the import/export section in settings.
+  message: ''
 labelBadge:
   description: Label for option to show number on badge.
   message: 'Näytä lätkässä: '
+labelBadgeColors:
+  description: Label for option group to set badge colors.
+  message: ''
 labelBadgeNone:
   description: Option to display nothing on badge.
   message: ei mitään
@@ -191,6 +284,9 @@ labelBadgeUnique:
 labelBlacklist:
   description: Label for global blacklist settings in security section.
   message: Musta lista
+labelContributors:
+  description: Label for link to contributors.
+  message: ''
 labelCurrentLang:
   description: Label of current language.
   message: 'Nykyinen kieli: '
@@ -200,24 +296,30 @@ labelCustomCSS:
 labelDataExport:
   description: Section title of data export.
   message: Datan vienti
+  touched: false
 labelDataImport:
   description: Section title of data import.
   message: Datan tuonti
+  touched: false
 labelDonate:
   description: Label of link to donate page.
   message: Lahjoita
+  touched: false
 labelDownloadURL:
   description: Label of script @downloadURL in custom meta data.
   message: 'Latausosoite:'
 labelEditValue:
   description: Label shown in the panel to edit a script value.
   message: Muokataan skriptin arvoa
-labelEditing:
-  description: Label for current editing script
+labelEditValueAll:
+  description: Label shown in the panel to edit the entire script value storage.
   message: ''
 labelEditor:
   description: Label for Editor settings
   message: Editori
+labelEnabledScriptsOnly:
+  description: Sub-option for autoupdate option, begins with a lowercase letter.
+  message: ''
 labelExclude:
   description: Label of @exclude rules.
   message: '@exclude-säännöt'
@@ -227,13 +329,21 @@ labelExcludeMatch:
 labelExportScriptData:
   description: Option to export script data along with scripts.
   message: Vie skriptidata
+labelExposeStatus:
+  description: Option in advanced settings.
+  message: ''
+labelFastFirefoxInject:
+  description: (`$1` will be shown as `page`) Option in Advanced settings.
+  message: ''
+labelFastFirefoxInjectHint:
+  description: Tooltip hint for the option in Advanced settings.
+  message: ''
 labelFeedback:
   description: Label of link to feedback page.
   message: Palaute
-  touched: false
 labelFilterSort:
   description: Label for sort filter.
-  message: 'Järjestä $1:n mukaan'
+  message: Järjestä $1:n mukaan
 labelGeneral:
   description: Label for general settings.
   message: Yleiset
@@ -243,19 +353,23 @@ labelHelpTranslate:
 labelHomepage:
   description: Label for home page in about tab.
   message: Kotisivu
-  touched: false
 labelHomepageURL:
   description: Label of script @homepageURL in custom meta data.
   message: 'Kotisivun osoite:'
+labelImportScriptData:
+  description: Option to import script data along with scripts.
+  message: ''
 labelImportSettings:
   description: Label for option to import settings from zip file.
   message: Tuo asetukset
 labelInclude:
   description: Label of @include rules.
   message: '@include-säännöt'
-labelIndentUnit:
-  description: Label for editor option of indent unit size.
-  message: Sisennysyksikkö
+labelInjectionMode:
+  description: >-
+    Label for option in advanced settings and in script settings. Don't forget
+    the space after ":" if the translated language separates words with spaces.
+  message: ''
 labelInstall:
   description: Shown in the title of the confirm page while trying to install a script.
   message: Asennetaan skriptiä
@@ -268,46 +382,59 @@ labelLastUpdatedAt:
 labelLineNumber:
   description: Label for line number jumper.
   message: 'Rivi nro.: '
-labelLineWrapping:
-  description: Label for editor option of line wrapping.
-  message: Rivitä pitkät rivit
 labelMatch:
   description: Label of @match rules.
   message: '@match-säännöt'
 labelName:
   description: Label of script name.
   message: 'Nimi:'
+labelNoFrames:
+  description: Label of script @noframes properties in custom meta data.
+  message: ''
 labelNoName:
   description: Text as the name of a script when no @name is assigned.
   message: Ei nimeä
-labelNoScripts:
-  description: Message shown when no script is installed.
-  message: 'Hups, sinulla ei ole vielä yhtään skriptiä.'
 labelNoSearchScripts:
   description: Message shown when no script is found in search results.
   message: Skriptejä ei löytynyt.
+labelNotifyThisUpdated:
+  description: >-
+    A per-script option in editor to enable notification when this script is
+    updated. The text follows "Allow update" checkbox option so it's like a
+    continuation of the phrase.
+  message: ''
 labelNotifyUpdates:
   description: Option to show notification when script is updated.
   message: Näytä ilmoitus päivityksistä
+labelNotifyUpdatesGlobal:
+  description: Option to prioritize global notification option over script's setting.
+  message: ''
+labelPopupSort:
+  description: Label in the VM settings tab for script list sort order in popup
+  message: ''
+labelPrivacyPolicy:
+  description: Label of link to privacy policy
+  message: ''
+labelReinstall:
+  description: >-
+    Shown in the title of the confirm page while trying to install a script
+    that's already installed.
+  message: ''
 labelRelated:
   description: Label of related links.
   message: 'Linkkejä aiheesta: '
-labelRemoved:
-  description: Label shown when a script is removed.
-  message: '[Poistettu]'
+labelRemovedAt:
+  description: Label for the time when the script is removed.
+  message: ''
 labelReplace:
   description: Label for replace input in search box.
   message: 'Korvaa: '
 labelRunAt:
   description: Label of script @run-at properties in custom meta data.
-  message: 'Ajoaika:'
+  message: 'Ajoaika: '
 labelRunAtDefault:
   description: Shown when custom @run-at is not assigned.
   message: (Oletus)
-labelScriptEditor:
-  description: Shown in the title of the script editing page.
-  message: Skriptieditori
-  touched: false
 labelScriptTemplate:
   description: Label for custom script template.
   message: Oma skriptipohja
@@ -320,13 +447,15 @@ labelSearchScript:
 labelSettings:
   description: Label shown on the top of settings page
   message: Asetukset
-labelShowBadge:
-  description: Option to show number of running scripts on the badge.
-  message: Näytä ajettavien skriptien lukumäärä kuvakkeessa
-  touched: false
+labelShowOrder:
+  description: Label for option in dashboard -> script list
+  message: ''
 labelSync:
   description: Label for sync options.
   message: Synkronointi
+labelSyncAnonymous:
+  description: Label for using anonymous account.
+  message: ''
 labelSyncAuthorize:
   description: Label for button to authorize a service.
   message: Anna lupa
@@ -336,6 +465,9 @@ labelSyncAuthorizing:
 labelSyncDisabled:
   description: Label for option to disable sync service.
   message: Ei mihinkään
+labelSyncPassword:
+  description: Label for input to hold password.
+  message: ''
 labelSyncReauthorize:
   description: Option to reauthorize sync service when expired.
   message: Uudista lupa automaattisesti sen vanhettua
@@ -346,30 +478,87 @@ labelSyncRevoke:
 labelSyncScriptStatus:
   description: Label for option to sync script status.
   message: Synkronoi skriptien tila
+labelSyncServerUrl:
+  description: Label for input to hold server URL.
+  message: ''
 labelSyncService:
   description: Label for sync service select.
   message: Synkronoi
+labelSyncUsername:
+  description: Label for input to hold username.
+  message: ''
+labelTheme:
+  description: Label for the visual theme option.
+  message: ''
 labelTranslator:
   description: Label of translator.
   message: 'Kääntäjä: '
+  touched: false
 labelUpdateURL:
   description: Label of script @updateURL in custom meta data.
   message: 'Päivitysosoite:'
+labelViewSingleColumn:
+  description: >-
+    Label for option in dashboard script list to show the scripts in single
+    column.
+  message: ''
+labelViewTable:
+  description: Label for option in dashboard script list to show the scripts as a table.
+  message: ''
+labelXhrInject:
+  description: >-
+    (`$1` will be shown as `page`) Option in Advanced settings to enable
+    synchronous injection.
+  message: ''
+labelXhrInjectHint:
+  description: Tooltip of the `Synchronous page mode` option in Advanced settings.
+  message: ''
 lastSync:
   description: Label for last sync timestamp.
   message: Synkronoitu viimeksi $1
 learnBlacklist:
   description: Refers to a link to introduce blacklist patterns.
   message: Lisää tietoa mustalistauksen malleista.
+learnInjectionMode:
+  description: Refers to a link to introduce injection modes.
+  message: ''
 menuCommands:
   description: Menu item to list script commands.
   message: Skriptikomennot
+  touched: false
 menuDashboard:
   description: Label for menu item to open dashboard.
   message: Avaa kojelauta
+menuExclude:
+  description: >-
+    Shown in popup menu after clicking script's "..." dropdown so try to keep
+    the label short.
+  message: ''
+menuExcludeHint:
+  description: Shown in popup menu after clicking "Exclude..." in script's "..." dropdown.
+  message: ''
+menuFeedback:
+  description: >-
+    Menu item in popup to open the selected script's feedback page. Please use a
+    short word in translation to keep the menu narrow.
+  message: ''
 menuFindScripts:
   description: Menu item to find scripts for a site.
   message: Etsi skriptejä tälle sivustolle
+menuInjectionFailed:
+  description: Injection error.
+  message: ''
+menuInjectionFailedFix:
+  description: Injection error fix, shown in case the default mode is "page".
+  message: ''
+menuMatchedDisabledScripts:
+  description: >-
+    Label for menu listing matched disabled scripts when the option to group
+    disabled scripts is selected.
+  message: ''
+menuMatchedFrameScripts:
+  description: Label for menu listing matching scripts in sub-frames.
+  message: ''
 menuMatchedScripts:
   description: Label for menu listing matched scripts.
   message: Täsmäävät skriptit
@@ -377,19 +566,27 @@ menuNewScript:
   description: Menu item to create a new script.
   message: ''
 menuScriptDisabled:
-  description: 'Menu item showing the status of Ace Script, when disabled.'
+  description: Menu item showing the status of Violentmonkey, when disabled.
   message: Skriptit poissa käytöstä
 menuScriptEnabled:
-  description: 'Menu item showing the status of Ace Script, when enabled.'
+  description: Menu item showing the status of Violentmonkey, when enabled.
   message: Skriptit käytössä
 msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
   message: Tarkistetaan päivityksiä...
+msgDateFormatInfo:
+  description: Help text of the info icon in VM settings for the export file name.
+  message: ''
+msgErrorFetchingResource:
+  description: >-
+    Message shown when Violentmonkey fails fetching a resource/require/icon of
+    the script.
+  message: ''
 msgErrorFetchingScript:
-  description: Message shown when Ace Script fails fetching a new version of the script.
+  description: Message shown when Violentmonkey fails fetching a new version of the script.
   message: Virhe noudettaessa skriptiä!
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Ace Script fails fetching version data of the script.
+  description: Message shown when Violentmonkey fails fetching version data of the script.
   message: Päivitystietojen noutaminen epäonnistui.
 msgErrorLoadingData:
   description: >-
@@ -404,6 +601,11 @@ msgImported:
     Message shown after import. There is an argument referring to the count of
     scripts imported.
   message: $1 skriptiä tuotu.
+msgIncognitoChanges:
+  description: >-
+    Message shown in popup and installation tab when opened in an incognito
+    window.
+  message: ''
 msgInstalled:
   description: Message shown when a script is installed.
   message: Skripti asennettu.
@@ -415,15 +617,22 @@ msgLoadedData:
     Message shown in the confirm page when a javascript file to be installed is
     loaded.
   message: Skriptidata ladattu.
+  touched: false
 msgLoading:
   description: Message shown in the options page before script list is loaded.
   message: Ladataan ...
+  touched: false
 msgLoadingData:
   description: Message shown on confirm page when the script to be installed is loading.
   message: Ladataan skriptidataa...
 msgLoadingDependency:
   description: Message shown on confirm page when the requirements are being downloaded.
   message: Ladataan riippuvuuksia... ($1/$2)
+msgMissingResources:
+  description: >-
+    Notification title shown for a missing @require or other resource when
+    running such scripts.
+  message: ''
 msgNamespaceConflict:
   description: >-
     Message shown when namespace of the new script conflicts with an existent
@@ -431,6 +640,11 @@ msgNamespaceConflict:
   message: >-
     Konflikti skriptien nimiavaruudessa! Ole hyvä ja muokkaa @name:a and
     @namespace:a.
+msgNamespaceConflictRestore:
+  description: >-
+    Message shown when namespace of the script to restore from recycle bin
+    conflicts with an existent one.
+  message: ''
 msgNewVersion:
   description: >-
     Message shown when a new version of script is found by @updateURL, but no
@@ -439,18 +653,35 @@ msgNewVersion:
 msgNoUpdate:
   description: Message shown when there is no new version of a script.
   message: Päivitystä ei löytynyt.
+msgOpenUpdateErrors:
+  description: Shown at the beginning of a notification (Chrome) or in its title (Firefox).
+  message: ''
+msgReinstallScripts:
+  description: >-
+    Notification body shown for a missing @require or other resource when
+    running such scripts.
+  message: ''
+msgSameCode:
+  description: Shown inside the title when re-installing a script that's already installed.
+  message: ''
 msgSavedBlacklist:
   description: Message shown when blacklist are saved.
   message: Musta lista päivitetty.
 msgSavedCustomCSS:
   description: Message shown when custom CSS is saved.
   message: Oma tyyli päivitetty.
+msgSavedEditorOptions:
+  description: Message shown when editor options are saved.
+  message: ''
 msgSavedScriptTemplate:
   description: Message shown when custom script template is saved.
   message: Oma skriptipohja on päivitetty.
 msgScriptUpdated:
   description: Notification message for script updates.
-  message: 'Skripti [$1] on päivitetty!'
+  message: Skripti [$1] on päivitetty!
+msgShowHide:
+  description: Tooltip or text shown on a toggle that shows/hides stuff
+  message: ''
 msgSyncError:
   description: Message shown when sync failed.
   message: Synkronointivirhe!
@@ -460,12 +691,18 @@ msgSyncInit:
 msgSyncInitError:
   description: Message shown when sync fails in initialization.
   message: Alustusvirhe!
+msgSyncNoAuthYet:
+  description: Message shown when the selected sync provider hasn't been authorized yet.
+  message: ''
 msgSyncReady:
   description: Message shown when sync will start soon.
   message: Synkronointi alkaa pian...
 msgSyncing:
   description: Message shown when sync is in progress.
   message: Synkronointi käynnissä...
+msgSyntaxError:
+  description: Shown in popup when a script didn't run and we don't know the exact reason.
+  message: ''
 msgUpdated:
   description: Message shown when a script is updated/reinstalled.
   message: Skripti päivitetty.
@@ -475,15 +712,55 @@ msgUpdating:
 noValues:
   description: Label shown when there is no value for current script.
   message: Ei tallennettuja arvoja
-notifDontShowAnymore:
-  description: Label for the second notification button
+optionEditorWindow:
+  description: Label for the option in settings
   message: ''
-notifShowMore:
-  description: Label for the first notification button
+optionEditorWindowHint:
+  description: >-
+    Tooltip for optionEditorWindow in case the browser doesn't support
+    onBoundsChanged
+  message: ''
+optionEditorWindowSimple:
+  description: Label for the editor window type
+  message: ''
+optionPopup:
+  description: Label of the popup menu section in settings.
+  message: ''
+optionPopupEnabledFirst:
+  description: Option to show enabled scripts first in popup.
+  message: ''
+optionPopupGroupDisabled:
+  description: Option to group disabled scripts in popup.
+  message: ''
+optionPopupGroupRunAt:
+  description: Option to group scripts in popup shown only when sorting by execution order.
+  message: ''
+optionPopupHideDisabled:
+  description: Option to hide disabled scripts in popup.
+  message: ''
+optionPopupShowDisabled:
+  description: Option to show disabled scripts in popup.
   message: ''
 optionShowEnabledFirst:
   description: Option to show enabled scripts first in alphabetical order.
   message: Näytä käytössä olevat skriptit ensin
+optionUiTheme:
+  description: Label for the theme selector in Advanced settings.
+  message: ''
+optionUiThemeAuto:
+  description: Name of a theme selector value in settings.
+  message: ''
+optionUiThemeDark:
+  description: Name of a theme selector value in settings.
+  message: ''
+optionUiThemeLight:
+  description: Name of a theme selector value in settings.
+  message: ''
+optionUpdate:
+  description: >-
+    Label of the update section in settings and notification title for script
+    updates.
+  message: Päivitys
 searchCaseSensitive:
   description: Option to perform a case-sensitive search
   message: Merkkikokoriippuvainen
@@ -499,17 +776,24 @@ sideMenuInstalled:
 sideMenuSettings:
   description: 'Side menu: Settings'
   message: Asetukset
-titleScriptUpdated:
-  description: Notification title for script updates.
-  message: Päivitys
+titleBadgeColor:
+  description: Tooltip for option to set badge color.
+  message: ''
+titleBadgeColorBlocked:
+  description: Tooltip for option to set badge color of non-injectable tabs.
+  message: ''
+titleSearchHint:
+  description: Hover title for search icon in dashboard.
+  message: ''
 valueLabelKey:
   description: Label for key of a script value.
   message: Avain (merkkijono)
 valueLabelValue:
   description: Label for value of a script value.
   message: Arvo (JSON-serialisoitu)
-warnScriptLongLines:
-  description: Warning message shown when script has lines that are too long to be edited.
-  message: >-
-    Osa riveistä on liian pitkiä, avataan vain-luku-tilassa. Ole hyvä ja muokkaa
-    ulkoisella editorilla.
+valueLabelValueAll:
+  description: Label for input of entire script value storage.
+  message: ''
+visitWebsite:
+  description: Label for link to open Violentmonkey website.
+  message: ''

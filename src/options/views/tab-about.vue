@@ -1,40 +1,47 @@
 <template>
-  <div class="tab-about">
-    <h1>
-      <span class="mr-1" v-text="i18n('labelAbout')"></span>
+  <div class="tab-about mb-2c">
+    <h1 class="mt-0 mr-1c">
+      <span v-text="name"></span>
       <small v-text="`v${version}`"></small>
     </h1>
-    <p class="mb-2" v-text="i18n('extDescription')"></p>
-    <div class="mb-1">
+    <p v-text="i18n('extDescription')"></p>
+    <div>
       <label v-text="i18n('labelRelated')"></label>
-      <a href="https://github.com/acestream/webextension" target="_blank">Source code</a>
-      | <a href="http://acestream.org/about/privacy-policy" target="_blank">Privacy policy</a>
+      <ul>
+        <li><a href="https://github.com/acestream/webextension" target="_blank">Source code</a></li>
+        <li><a href="https://acestream.org/about/privacy-policy" target="_blank">Privacy policy</a></li>
+      </ul>
     </div>
-    <div class="mb-1">
-      <label v-text="i18n('labelAuthor')"></label>
-      <span v-html="i18n('anchorAuthor')"></span> | <a href="https://violentmonkey.github.io/donate/" target="_blank" v-text="i18n('labelDonate')"></a><span class="text-red"> &hearts;</span>
-    </div>
-    <div class="mb-1">
-      <label v-text="i18n('labelTranslator')"></label>
-      <span v-html="i18n('anchorTranslator')"></span>
-    </div>
-    <div class="mb-1">
+    <div>
       <label v-text="i18n('labelCurrentLang')"></label>
-      <span class="text-green" v-text="language"></span> |
-      <a href="https://violentmonkey.github.io/localization/" target="_blank" v-text="i18n('labelHelpTranslate')"></a>
+      <span class="current" v-text="language"></span> |
+      <a href="https://violentmonkey.github.io/localization/" target="_blank" rel="noopener noreferrer" v-text="i18n('labelHelpTranslate')"></a>
     </div>
   </div>
 </template>
 
 <script>
-const data = {
-  version: browser.runtime.getManifest().version,
-  language: navigator.language,
-};
+import { focusMe } from '@/common/ui';
 
 export default {
   data() {
-    return data;
+    return {
+      name: extensionManifest.name,
+      version: process.env.VM_VER,
+      language: browser.i18n.getUILanguage(),
+    };
+  },
+  activated() {
+    focusMe(this.$el);
   },
 };
 </script>
+
+<style>
+  .current {
+    color: green;
+    @media (prefers-color-scheme: dark) {
+      color: greenyellow;
+    }
+  }
+</style>

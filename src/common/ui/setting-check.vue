@@ -1,5 +1,10 @@
 <template>
-  <input type="checkbox" v-model="value" :disabled="disabled">
+  <label class="setting-check">
+    <input type="checkbox" v-model="value" :disabled="disabled">
+    <slot>
+      <span v-text="label" />
+    </slot>
+  </label>
 </template>
 
 <script>
@@ -9,6 +14,7 @@ import hookSetting from '../hook-setting';
 export default {
   props: {
     name: String,
+    label: String,
     disabled: Boolean,
     sync: {
       type: Boolean,
@@ -35,16 +41,17 @@ export default {
     },
   },
   created() {
-    options.ready(() => {
-      this.value = options.get(this.name);
-      this.revoke = hookSetting(this.name, value => {
-        this.value = value;
-      });
-      this.$watch('value', this.onChange);
-    });
+    this.revoke = hookSetting(this.name, val => { this.value = val; });
+    this.$watch('value', this.onChange);
   },
-  beforeDestroy() {
+  beforeUnmount() {
     if (this.revoke) this.revoke();
   },
 };
 </script>
+
+<style>
+.setting-check {
+  display: inline-flex;
+}
+</style>

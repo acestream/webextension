@@ -5,20 +5,19 @@
 </template>
 
 <script>
-import Vue from 'vue';
-import options from '#/common/options';
-import { objectGet } from '#/common/object';
+import options from '@/common/options';
+import { objectGet } from '@/common/object';
 import { store } from '../utils';
 
 const FEATURES_KEY = 'features';
 store.features = options.get(FEATURES_KEY);
-options.hook(data => {
+options.hook((data) => {
   const features = data[FEATURES_KEY];
   if (features) {
-    Vue.set(store, 'features', features);
+    store.features = features;
   }
 });
-options.ready(() => reset('sync'));
+options.ready.then(() => reset('sync'));
 
 function reset(version) {
   if (objectGet(store, 'features.version') !== version) {

@@ -1,19 +1,36 @@
+import { addHandlers, onScripts } from './bridge';
+
+export let onClipboardCopy;
+let doCopy;
 let clipboardData;
+let setClipboard;
 
-function onCopy(e) {
-  e.stopImmediatePropagation();
-  e.preventDefault();
-  const { type, data } = clipboardData;
-  e.clipboardData.setData(type || 'text/plain', data);
+// Attaching a dummy listener so the page can't prevent us (fwiw h@xx0rz excluded)
+if (IS_FIREFOX) {
+  on('copy', onClipboardCopy = e => clipboardData && doCopy(e), true);
 }
 
-export default function setClipboard({ type, data }) {
-  clipboardData = { type, data };
-  document.addEventListener('copy', onCopy, false);
-  const ret = document.execCommand('copy', false, null);
-  document.removeEventListener('copy', onCopy, false);
-  clipboardData = null;
-  if (process.env.DEBUG && !ret) {
-    console.warn('Copy failed!');
+onScripts.push(({ clipFF }) => {
+  if (clipFF) {
+    const { execCommand } = document;
+    const { setData } = DataTransfer[PROTO];
+    const { get: getClipboardData } = describeProperty(ClipboardEvent[PROTO], 'clipboardData');
+    const { preventDefault, stopPropagation } = Event[PROTO];
+    doCopy = e => {
+      e::stopPropagation();
+      e::stopImmediatePropagation();
+      e::preventDefault();
+      e::getClipboardData()::setData(clipboardData.type || 'text/plain', clipboardData.data);
+    };
+    setClipboard = params => {
+      clipboardData = params;
+      if (!document::execCommand('copy') && process.env.DEBUG) {
+        log('warn', null, 'GM_setClipboard failed!');
+      }
+      clipboardData = null;
+    };
   }
-}
+  addHandlers({
+    SetClipboard: setClipboard || true,
+  });
+});

@@ -1,143 +1,128 @@
-import { initHooks, debounce, normalizeKeys } from '#/common';
-import { objectGet, objectSet } from '#/common/object';
-import { register } from './init';
+import { debounce, ensureArray, initHooks, normalizeKeys } from '@/common';
+import { deepCopy, deepEqual, mapEntry, objectGet, objectSet } from '@/common/object';
+import defaults from '@/common/options-defaults';
+import { preInitialize } from './init';
+import { addOwnCommands, commands } from './message';
+import storage from './storage';
 
-const defaults = {
-  isApplied: true,
-  autoUpdate: true,
-  // ignoreGrant: false,
-  lastUpdate: 0,
-  lastModified: 0,
-  showBadge: 'unique', // '' | 'unique' | 'total'
-  exportValues: true,
-  closeAfterInstall: false,
-  trackLocalFile: false,
-  autoReload: false,
-  features: null,
-  blacklist: null,
-  syncScriptStatus: true,
-  sync: null,
-  customCSS: null,
-  importSettings: true,
-  notifyUpdates: false,
-  version: null,
-  filters: {
-    sort: 'exec',
+let changes;
+let initPending;
+let options = {};
+
+addOwnCommands({
+  /** @return {Object} */
+  GetAllOptions() {
+    return commands.GetOptions(defaults);
   },
-  editor: {
-    lineWrapping: false,
-    indentUnit: 2,
+  /** @return {Object} */
+  GetOptions(data) {
+    return data::mapEntry((_, key) => getOption(key));
   },
-  scriptTemplate: `\
+  /**
+   * @param {{key:string, value?:PlainJSONValue, reply?:boolean}|Array} data
+   * @return {Promise<void>}
+   * @throws {?} hooks can throw after the option was set */
+  async SetOptions(data) {
+    if (initPending) await initPending;
+    for (const { key, value, reply } of ensureArray(data)) {
+      setOption(key, value, reply);
+    }
+    callHooks(); // exceptions will be sent to the caller
+  },
+});
+
+const STORAGE_KEY = 'options';
+const VERSION = 'version';
+const TPL_KEY = 'scriptTemplate';
+const TPL_OLD_VAL = `\
 // ==UserScript==
 // @name New Script
 // @namespace AceScript Scripts
 // @match {{url}}
 // @grant none
 // ==/UserScript==
-`,
-};
-let changes = {};
+`;
+const DELAY = 100;
 const hooks = initHooks();
-const callHooksLater = debounce(callHooks, 100);
+const callHooksLater = debounce(callHooks, DELAY);
+const writeOptionsLater = debounce(writeOptions, DELAY);
 
-let options = {};
-let ready = false;
-const init = browser.storage.local.get('options')
-.then(({ options: data }) => {
-  if (data && typeof data === 'object') options = data;
-  if (process.env.DEBUG) {
-    console.log('options:', options); // eslint-disable-line no-console
+initPending = storage.base.getOne(STORAGE_KEY).then(data => {
+  if (isObject(data)) options = data;
+  if (process.env.DEBUG) console.info('options:', options);
+  if (!options[VERSION]) {
+    setOption(VERSION, 1);
   }
-  if (!objectGet(options, 'version')) {
-    // v2.8.0+ stores options in browser.storage.local
-    // Upgrade from v2.7.x
-    if (process.env.DEBUG) {
-      console.log('Upgrade options...'); // eslint-disable-line no-console
-    }
-    try {
-      if (localStorage.length) {
-        Object.keys(defaults)
-        .forEach(key => {
-          let value = localStorage.getItem(key);
-          if (value) {
-            try {
-              value = JSON.parse(value);
-            } catch (e) {
-              value = null;
-            }
-          }
-          if (value) {
-            if (process.env.DEBUG) {
-              console.log('Upgrade option:', key, value); // eslint-disable-line no-console
-            }
-            setOption(key, value);
-          }
-        });
-      }
-    } catch (e) {
-      // ignore security issue in Firefox
-    }
-    setOption('version', 1);
+  if (options[TPL_KEY] === TPL_OLD_VAL) {
+    options[TPL_KEY] = defaults[TPL_KEY]; // will be detected by omitDefaultValue below
   }
-})
-.then(() => {
-  ready = true;
+  if (Object.keys(options).map(omitDefaultValue).some(Boolean)) {
+    delete options[`${TPL_KEY}Edited`]; // TODO: remove this in 2023
+    writeOptionsLater();
+  }
+  initPending = null;
 });
-register(init);
+preInitialize.push(initPending);
 
-function fireChange(keys, value) {
-  objectSet(changes, keys, value);
-  callHooksLater();
+/**
+ * @param {!string} key - must be "a.b.c" to allow clients easily set inside existing object trees
+ * @param {PlainJSONValue} [value]
+ * @param {boolean} [silent] - in case you callHooks() directly yourself afterwards
+ */
+function addChange(key, value, silent) {
+  if (!changes) changes = {};
+  else delete changes[key]; // Deleting first to place the new value at the end
+  changes[key] = value;
+  if (!silent) callHooksLater();
 }
 
+/** @throws in option handlers */
 function callHooks() {
-  hooks.fire(changes);
-  changes = {};
+  if (!changes) return; // may happen in callHooksLater if callHooks was called earlier
+  const tmp = changes;
+  changes = null;
+  hooks.fire(tmp);
 }
 
-export function getOption(key, def) {
+export function getOption(key) {
+  let res = options[key];
+  if (res != null) return res;
   const keys = normalizeKeys(key);
   const mainKey = keys[0];
-  let value = options[mainKey];
-  if (value == null) value = defaults[mainKey];
-  if (value == null) value = def;
-  return keys.length > 1 ? objectGet(value, keys.slice(1), def) : value;
+  const value = options[mainKey] ?? deepCopy(defaults[mainKey]);
+  return keys.length > 1 ? objectGet(value, keys.slice(1)) : value;
 }
 
-export function getDefaultOption(key) {
-  return objectGet(defaults, key);
-}
-
-export function setOption(key, value) {
-  if (!ready) {
-    init.then(() => {
-      setOption(key, value);
-    });
+export function setOption(key, value, silent) {
+  // eslint-disable-next-line prefer-rest-params
+  if (initPending) return initPending.then(() => setOption(...arguments));
+  const keys = normalizeKeys(key);
+  const mainKey = keys[0];
+  key = keys.join('.'); // must be a string for addChange()
+  if (!hasOwnProperty(defaults, mainKey)) {
+    if (process.env.DEBUG) console.info('Unknown option:', key, value, options);
     return;
   }
-  const keys = normalizeKeys(key);
-  const optionKey = keys.join('.');
-  let optionValue = value;
-  const mainKey = keys[0];
-  if (mainKey in defaults) {
-    if (keys.length > 1) {
-      optionValue = objectSet(getOption(mainKey), keys.slice(1), value);
-    }
-    options[mainKey] = optionValue;
-    browser.storage.local.set({ options });
-    fireChange(keys, value);
-    if (process.env.DEBUG) {
-      console.log('Options updated:', optionKey, value, options); // eslint-disable-line no-console
-    }
+  const subKey = keys.length > 1 && keys.slice(1);
+  const mainVal = getOption([mainKey]);
+  if (deepEqual(value, subKey ? objectGet(mainVal, subKey) : mainVal)) {
+    if (process.env.DEBUG) console.info('Option unchanged:', key, value, options);
+    return;
   }
+  options[mainKey] = subKey ? objectSet(mainVal, subKey, value) : value;
+  omitDefaultValue(mainKey);
+  writeOptionsLater();
+  addChange(key, value, silent);
+  if (process.env.DEBUG) console.info('Options updated:', key, value, options);
 }
 
-export function getAllOptions() {
-  return Object.keys(defaults).reduce((res, key) => {
-    res[key] = getOption(key);
-    return res;
-  }, {});
+function writeOptions() {
+  return storage.base.setOne(STORAGE_KEY, options);
+}
+
+function omitDefaultValue(key) {
+  return deepEqual(options[key], defaults[key])
+    && delete options[key];
 }
 
 export const hookOptions = hooks.hook;

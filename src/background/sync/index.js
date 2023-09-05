@@ -1,12 +1,22 @@
 import {
-  checkAuthUrl, initialize, sync, getStates, authorize, revoke,
+  initialize,
+  sync,
+  getStates,
+  authorize,
+  revoke,
+  setConfig,
 } from './base';
 import './dropbox';
 import './onedrive';
 import './googledrive';
+import './webdav';
+import { addOwnCommands } from '../utils/message';
 
-browser.tabs.onUpdated.addListener((tabId, changes) => {
-  if (changes.url && checkAuthUrl(changes.url)) browser.tabs.remove(tabId);
+addOwnCommands({
+  SyncAuthorize: authorize,
+  SyncRevoke: revoke,
+  SyncStart: sync,
+  SyncSetConfig: setConfig,
 });
 
 export {
