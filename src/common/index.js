@@ -351,3 +351,15 @@ export function assertTestMode() {
     throw new Error(`Test mode expected: current=${process.env.NODE_ENV}`);
   }
 }
+
+/**
+* Function to include setTimeout in promise chain.
+* Usage:
+* delay(1000).then(() => { doSmth(); })
+*
+*/
+export function delay(t, v) {
+  return new Promise((resolve => {
+    setTimeout(resolve.bind(null, v), t);
+  }));
+}
