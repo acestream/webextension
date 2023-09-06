@@ -7,9 +7,7 @@ import { addPublicCommands } from './message';
 import { preInitialize } from './init';
 import { addOpener } from './notifications';
 
-//ASTODO: test this
-// const NOTIFICATIONS_BUTTONS_SUPPORTED = !IS_FIREFOX;
-const NOTIFICATIONS_BUTTONS_SUPPORTED = true;
+const NOTIFICATIONS_BUTTONS_SUPPORTED = !IS_FIREFOX;
 
 preInitialize.push(async () => initialize());
 
