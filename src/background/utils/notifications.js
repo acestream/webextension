@@ -30,13 +30,22 @@ browser.notifications.onClosed.addListener((id) => {
   delete openers[id];
 });
 
-function notifyOpener(id, isClick) {
+//ASTODO: check in FF
+browser.notifications.onButtonClicked.addListener((id, buttonIndex) => {
+  notifyOpener(id, true, buttonIndex);
+});
+
+function notifyOpener(id, isClick, buttonIndex) {
   const op = openers[id];
   if (isFunction(op)) {
-    op(isClick);
+    op(isClick, buttonIndex);
   } else if (op) {
     sendTabCmd(op[0], isClick ? 'NotificationClick' : 'NotificationClose', id, {
       frameId: op[1],
     });
   }
+}
+
+export function addOpener(id, callback) {
+  openers[id] = callback;
 }

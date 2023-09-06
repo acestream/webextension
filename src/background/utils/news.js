@@ -1,21 +1,27 @@
-import { verbose, request, assertTestMode } from '@/common';
+import { verbose, request, assertTestMode, i18n } from '@/common';
 import { getVendor } from '@/common/vendor';
 import { getPrivacyOptions } from '@/common/privacy';
 import { getEngineStatus } from './engine-api';
 import { getInstalledScripts, eventEmitter } from './db';
 import { addPublicCommands } from './message';
+import { preInitialize } from './init';
+import { addOpener } from './notifications';
+
+//ASTODO: test this
+// const NOTIFICATIONS_BUTTONS_SUPPORTED = !IS_FIREFOX;
+const NOTIFICATIONS_BUTTONS_SUPPORTED = true;
+
+preInitialize.push(async () => initialize());
 
 addPublicCommands({
   CheckNews({ url }) {
-    verbose(`ASDEBUG: check news: url=${url}`);
-    /*
     verbose(`bg: check news: url=${url}`);
 
     if (!url) {
       return Promise.reject('missing url');
     }
 
-    const newsList = news.getNewsForUrl(url);
+    const newsList = getNewsForUrl(url);
     for (let i = 0; i < newsList.length; i += 1) {
       let targetUrl;
       const newsId = newsList[i].id;
@@ -47,32 +53,27 @@ addPublicCommands({
         options,
       ).then(newNotificationId => {
         verbose(`notification created: id=${newNotificationId}`);
-        registeredNotifications_[newNotificationId] = {
-          onClicked: () => {
-            // Use has clicked notification itself.
-            if (targetUrl) {
-              browser.tabs.create({ url: targetUrl });
-            }
-            news.onInstallButtonClicked(newsId);
-            browser.notifications.clear(newNotificationId);
-          },
-          onButtonClicked: index => {
-            if (index === 0) {
-              // User has pressed 'Install' button
+
+        addOpener(newNotificationId, (isClick, buttonIndex) => {
+          verbose(`notification event: isClick=${isClick} buttonIndex=${buttonIndex}`);
+          if(isClick) {
+            if(buttonIndex === 1) {
+              // user clicked skip button
+              onSkipButtonClicked(newsId);
+            } else {
+              // user clicked notification itself or "install" button
               if (targetUrl) {
                 browser.tabs.create({ url: targetUrl });
               }
-              news.onInstallButtonClicked(newsId);
-            } else if (index === 1) {
-              // User has pressed 'No, thanks' button
-              news.onSkipButtonClicked(newsId);
+              onInstallButtonClicked(newsId);
             }
-            browser.notifications.clear(newNotificationId);
-          },
-        };
+            //ASTODO: do we need this?
+            //browser.notifications.clear(newNotificationId);
+          }
+        });
       });
 
-      news.registerImpression(newsId);
+      registerImpression(newsId);
 
       if (!NOTIFICATIONS_BUTTONS_SUPPORTED) {
         window.setTimeout(() => {
@@ -82,10 +83,10 @@ addPublicCommands({
     }
 
     return Promise.resolve();
-    */
   }
 });
 
+//ASTODO: check events
 eventEmitter.on('scriptSaved', data => {
   verbose('news:scriptSaved: data', data);
   updateInstalledScripts();
@@ -101,12 +102,13 @@ eventEmitter.on('scriptUpdated', data => {
   updateInstalledScripts();
 });
 
+
 const store = {
   config: {
     checkInterval: 14400000,
     notificationBaseInterval: 3600000,
-    notificationIntervalAdjust: 3600000,
-    notificationMaxImpressions: 10,
+    notificationIntervalAdjust: NOTIFICATIONS_BUTTONS_SUPPORTED ? 0 : 3600000,
+    notificationMaxImpressions: NOTIFICATIONS_BUTTONS_SUPPORTED ? 0 : 10,
     notificationMaxSkip: 2,
     notificationBaseSkipInterval: 7 * 86400 * 1000, // 1 week
     notificationSkipIntervalAdjust: 0,
@@ -206,7 +208,7 @@ function checkNews(engineStatus) {
   }
 
   const forceLocale = store.config.forceLocale ? 1 : 0;
-  const url = `http://awe-api.acestream.me/news/get?vendor=${getVendor()}&locale=${getLocale()}&force_locale=${forceLocale}&appVersion=${appVersion}&engineVersion=${store.lastEngineVersion}&privacy_opt_in=${store.privacyOptInAccepted}&_=${Math.random()}`;
+  const url = `https://awe-api.acestream.me/news/get?vendor=${getVendor()}&locale=${getLocale()}&force_locale=${forceLocale}&appVersion=${appVersion}&engineVersion=${store.lastEngineVersion}&privacy_opt_in=${store.privacyOptInAccepted}&_=${Math.random()}`;
   verbose(`news: request: url=${url}`);
 
   // schedule next update
