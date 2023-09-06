@@ -39,9 +39,9 @@ const PRIVACY_SETTINGS = 'privacySettings';
 const tabs = [
   { name: SCRIPTS, comp: Installed, label: i18n('sideMenuInstalled') },
   { name: SETTINGS, comp: Settings, label: i18n('sideMenuSettings') },
+  { name: PRIVACY_SETTINGS, comp: PrivacySettings, label: i18n('Privacy Settings') },
   { name: ABOUT, comp: About, label: i18n('sideMenuAbout') },
   { name: RECYCLE_BIN, comp: Installed, label: i18n('buttonRecycleBin') },
-  { name: PRIVACY_SETTINGS, comp: PrivacySettings, label: i18n('Privacy Settings') },
 ];
 const extName = i18n('extName');
 const conditionNotEdit = '!editScript';
