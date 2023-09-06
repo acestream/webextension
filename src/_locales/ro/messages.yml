@@ -20,7 +20,7 @@ buttonDisable:
   description: Button to disable a script.
   message: Dezactivează
 buttonDownloadThemes:
-  description: Button in Violentmonkey settings for editor.
+  description: Button in Ace Script settings for editor.
   message: Descarcă teme
   touched: false
 buttonEdit:
@@ -131,7 +131,7 @@ descEditorOptions:
   message: >-
     Opțiuni personalizate pentru CodeMirror și suplimente în obiecte JSON precum
     <code>{"indentUnit":2, "smartIndent":true}</code> Cu toate acestea, reține
-    că unele dintre ele pot să nu funcționeze în Violentmonkey. Vezi <a
+    că unele dintre ele pot să nu funcționeze în Ace Script. Vezi <a
     href="https://codemirror.net/doc/manual.html#config" target="_blank"
     rel="noopener noreferrer">lista completă</a>.
 editHelpDocumention:
@@ -184,16 +184,16 @@ extDescription:
   message: Un manager de userscripturi, open source, care suportă o grămadă de browsere
 extName:
   description: Name of this extension.
-  message: Violentmonkey
+  message: Ace Script
 failureReasonBlacklisted:
   description: Shown for blacklisted URLs (in the extension icon tooltip, in the popup)
-  message: Trecut în lista neagră din setările Violentmonkey
+  message: Trecut în lista neagră din setările Ace Script
 failureReasonNoninjectable:
   description: >-
     Shown for URLs that cannot be processed (same places as
     failureBlacklistedUrl)
   message: >-
-    Violentmonkey nu poate rula userscripturi în această pagină
+    Ace Script nu poate rula userscripturi în această pagină
 
     (exemple uzuale: interfața de utilizator a browserului, o extensie, blocat
     via politici, un site al unui motor de căutare în Opera)
@@ -265,7 +265,7 @@ installOptionTrackTooltip:
     versiunile mai noi.
 labelAbout:
   description: Label shown on top of the about page.
-  message: Despre Violentmonkey
+  message: Despre Ace Script
   touched: false
 labelAdvanced:
   description: Label for button to show advanced settings.
@@ -281,7 +281,7 @@ labelAutoReloadCurrentTab:
   message: Reîncarcă fila actuală după activarea/dezactivarea unui script din meniu
 labelAutoReloadCurrentTabDisabled:
   description: >-
-    Tooltip in menu after Violentmonkey is switched off if auto-reload is
+    Tooltip in menu after Ace Script is switched off if auto-reload is
     disabled.
   message: Scripturile actuale vor continua să ruleze până când reîncarci fila
 labelAutoUpdate:
@@ -611,10 +611,10 @@ menuNewScript:
   description: Menu item to create a new script.
   message: Creează un script nou
 menuScriptDisabled:
-  description: Menu item showing the status of Violentmonkey, when disabled.
+  description: Menu item showing the status of Ace Script, when disabled.
   message: Scripturi dezactivate
 menuScriptEnabled:
-  description: Menu item showing the status of Violentmonkey, when enabled.
+  description: Menu item showing the status of Ace Script, when enabled.
   message: Scripturi activate
 msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
@@ -626,14 +626,14 @@ msgDateFormatInfo:
     Folosește [paranteze pătrate] pentru a proteja textul literal.
 msgErrorFetchingResource:
   description: >-
-    Message shown when Violentmonkey fails fetching a resource/require/icon of
+    Message shown when Ace Script fails fetching a resource/require/icon of
     the script.
   message: Eroare la preluarea resursei!
 msgErrorFetchingScript:
-  description: Message shown when Violentmonkey fails fetching a new version of the script.
+  description: Message shown when Ace Script fails fetching a new version of the script.
   message: Eroare la preluarea scriptului!
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Violentmonkey fails fetching version data of the script.
+  description: Message shown when Ace Script fails fetching version data of the script.
   message: Eșec la preluarea informațiilor de actualizare.
 msgErrorLoadingData:
   description: >-
@@ -852,5 +852,5 @@ valueLabelValueAll:
   description: Label for input of entire script value storage.
   message: Toate valorile (serializate ca JSON)
 visitWebsite:
-  description: Label for link to open Violentmonkey website.
+  description: Label for link to open Ace Script website.
   message: Vizitează site-ul web

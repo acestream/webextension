@@ -20,7 +20,7 @@ buttonDisable:
   description: Button to disable a script.
   message: Desativar
 buttonDownloadThemes:
-  description: Button in Violentmonkey settings for editor.
+  description: Button in Ace Script settings for editor.
   message: Transferir temas
   touched: false
 buttonEdit:
@@ -128,7 +128,7 @@ descEditorOptions:
   message: >-
     Opções personalizadas para o CodeMirror e seus addons em formato JSON, tais
     como: {"indentUnit":2, "smartIndent":true}. No entanto, tenha em atenção que
-    algumas poderão não funcionar com o Violentmonkey. Lista completa:
+    algumas poderão não funcionar com o Ace Script. Lista completa:
     https://codemirror.net/doc/manual.html#config
 editHelpDocumention:
   description: Label in the editor help tab for the documentation link.
@@ -174,16 +174,16 @@ extDescription:
   message: Oferece suporte a scripts de utilizador para navegadores.
 extName:
   description: Name of this extension.
-  message: Violentmonkey
+  message: Ace Script
 failureReasonBlacklisted:
   description: Shown for blacklisted URLs (in the extension icon tooltip, in the popup)
-  message: Na lista negra nas definições do Violentmonkey
+  message: Na lista negra nas definições do Ace Script
 failureReasonNoninjectable:
   description: >-
     Shown for URLs that cannot be processed (same places as
     failureBlacklistedUrl)
   message: |-
-    O Violentmonkey não pode executar scripts de utilizador nesta página
+    O Ace Script não pode executar scripts de utilizador nesta página
     (exemplos comuns: interface do navegador ou uma extensão)
 filterAlphabeticalOrder:
   description: Label for option to sort scripts in alphabetical order.
@@ -249,7 +249,7 @@ installOptionTrackTooltip:
   message: ''
 labelAbout:
   description: Label shown on top of the about page.
-  message: Acerca do Violentmonkey
+  message: Acerca do Ace Script
   touched: false
 labelAdvanced:
   description: Label for button to show advanced settings.
@@ -267,7 +267,7 @@ labelAutoReloadCurrentTab:
     menu
 labelAutoReloadCurrentTabDisabled:
   description: >-
-    Tooltip in menu after Violentmonkey is switched off if auto-reload is
+    Tooltip in menu after Ace Script is switched off if auto-reload is
     disabled.
   message: Os scripts atuais continuarão a executar até que tu recarregues o separador
 labelAutoUpdate:
@@ -576,10 +576,10 @@ menuNewScript:
   description: Menu item to create a new script.
   message: Criar um novo script
 menuScriptDisabled:
-  description: Menu item showing the status of Violentmonkey, when disabled.
+  description: Menu item showing the status of Ace Script, when disabled.
   message: Scripts desativados
 menuScriptEnabled:
-  description: Menu item showing the status of Violentmonkey, when enabled.
+  description: Menu item showing the status of Ace Script, when enabled.
   message: Scripts ativados
 msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
@@ -589,14 +589,14 @@ msgDateFormatInfo:
   message: ''
 msgErrorFetchingResource:
   description: >-
-    Message shown when Violentmonkey fails fetching a resource/require/icon of
+    Message shown when Ace Script fails fetching a resource/require/icon of
     the script.
   message: ''
 msgErrorFetchingScript:
-  description: Message shown when Violentmonkey fails fetching a new version of the script.
+  description: Message shown when Ace Script fails fetching a new version of the script.
   message: Erro ao obter script!
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Violentmonkey fails fetching version data of the script.
+  description: Message shown when Ace Script fails fetching version data of the script.
   message: Falha ao obter informações de atualização.
 msgErrorLoadingData:
   description: >-
@@ -805,5 +805,5 @@ valueLabelValueAll:
   description: Label for input of entire script value storage.
   message: Todos os valores (serializados em JSON)
 visitWebsite:
-  description: Label for link to open Violentmonkey website.
+  description: Label for link to open Ace Script website.
   message: Visitar website

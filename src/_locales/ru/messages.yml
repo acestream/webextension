@@ -20,7 +20,7 @@ buttonDisable:
   description: Button to disable a script.
   message: Выключить
 buttonDownloadThemes:
-  description: Button in Violentmonkey settings for editor.
+  description: Button in Ace Script settings for editor.
   message: Скачать темы
   touched: false
 buttonEdit:
@@ -128,7 +128,7 @@ descEditorOptions:
   message: >-
     Опции для редактора CodeMirror и его дополнений в формате JSON, например
     <code>{"indentUnit":2, "smartIndent":true}</code>. Имейте в виду, что
-    некоторые опции могут не работать в Violentmonkey. См. <a
+    некоторые опции могут не работать в Ace Script. См. <a
     href="https://codemirror.net/doc/manual.html#config" target="_blank"
     rel="noopener noreferrer">полный список</a>.
 editHelpDocumention:
@@ -175,20 +175,20 @@ editValueAllHint:
 extDescription:
   description: Description for this extension, will be displayed in web store
   message: >-
-    Violentmonkey - менеджер пользовательских скриптов для множества браузеров,
+    Ace Script - менеджер пользовательских скриптов для множества браузеров,
     с открытым исходным кодом.
 extName:
   description: Name of this extension.
-  message: Violentmonkey
+  message: Ace Script
 failureReasonBlacklisted:
   description: Shown for blacklisted URLs (in the extension icon tooltip, in the popup)
-  message: Черный список Violentmonkey
+  message: Черный список Ace Script
 failureReasonNoninjectable:
   description: >-
     Shown for URLs that cannot be processed (same places as
     failureBlacklistedUrl)
   message: >-
-    Violentmonkey не может запускать скрипты на этой странице
+    Ace Script не может запускать скрипты на этой странице
 
     (например: UI браузера, расширение, блокировка настройками политики,
     поисковой сайт в Opera)
@@ -256,7 +256,7 @@ installOptionTrackTooltip:
   message: Вкладка исходного файла должна оставаться открытой в Firefox 68 и новее.
 labelAbout:
   description: Label shown on top of the about page.
-  message: О расширении Violentmonkey
+  message: О расширении Ace Script
   touched: false
 labelAdvanced:
   description: Label for button to show advanced settings.
@@ -272,7 +272,7 @@ labelAutoReloadCurrentTab:
   message: Обновить текущую вкладку после включения или отключения скрипта из меню.
 labelAutoReloadCurrentTabDisabled:
   description: >-
-    Tooltip in menu after Violentmonkey is switched off if auto-reload is
+    Tooltip in menu after Ace Script is switched off if auto-reload is
     disabled.
   message: Текущие скрипты будут работать до перезагрузки вкладки.
 labelAutoUpdate:
@@ -593,10 +593,10 @@ menuNewScript:
   description: Menu item to create a new script.
   message: Создать новый скрипт
 menuScriptDisabled:
-  description: Menu item showing the status of Violentmonkey, when disabled.
+  description: Menu item showing the status of Ace Script, when disabled.
   message: Скрипты отключены
 menuScriptEnabled:
-  description: Menu item showing the status of Violentmonkey, when enabled.
+  description: Menu item showing the status of Ace Script, when enabled.
   message: Скрипты включены
 msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
@@ -608,14 +608,14 @@ msgDateFormatInfo:
     $1Используйте [квадратные скобки] для защиты буквального текста.
 msgErrorFetchingResource:
   description: >-
-    Message shown when Violentmonkey fails fetching a resource/require/icon of
+    Message shown when Ace Script fails fetching a resource/require/icon of
     the script.
   message: Ошибка извлечения ресурса!
 msgErrorFetchingScript:
-  description: Message shown when Violentmonkey fails fetching a new version of the script.
+  description: Message shown when Ace Script fails fetching a new version of the script.
   message: Ошибка при загрузке скрипта!
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Violentmonkey fails fetching version data of the script.
+  description: Message shown when Ace Script fails fetching version data of the script.
   message: Не удается проверить наличие обновлений.
 msgErrorLoadingData:
   description: >-
@@ -828,5 +828,5 @@ valueLabelValueAll:
   description: Label for input of entire script value storage.
   message: Все значения (в формате JSON)
 visitWebsite:
-  description: Label for link to open Violentmonkey website.
+  description: Label for link to open Ace Script website.
   message: Сайт расширения

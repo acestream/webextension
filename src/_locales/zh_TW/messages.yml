@@ -20,7 +20,7 @@ buttonDisable:
   description: Button to disable a script.
   message: 停用
 buttonDownloadThemes:
-  description: Button in Violentmonkey settings for editor.
+  description: Button in Ace Script settings for editor.
   message: ''
   touched: false
 buttonEdit:
@@ -125,7 +125,7 @@ descEditorOptions:
   description: Description of editor options JSON section.
   message: >-
     在 JSON 對像中為 CodeMirror 和附加組件提供自定義選項，如 <code>{"indentUnit":2,
-    "smartIndent":true}</code>，但請注意，其中一些選項在 Violentmonkey 中可能不起作用。 查看<a
+    "smartIndent":true}</code>，但請注意，其中一些選項在 Ace Script 中可能不起作用。 查看<a
     href="https://codemirror.net/doc/manual.html#config"
     target="\&quot;_blank\&quot;" rel="\&quot;noopener"
     noreferrer\"="">完整列表</a>。
@@ -265,7 +265,7 @@ labelAutoReloadCurrentTab:
   message: 從選單開啟或關閉腳本後自動重新整理當前頁面
 labelAutoReloadCurrentTabDisabled:
   description: >-
-    Tooltip in menu after Violentmonkey is switched off if auto-reload is
+    Tooltip in menu after Ace Script is switched off if auto-reload is
     disabled.
   message: 目前的腳本會繼續執行，直到您重新載入分頁
 labelAutoUpdate:
@@ -584,10 +584,10 @@ menuNewScript:
   description: Menu item to create a new script.
   message: 建立新腳本
 menuScriptDisabled:
-  description: Menu item showing the status of Violentmonkey, when disabled.
+  description: Menu item showing the status of Ace Script, when disabled.
   message: 腳本已停用
 menuScriptEnabled:
-  description: Menu item showing the status of Violentmonkey, when enabled.
+  description: Menu item showing the status of Ace Script, when enabled.
   message: 腳本已啟用
 msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
@@ -597,14 +597,14 @@ msgDateFormatInfo:
   message: 單擊打開 MomentJS 文檔。允許的標記：$1。使用 [方括號] 保護明文文本。
 msgErrorFetchingResource:
   description: >-
-    Message shown when Violentmonkey fails fetching a resource/require/icon of
+    Message shown when Ace Script fails fetching a resource/require/icon of
     the script.
   message: 獲取資源發生錯誤！
 msgErrorFetchingScript:
-  description: Message shown when Violentmonkey fails fetching a new version of the script.
+  description: Message shown when Ace Script fails fetching a new version of the script.
   message: 獲取腳本發生錯誤！
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Violentmonkey fails fetching version data of the script.
+  description: Message shown when Ace Script fails fetching version data of the script.
   message: 獲取更新資訊失敗。
 msgErrorLoadingData:
   description: >-
@@ -813,5 +813,5 @@ valueLabelValueAll:
   description: Label for input of entire script value storage.
   message: 所有值（作為 JSON 序列化）
 visitWebsite:
-  description: Label for link to open Violentmonkey website.
+  description: Label for link to open Ace Script website.
   message: 訪問網站

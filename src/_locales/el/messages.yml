@@ -20,7 +20,7 @@ buttonDisable:
   description: Button to disable a script.
   message: Απενεργοποίηση
 buttonDownloadThemes:
-  description: Button in Violentmonkey settings for editor.
+  description: Button in Ace Script settings for editor.
   message: ''
   touched: false
 buttonEdit:
@@ -176,7 +176,7 @@ extDescription:
   message: Προσφέρει υποστήριξη για σενάρια χρηστών για τους φυλλομετρητές.
 extName:
   description: Name of this extension.
-  message: Violentmonkey
+  message: Ace Script
 failureReasonBlacklisted:
   description: Shown for blacklisted URLs (in the extension icon tooltip, in the popup)
   message: ''
@@ -185,7 +185,7 @@ failureReasonNoninjectable:
     Shown for URLs that cannot be processed (same places as
     failureBlacklistedUrl)
   message: >-
-    Το Violentmonkey δεν μπορεί να εκτελέσει τα userscripts σε αυτήν τη σελίδα
+    Το Ace Script δεν μπορεί να εκτελέσει τα userscripts σε αυτήν τη σελίδα
 
     (πιθανότατα βρίσκεστε σε μία σελίδα είτε του περιηγητή σας είτε μία
     επέκτασης)
@@ -255,7 +255,7 @@ installOptionTrackTooltip:
   message: ''
 labelAbout:
   description: Label shown on top of the about page.
-  message: Περί του Violentmonkey
+  message: Περί του Ace Script
   touched: false
 labelAdvanced:
   description: Label for button to show advanced settings.
@@ -273,7 +273,7 @@ labelAutoReloadCurrentTab:
     σεναρίου από το μενού
 labelAutoReloadCurrentTabDisabled:
   description: >-
-    Tooltip in menu after Violentmonkey is switched off if auto-reload is
+    Tooltip in menu after Ace Script is switched off if auto-reload is
     disabled.
   message: Αυτά τα scripts θα συνεχίσουν να τρέχουν έως ότου επαναφορτώσετε την καρτέλα
 labelAutoUpdate:
@@ -584,10 +584,10 @@ menuNewScript:
   description: Menu item to create a new script.
   message: Δημιουργία νέου script
 menuScriptDisabled:
-  description: Menu item showing the status of Violentmonkey, when disabled.
+  description: Menu item showing the status of Ace Script, when disabled.
   message: Σενάρια απενεργοποιήθηκαν
 menuScriptEnabled:
-  description: Menu item showing the status of Violentmonkey, when enabled.
+  description: Menu item showing the status of Ace Script, when enabled.
   message: Σενάρια ενεργοποιήθηκαν
 msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
@@ -597,14 +597,14 @@ msgDateFormatInfo:
   message: ''
 msgErrorFetchingResource:
   description: >-
-    Message shown when Violentmonkey fails fetching a resource/require/icon of
+    Message shown when Ace Script fails fetching a resource/require/icon of
     the script.
   message: Σφάλμα λήψης σεναρίου (resource)!
 msgErrorFetchingScript:
-  description: Message shown when Violentmonkey fails fetching a new version of the script.
+  description: Message shown when Ace Script fails fetching a new version of the script.
   message: Σφάλμα λήψης σεναρίου!
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Violentmonkey fails fetching version data of the script.
+  description: Message shown when Ace Script fails fetching version data of the script.
   message: Αδυναμία λήψης πληροφοριών ενημέρωσης.
 msgErrorLoadingData:
   description: >-
@@ -815,5 +815,5 @@ valueLabelValueAll:
   description: Label for input of entire script value storage.
   message: Όλες οι τιμές (σε μορφή JSON)
 visitWebsite:
-  description: Label for link to open Violentmonkey website.
+  description: Label for link to open Ace Script website.
   message: Επισκεφτείτε την ιστοσελίδα

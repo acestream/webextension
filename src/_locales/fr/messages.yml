@@ -20,7 +20,7 @@ buttonDisable:
   description: Button to disable a script.
   message: Désactiver
 buttonDownloadThemes:
-  description: Button in Violentmonkey settings for editor.
+  description: Button in Ace Script settings for editor.
   message: ''
   touched: false
 buttonEdit:
@@ -131,7 +131,7 @@ descEditorOptions:
   message: >-
     Options personnalisées pour CodeMirror et extensions dans un objet JSON
     comme<code>{"indentUnit":2, "smartIndent":true}</code>, cependant notez que
-    certaines peuvent ne pas marcher dans Violentmonkey. Voir la<a
+    certaines peuvent ne pas marcher dans Ace Script. Voir la<a
     href="https://codemirror.net/doc/manual.html#config" target="_blank"
     rel="noopener noreferrer">liste complète</a>. Pour utiliser un thème
     CodeMirror, spécifiez son nom de fichier comme <code>"theme":
@@ -187,15 +187,15 @@ extDescription:
   message: Un gestionnaire de scipts utilisateurs qui supporte beaucoup de navigateurs
 extName:
   description: Name of this extension.
-  message: Violentmonkey
+  message: Ace Script
 failureReasonBlacklisted:
   description: Shown for blacklisted URLs (in the extension icon tooltip, in the popup)
-  message: Sur la liste noire des paramètres de Violentmonkey
+  message: Sur la liste noire des paramètres de Ace Script
 failureReasonNoninjectable:
   description: >-
     Shown for URLs that cannot be processed (same places as
     failureBlacklistedUrl)
-  message: "Violentmonkey ne peut pas lancer de scripts utilisateurs\nsur cette page (exemples courants\_: page du navigateur\nou d’une extension)"
+  message: "Ace Script ne peut pas lancer de scripts utilisateurs\nsur cette page (exemples courants\_: page du navigateur\nou d’une extension)"
 filterAlphabeticalOrder:
   description: Label for option to sort scripts in alphabetical order.
   message: ordre alphabétique
@@ -264,7 +264,7 @@ installOptionTrackTooltip:
     plus.
 labelAbout:
   description: Label shown on top of the about page.
-  message: À propos de Violentmonkey
+  message: À propos de Ace Script
   touched: false
 labelAdvanced:
   description: Label for button to show advanced settings.
@@ -282,7 +282,7 @@ labelAutoReloadCurrentTab:
     menu
 labelAutoReloadCurrentTabDisabled:
   description: >-
-    Tooltip in menu after Violentmonkey is switched off if auto-reload is
+    Tooltip in menu after Ace Script is switched off if auto-reload is
     disabled.
   message: >-
     Les scripts actuels vont continuer à s'exécuter jusqu'à ce que vous
@@ -617,10 +617,10 @@ menuNewScript:
   description: Menu item to create a new script.
   message: Créer un nouveau script
 menuScriptDisabled:
-  description: Menu item showing the status of Violentmonkey, when disabled.
+  description: Menu item showing the status of Ace Script, when disabled.
   message: Scripts désactivés
 menuScriptEnabled:
-  description: Menu item showing the status of Violentmonkey, when enabled.
+  description: Menu item showing the status of Ace Script, when enabled.
   message: Scripts activés
 msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
@@ -632,14 +632,14 @@ msgDateFormatInfo:
     Utilisez [les crochets] pour protéger le texte littéral.
 msgErrorFetchingResource:
   description: >-
-    Message shown when Violentmonkey fails fetching a resource/require/icon of
+    Message shown when Ace Script fails fetching a resource/require/icon of
     the script.
   message: "Erreur lors de la récupération de la ressource\_!"
 msgErrorFetchingScript:
-  description: Message shown when Violentmonkey fails fetching a new version of the script.
+  description: Message shown when Ace Script fails fetching a new version of the script.
   message: "Erreur de récupération du script\_!"
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Violentmonkey fails fetching version data of the script.
+  description: Message shown when Ace Script fails fetching version data of the script.
   message: Échec de récupération des informations de mise à jour.
 msgErrorLoadingData:
   description: >-
@@ -852,5 +852,5 @@ valueLabelValueAll:
   description: Label for input of entire script value storage.
   message: Toutes les valeurs (sérialisées en JSON)
 visitWebsite:
-  description: Label for link to open Violentmonkey website.
+  description: Label for link to open Ace Script website.
   message: Aller sur le site web

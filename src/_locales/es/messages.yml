@@ -20,7 +20,7 @@ buttonDisable:
   description: Button to disable a script.
   message: Desactivar
 buttonDownloadThemes:
-  description: Button in Violentmonkey settings for editor.
+  description: Button in Ace Script settings for editor.
   message: ''
   touched: false
 buttonEdit:
@@ -130,7 +130,7 @@ descEditorOptions:
   message: >-
     Opciones personalizadas para CodeMirror y complementos en objetos JSON como
     <code>{"indentUnit":2, "smartIndent":true}</code> sin embargo ten en cuenta
-    que algunas de ellas pueden no funcionar en Violentmonkey. Ver <a
+    que algunas de ellas pueden no funcionar en Ace Script. Ver <a
     href="https://codemirror.net/doc/manual.html#config" target="_blank"
     rel="noopener noreferrer">lista completa</a>.
 editHelpDocumention:
@@ -185,16 +185,16 @@ extDescription:
     navegadores
 extName:
   description: Name of this extension.
-  message: Violentmonkey
+  message: Ace Script
 failureReasonBlacklisted:
   description: Shown for blacklisted URLs (in the extension icon tooltip, in the popup)
-  message: En la lista negra en la configuración de Violentmonkey
+  message: En la lista negra en la configuración de Ace Script
 failureReasonNoninjectable:
   description: >-
     Shown for URLs that cannot be processed (same places as
     failureBlacklistedUrl)
   message: >-
-    Violentmonkey no puede ejecutar usercripts en esta página
+    Ace Script no puede ejecutar usercripts en esta página
 
     (ejemplos comunes: interfaz del navegador, una extensión, bloqueado a través
     de políticas, un sitio de motor de búsqueda en Opera)
@@ -284,7 +284,7 @@ labelAutoReloadCurrentTab:
     menú
 labelAutoReloadCurrentTabDisabled:
   description: >-
-    Tooltip in menu after Violentmonkey is switched off if auto-reload is
+    Tooltip in menu after Ace Script is switched off if auto-reload is
     disabled.
   message: Los scripts actuales seguirán ejecutándose hasta que recargues la pestaña
 labelAutoUpdate:
@@ -608,10 +608,10 @@ menuNewScript:
   description: Menu item to create a new script.
   message: Crear un nuevo script
 menuScriptDisabled:
-  description: Menu item showing the status of Violentmonkey, when disabled.
+  description: Menu item showing the status of Ace Script, when disabled.
   message: Scripts deshabilitados
 menuScriptEnabled:
-  description: Menu item showing the status of Violentmonkey, when enabled.
+  description: Menu item showing the status of Ace Script, when enabled.
   message: Scripts activos
 msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
@@ -623,14 +623,14 @@ msgDateFormatInfo:
     Utiliza [corchetes] para proteger el texto literal.
 msgErrorFetchingResource:
   description: >-
-    Message shown when Violentmonkey fails fetching a resource/require/icon of
+    Message shown when Ace Script fails fetching a resource/require/icon of
     the script.
   message: ¡Error al obtener el recurso!
 msgErrorFetchingScript:
-  description: Message shown when Violentmonkey fails fetching a new version of the script.
+  description: Message shown when Ace Script fails fetching a new version of the script.
   message: ¡Error al obtener el script!
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Violentmonkey fails fetching version data of the script.
+  description: Message shown when Ace Script fails fetching version data of the script.
   message: No se pudo obtener la información de actualización.
 msgErrorLoadingData:
   description: >-
@@ -849,5 +849,5 @@ valueLabelValueAll:
   description: Label for input of entire script value storage.
   message: Todos los valores (serializados como JSON)
 visitWebsite:
-  description: Label for link to open Violentmonkey website.
+  description: Label for link to open Ace Script website.
   message: Visitar Sitio Web

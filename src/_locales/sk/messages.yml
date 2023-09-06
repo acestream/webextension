@@ -20,7 +20,7 @@ buttonDisable:
   description: Button to disable a script.
   message: Zakázať
 buttonDownloadThemes:
-  description: Button in Violentmonkey settings for editor.
+  description: Button in Ace Script settings for editor.
   message: Stiahnuť motívy
   touched: false
 buttonEdit:
@@ -130,7 +130,7 @@ descEditorOptions:
   message: >-
     Vlastné možnosti pre CodeMirror a doplnky v JSON objekte ako
     <code>{"indentUnit":2, "smartIndent":true}</code> avšak niektoré z nich
-    nemusia byť funkčné vo Violentmonkey. Pozri <a
+    nemusia byť funkčné vo Ace Script. Pozri <a
     href="https://codemirror.net/doc/manual.html#config" target="_blank"
     rel="noopener noreferrer">celý zoznam</a>.
 editHelpDocumention:
@@ -183,16 +183,16 @@ extDescription:
     prehliadačov
 extName:
   description: Name of this extension.
-  message: Violentmonkey
+  message: Ace Script
 failureReasonBlacklisted:
   description: Shown for blacklisted URLs (in the extension icon tooltip, in the popup)
-  message: Na čiernej listine v nastaveniach Violentmonkey
+  message: Na čiernej listine v nastaveniach Ace Script
 failureReasonNoninjectable:
   description: >-
     Shown for URLs that cannot be processed (same places as
     failureBlacklistedUrl)
   message: >-
-    Violentmonkey nemôže spustiť skripty na tejto stránke
+    Ace Script nemôže spustiť skripty na tejto stránke
 
     (najčastejší prípad: rozhranie prehliadača alebo rozšírenia, blokované cez
     politiku, web vyhľadávača v Opere)
@@ -262,7 +262,7 @@ installOptionTrackTooltip:
   message: Karta so zdrojovým súborom by mala byť otvorená vo Firefoxe 68 a novšom.
 labelAbout:
   description: Label shown on top of the about page.
-  message: Informácie o Violentmonkey
+  message: Informácie o Ace Script
   touched: false
 labelAdvanced:
   description: Label for button to show advanced settings.
@@ -278,7 +278,7 @@ labelAutoReloadCurrentTab:
   message: Obnoviť aktuálny list po vypnutí alebo zapnutí skriptu z menu
 labelAutoReloadCurrentTabDisabled:
   description: >-
-    Tooltip in menu after Violentmonkey is switched off if auto-reload is
+    Tooltip in menu after Ace Script is switched off if auto-reload is
     disabled.
   message: Aktuálne skripty budú spustené, kým kartu znovu nenačítate
 labelAutoUpdate:
@@ -604,10 +604,10 @@ menuNewScript:
   description: Menu item to create a new script.
   message: Vytvoriť nový skript
 menuScriptDisabled:
-  description: Menu item showing the status of Violentmonkey, when disabled.
+  description: Menu item showing the status of Ace Script, when disabled.
   message: Skripty sú zakázané
 menuScriptEnabled:
-  description: Menu item showing the status of Violentmonkey, when enabled.
+  description: Menu item showing the status of Ace Script, when enabled.
   message: Skripty sú povolené
 msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
@@ -619,14 +619,14 @@ msgDateFormatInfo:
     doslovného textu použite [hranaté zátvorky].
 msgErrorFetchingResource:
   description: >-
-    Message shown when Violentmonkey fails fetching a resource/require/icon of
+    Message shown when Ace Script fails fetching a resource/require/icon of
     the script.
   message: Chyba pri načítaní zdroja!
 msgErrorFetchingScript:
-  description: Message shown when Violentmonkey fails fetching a new version of the script.
+  description: Message shown when Ace Script fails fetching a new version of the script.
   message: Chyba pri načítaní skriptu!
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Violentmonkey fails fetching version data of the script.
+  description: Message shown when Ace Script fails fetching version data of the script.
   message: Načítanie informácií o aktualizácii skončilo chybou.
 msgErrorLoadingData:
   description: >-
@@ -809,7 +809,7 @@ searchUseRegex:
   message: Použiť regulárne výrazy
 sideMenuAbout:
   description: 'Side menu: About'
-  message: O Violentmonkey
+  message: O Ace Script
 sideMenuInstalled:
   description: 'Side menu: Installed scripts'
   message: Nainštalované skripty
@@ -839,5 +839,5 @@ valueLabelValueAll:
   description: Label for input of entire script value storage.
   message: Všetky hodnoty (serializované ako JSON)
 visitWebsite:
-  description: Label for link to open Violentmonkey website.
+  description: Label for link to open Ace Script website.
   message: Prejsť na stránku

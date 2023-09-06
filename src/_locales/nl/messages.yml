@@ -20,7 +20,7 @@ buttonDisable:
   description: Button to disable a script.
   message: Uitschakelen
 buttonDownloadThemes:
-  description: Button in Violentmonkey settings for editor.
+  description: Button in Ace Script settings for editor.
   message: 'Thema''s downloaden:'
   touched: false
 buttonEdit:
@@ -128,7 +128,7 @@ descEditorOptions:
   message: >-
     Aangepaste instellingen voor CodeMirror en uitbreidingen in json-objecten,
     zoals <code>{"indentUnit":2, "smartIndent":true}</code>. Let op: niet alle
-    werken gegarandeerd in Violentmonkey. Bekijk de <a
+    werken gegarandeerd in Ace Script. Bekijk de <a
     href="https://codemirror.net/doc/manual.html#config" target="_blank"
     rel="noopener noreferrer">volledige lijst</a>.
 editHelpDocumention:
@@ -181,16 +181,16 @@ extDescription:
   message: Een open source gebruikersscriptbeheerder voor diverse webbrowsers
 extName:
   description: Name of this extension.
-  message: Violentmonkey
+  message: Ace Script
 failureReasonBlacklisted:
   description: Shown for blacklisted URLs (in the extension icon tooltip, in the popup)
-  message: Staat op Violentmonkey's zwarte lijst
+  message: Staat op Ace Script's zwarte lijst
 failureReasonNoninjectable:
   description: >-
     Shown for URLs that cannot be processed (same places as
     failureBlacklistedUrl)
   message: >-
-    Violentmonkey kan geen gebruikersscripts uitvoeren op deze pagina
+    Ace Script kan geen gebruikersscripts uitvoeren op deze pagina
 
     (bijv. interne of extensiepagina's, of vanwege een blokkadebeleid of
     bepaalde Opera-zoekmachine)
@@ -258,7 +258,7 @@ installOptionTrackTooltip:
   message: In Firefox 68 en nieuwer moet het brontabblad geopend blijven.
 labelAbout:
   description: Label shown on top of the about page.
-  message: Over Violentmonkey
+  message: Over Ace Script
   touched: false
 labelAdvanced:
   description: Label for button to show advanced settings.
@@ -274,7 +274,7 @@ labelAutoReloadCurrentTab:
   message: Huidig tabblad herladen na in-/uitschakelen van een script
 labelAutoReloadCurrentTabDisabled:
   description: >-
-    Tooltip in menu after Violentmonkey is switched off if auto-reload is
+    Tooltip in menu after Ace Script is switched off if auto-reload is
     disabled.
   message: De huidige scripts worden uitgevoerd totdat je het tabblad herlaadt
 labelAutoUpdate:
@@ -599,10 +599,10 @@ menuNewScript:
   description: Menu item to create a new script.
   message: Script schrijven
 menuScriptDisabled:
-  description: Menu item showing the status of Violentmonkey, when disabled.
+  description: Menu item showing the status of Ace Script, when disabled.
   message: Scripts zijn uitgeschakeld
 menuScriptEnabled:
-  description: Menu item showing the status of Violentmonkey, when enabled.
+  description: Menu item showing the status of Ace Script, when enabled.
   message: Scripts zijn ingeschakeld
 msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
@@ -614,14 +614,14 @@ msgDateFormatInfo:
     [vierkante haakjes] om letterlijke tekst te beschermen.
 msgErrorFetchingResource:
   description: >-
-    Message shown when Violentmonkey fails fetching a resource/require/icon of
+    Message shown when Ace Script fails fetching a resource/require/icon of
     the script.
   message: De bron kan niet worden opgehaald!
 msgErrorFetchingScript:
-  description: Message shown when Violentmonkey fails fetching a new version of the script.
+  description: Message shown when Ace Script fails fetching a new version of the script.
   message: Het script kan niet worden opgehaald!
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Violentmonkey fails fetching version data of the script.
+  description: Message shown when Ace Script fails fetching version data of the script.
   message: De update-informatie kan niet worden opgehaald.
 msgErrorLoadingData:
   description: >-
@@ -836,5 +836,5 @@ valueLabelValueAll:
   description: Label for input of entire script value storage.
   message: Alle waarden (in json-opmaak)
 visitWebsite:
-  description: Label for link to open Violentmonkey website.
-  message: Violentmonkey-website
+  description: Label for link to open Ace Script website.
+  message: Ace Script-website

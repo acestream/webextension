@@ -20,7 +20,7 @@ buttonDisable:
   description: Button to disable a script.
   message: Disabilita
 buttonDownloadThemes:
-  description: Button in Violentmonkey settings for editor.
+  description: Button in Ace Script settings for editor.
   message: Scarica temi
   touched: false
 buttonEdit:
@@ -133,7 +133,7 @@ descEditorOptions:
     Opzioni personalizzate per CodeMirror e componenti aggiuntivi in oggetto
     JSON, come <code>{"indentUnit":2, "smartIndent":true}</code>; tuttavia,
     tieni presente che alcune di esse potrebbero non funzionare in
-    Violentmonkey. Vedi l'<a
+    Ace Script. Vedi l'<a
     href="https://codemirror.net/doc/manual.html#config" target="_blank"
     rel="noopener noreferrer">elenco completo</a>.
 editHelpDocumention:
@@ -184,16 +184,16 @@ extDescription:
   message: Un gestore di userscript libero che supporta un sacco di browser
 extName:
   description: Name of this extension.
-  message: Violentmonkey
+  message: Ace Script
 failureReasonBlacklisted:
   description: Shown for blacklisted URLs (in the extension icon tooltip, in the popup)
-  message: Aggiunto alla lista nera dalle impostazioni di Violentmonkey
+  message: Aggiunto alla lista nera dalle impostazioni di Ace Script
 failureReasonNoninjectable:
   description: >-
     Shown for URLs that cannot be processed (same places as
     failureBlacklistedUrl)
   message: >-
-    Violentmonkey non può eseguire script utente in questa pagina
+    Ace Script non può eseguire script utente in questa pagina
 
     (esempi comuni: interfaccia utente del browser, un'estensione, bloccato da
     politiche, un sito motore di ricerca in Opera)
@@ -263,7 +263,7 @@ installOptionTrackTooltip:
     versioni successive.
 labelAbout:
   description: Label shown on top of the about page.
-  message: Riguardo Violentmonkey
+  message: Riguardo Ace Script
   touched: false
 labelAdvanced:
   description: Label for button to show advanced settings.
@@ -279,7 +279,7 @@ labelAutoReloadCurrentTab:
   message: Ricarica la scheda corrente dopo aver acceso/spento uno script dal menu
 labelAutoReloadCurrentTabDisabled:
   description: >-
-    Tooltip in menu after Violentmonkey is switched off if auto-reload is
+    Tooltip in menu after Ace Script is switched off if auto-reload is
     disabled.
   message: >-
     Gli script correnti continueranno a funzionare fino a quando non
@@ -609,10 +609,10 @@ menuNewScript:
   description: Menu item to create a new script.
   message: Crea un nuovo script
 menuScriptDisabled:
-  description: Menu item showing the status of Violentmonkey, when disabled.
+  description: Menu item showing the status of Ace Script, when disabled.
   message: Script disabilitati
 menuScriptEnabled:
-  description: Menu item showing the status of Violentmonkey, when enabled.
+  description: Menu item showing the status of Ace Script, when enabled.
   message: Script abilitati
 msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
@@ -624,14 +624,14 @@ msgDateFormatInfo:
     [parentesi quadre] per proteggere il testo letterale.
 msgErrorFetchingResource:
   description: >-
-    Message shown when Violentmonkey fails fetching a resource/require/icon of
+    Message shown when Ace Script fails fetching a resource/require/icon of
     the script.
   message: Errore nel recupero della risorsa!
 msgErrorFetchingScript:
-  description: Message shown when Violentmonkey fails fetching a new version of the script.
+  description: Message shown when Ace Script fails fetching a new version of the script.
   message: Errore nel recupero degli script!
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Violentmonkey fails fetching version data of the script.
+  description: Message shown when Ace Script fails fetching version data of the script.
   message: Recupero informazioni di aggiornamento fallito.
 msgErrorLoadingData:
   description: >-
@@ -848,5 +848,5 @@ valueLabelValueAll:
   description: Label for input of entire script value storage.
   message: Tutti i valori (formato JSON)
 visitWebsite:
-  description: Label for link to open Violentmonkey website.
+  description: Label for link to open Ace Script website.
   message: Visita sito web

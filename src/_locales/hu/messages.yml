@@ -20,7 +20,7 @@ buttonDisable:
   description: Button to disable a script.
   message: Kikapcsol
 buttonDownloadThemes:
-  description: Button in Violentmonkey settings for editor.
+  description: Button in Ace Script settings for editor.
   message: ''
   touched: false
 buttonEdit:
@@ -134,7 +134,7 @@ descEditorOptions:
   message: >-
     Egyedi beállítások a CodeMirror és bővítményei számára JSON objektumként,
     mint például: <code>{"indentUnit":2, "smartIndent":true}</code> Megeshet,
-    hogy van amelyik nem működik a Violentmonkey-n belül. Itt a <a
+    hogy van amelyik nem működik a Ace Script-n belül. Itt a <a
     href="https://codemirror.net/doc/manual.html#config" target="_blank"
     rel="noopener noreferrer">teljes lista</a>.
 editHelpDocumention:
@@ -186,16 +186,16 @@ extDescription:
   message: Egy nyílt forráskódú userscript menedzser, ami rengeteg böngészőt támogat!
 extName:
   description: Name of this extension.
-  message: Violentmonkey
+  message: Ace Script
 failureReasonBlacklisted:
   description: Shown for blacklisted URLs (in the extension icon tooltip, in the popup)
-  message: Ez az oldal szerepel a Violentmonkey beállításainak feketelistáján
+  message: Ez az oldal szerepel a Ace Script beállításainak feketelistáján
 failureReasonNoninjectable:
   description: >-
     Shown for URLs that cannot be processed (same places as
     failureBlacklistedUrl)
   message: >-
-    A Violentmonkey nem tud futtatni userscript-et ezen az oldalon
+    A Ace Script nem tud futtatni userscript-et ezen az oldalon
 
     (gyakori példák erre: böngésző felhasználói felülete, egy bővítményé,
     házirend által blokkolt, keresőmotor oldala Opera-ban)
@@ -281,7 +281,7 @@ labelAutoReloadCurrentTab:
   message: Aktuális lap újratöltése egy szkript ki/bekapcsolása után a menüben
 labelAutoReloadCurrentTabDisabled:
   description: >-
-    Tooltip in menu after Violentmonkey is switched off if auto-reload is
+    Tooltip in menu after Ace Script is switched off if auto-reload is
     disabled.
   message: A jelenlegi szkriptek futni fognak addig, amíg újra nem lesz töltve a lap
 labelAutoUpdate:
@@ -612,10 +612,10 @@ menuNewScript:
   description: Menu item to create a new script.
   message: Új szkript készítése
 menuScriptDisabled:
-  description: Menu item showing the status of Violentmonkey, when disabled.
+  description: Menu item showing the status of Ace Script, when disabled.
   message: Szkript kikapcsolva
 menuScriptEnabled:
-  description: Menu item showing the status of Violentmonkey, when enabled.
+  description: Menu item showing the status of Ace Script, when enabled.
   message: Szkript bekapcsolva
 msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
@@ -627,14 +627,14 @@ msgDateFormatInfo:
     Használj [szögletes zárójeleket] az egyszerű szöveg megóvásához.
 msgErrorFetchingResource:
   description: >-
-    Message shown when Violentmonkey fails fetching a resource/require/icon of
+    Message shown when Ace Script fails fetching a resource/require/icon of
     the script.
   message: Hiba az erőforrás lekérésekor!
 msgErrorFetchingScript:
-  description: Message shown when Violentmonkey fails fetching a new version of the script.
+  description: Message shown when Ace Script fails fetching a new version of the script.
   message: Hiba a szkript lekérésekor!
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Violentmonkey fails fetching version data of the script.
+  description: Message shown when Ace Script fails fetching version data of the script.
   message: A frissítési információk lekérése nem sikerült.
 msgErrorLoadingData:
   description: >-
@@ -857,5 +857,5 @@ valueLabelValueAll:
   description: Label for input of entire script value storage.
   message: Összes érték (JSON-ként sorosítva)
 visitWebsite:
-  description: Label for link to open Violentmonkey website.
+  description: Label for link to open Ace Script website.
   message: Látogasd meg a honlapot

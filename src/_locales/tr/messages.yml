@@ -20,7 +20,7 @@ buttonDisable:
   description: Button to disable a script.
   message: Kapat
 buttonDownloadThemes:
-  description: Button in Violentmonkey settings for editor.
+  description: Button in Ace Script settings for editor.
   message: ''
   touched: false
 buttonEdit:
@@ -130,7 +130,7 @@ descEditorOptions:
   message: >-
     CodeMirror  ve JSON eklentileri için <code>{"indentUnit":2,
     "smartIndent":true}1</code> gibi özelleştirilmiş ayarlar, ancak bazıları
-    Violentmonkey'de çalışmayabililir. Tüm listeyi görmek için <a
+    Ace Script'de çalışmayabililir. Tüm listeyi görmek için <a
     href="https://codemirror.net/doc/manual.html#config" target="_blank"
     rel="noopener noreferrer">tıklayın</a>
 editHelpDocumention:
@@ -183,16 +183,16 @@ extDescription:
     yöneticisi
 extName:
   description: Name of this extension.
-  message: Violentmonkey
+  message: Ace Script
 failureReasonBlacklisted:
   description: Shown for blacklisted URLs (in the extension icon tooltip, in the popup)
-  message: Violentmonkey ayarlarında kara listeye eklenmiş
+  message: Ace Script ayarlarında kara listeye eklenmiş
 failureReasonNoninjectable:
   description: >-
     Shown for URLs that cannot be processed (same places as
     failureBlacklistedUrl)
   message: >-
-    Violentmonkey bu sayfadaki kullanıcı betiğini çalıştıramıyor
+    Ace Script bu sayfadaki kullanıcı betiğini çalıştıramıyor
 
     (olağan şüpheliler: tarayıcı arayüzü, bir başka eklenti, poliçe sebebiyle
     bloklama, Opera'da bir arama motoru sayfası)
@@ -260,7 +260,7 @@ installOptionTrackTooltip:
   message: Firefox 68 ve sonrası için kaynak dosyası sekmesi açık tutulmalıdır.
 labelAbout:
   description: Label shown on top of the about page.
-  message: Violentmonkey hakkında
+  message: Ace Script hakkında
   touched: false
 labelAdvanced:
   description: Label for button to show advanced settings.
@@ -276,7 +276,7 @@ labelAutoReloadCurrentTab:
   message: Bir betik dosyasını menüden kapatıp açarken geçerli sekmeyi yenile
 labelAutoReloadCurrentTabDisabled:
   description: >-
-    Tooltip in menu after Violentmonkey is switched off if auto-reload is
+    Tooltip in menu after Ace Script is switched off if auto-reload is
     disabled.
   message: Geçerli betikler sayfa yenilenene kadar çalışmaya devam edecektir
 labelAutoUpdate:
@@ -600,10 +600,10 @@ menuNewScript:
   description: Menu item to create a new script.
   message: Yeni betik oluştur
 menuScriptDisabled:
-  description: Menu item showing the status of Violentmonkey, when disabled.
+  description: Menu item showing the status of Ace Script, when disabled.
   message: Betikler kapatıldı
 menuScriptEnabled:
-  description: Menu item showing the status of Violentmonkey, when enabled.
+  description: Menu item showing the status of Ace Script, when enabled.
   message: Betikler açıldı
 msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
@@ -615,14 +615,14 @@ msgDateFormatInfo:
     Metinleri korumak için [köşeli parantez] kullanın.
 msgErrorFetchingResource:
   description: >-
-    Message shown when Violentmonkey fails fetching a resource/require/icon of
+    Message shown when Ace Script fails fetching a resource/require/icon of
     the script.
   message: Kaynak güncelleme hatası!
 msgErrorFetchingScript:
-  description: Message shown when Violentmonkey fails fetching a new version of the script.
+  description: Message shown when Ace Script fails fetching a new version of the script.
   message: Betik güncelleme hatası!
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Violentmonkey fails fetching version data of the script.
+  description: Message shown when Ace Script fails fetching version data of the script.
   message: Güncelleme bilgilerini getirirken hata oluştu.
 msgErrorLoadingData:
   description: >-
@@ -838,5 +838,5 @@ valueLabelValueAll:
   description: Label for input of entire script value storage.
   message: Tüm değerler (JSON şeklinde serileştirilmiş)
 visitWebsite:
-  description: Label for link to open Violentmonkey website.
+  description: Label for link to open Ace Script website.
   message: Siteyi ziyaret et

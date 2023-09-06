@@ -20,7 +20,7 @@ buttonDisable:
   description: Button to disable a script.
   message: Nonaktifkan
 buttonDownloadThemes:
-  description: Button in Violentmonkey settings for editor.
+  description: Button in Ace Script settings for editor.
   message: Unduh tema
   touched: false
 buttonEdit:
@@ -128,7 +128,7 @@ descEditorOptions:
   message: >-
     Opsi khusus untuk CodeMirror dan addon di dalam obyek JSON seperti
     <code>{"indentUnit":2, "smartIndent":true}</code> meskipun demikian beberapa
-    diantaranya mungkin tidak bisa digunakan di Violentmonkey. Lihat <a
+    diantaranya mungkin tidak bisa digunakan di Ace Script. Lihat <a
     href="https://codemirror.net/doc/manual.html#config" target="_blank"
     rel="noopener noreferrer">daftar lengkap</a>. Untuk menggunakan tema
     CodeMirror khusus, tulis nama berkasnya di sini <code>"theme":
@@ -183,16 +183,16 @@ extDescription:
   message: Pengelola userscript sumber terbuka yang mendukung banyak peramban
 extName:
   description: Name of this extension.
-  message: Violentmonkey
+  message: Ace Script
 failureReasonBlacklisted:
   description: Shown for blacklisted URLs (in the extension icon tooltip, in the popup)
-  message: Dalam daftar hitam di pengaturan Violentmonkey
+  message: Dalam daftar hitam di pengaturan Ace Script
 failureReasonNoninjectable:
   description: >-
     Shown for URLs that cannot be processed (same places as
     failureBlacklistedUrl)
   message: |-
-    Violentmonkey tidak bisa menjalankan userscript di halaman ini
+    Ace Script tidak bisa menjalankan userscript di halaman ini
     (contoh: UI peramban atau ekstensi)
 filterAlphabeticalOrder:
   description: Label for option to sort scripts in alphabetical order.
@@ -260,7 +260,7 @@ installOptionTrackTooltip:
   message: Tab sumber berkas harus tetap terbuka di Firefox 68 dan terbaru.
 labelAbout:
   description: Label shown on top of the about page.
-  message: Tentang Violentmonkey
+  message: Tentang Ace Script
   touched: false
 labelAdvanced:
   description: Label for button to show advanced settings.
@@ -278,7 +278,7 @@ labelAutoReloadCurrentTab:
     menu
 labelAutoReloadCurrentTabDisabled:
   description: >-
-    Tooltip in menu after Violentmonkey is switched off if auto-reload is
+    Tooltip in menu after Ace Script is switched off if auto-reload is
     disabled.
   message: Skrip konten akan terus berjalan sampai Anda memuat ulang tab
 labelAutoUpdate:
@@ -600,10 +600,10 @@ menuNewScript:
   description: Menu item to create a new script.
   message: Buat skrip baru
 menuScriptDisabled:
-  description: Menu item showing the status of Violentmonkey, when disabled.
+  description: Menu item showing the status of Ace Script, when disabled.
   message: Skrip dinonaktifkan
 menuScriptEnabled:
-  description: Menu item showing the status of Violentmonkey, when enabled.
+  description: Menu item showing the status of Ace Script, when enabled.
   message: Skrip diaktifkan
 msgCheckingForUpdate:
   description: Message shown when a script is being checked for updates by version numbers.
@@ -615,14 +615,14 @@ msgDateFormatInfo:
     [tanda kurung siku] untuk melindungi teks harfiah.
 msgErrorFetchingResource:
   description: >-
-    Message shown when Violentmonkey fails fetching a resource/require/icon of
+    Message shown when Ace Script fails fetching a resource/require/icon of
     the script.
   message: Kesalahan saat mengambil sumber daya!
 msgErrorFetchingScript:
-  description: Message shown when Violentmonkey fails fetching a new version of the script.
+  description: Message shown when Ace Script fails fetching a new version of the script.
   message: Kesalahan saat mengambil skrip!
 msgErrorFetchingUpdateInfo:
-  description: Message shown when Violentmonkey fails fetching version data of the script.
+  description: Message shown when Ace Script fails fetching version data of the script.
   message: Gagal mengambil informasi pembaruan.
 msgErrorLoadingData:
   description: >-
@@ -841,5 +841,5 @@ valueLabelValueAll:
   description: Label for input of entire script value storage.
   message: Semua nilai (serialisasi sebagai JSON)
 visitWebsite:
-  description: Label for link to open Violentmonkey website.
+  description: Label for link to open Ace Script website.
   message: Kunjungi Situs Web
