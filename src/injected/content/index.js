@@ -105,14 +105,24 @@ function getXhrInjection() {
   } catch { /* NOP */ }
 }
 
-function watchDOM(func, retryCount, retryInterval) {
-  if (!func()) {
-    if (retryCount && retryCount > 0) {
-      setTimeout(() => {
-        watchDOM(func, retryCount - 1, retryInterval);
-      }, retryInterval);
-    }
-  }
+function watchDOM(func) {
+  const observer = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
+      [].forEach.call(mutation.addedNodes, node => {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          func(node);
+        }
+        [].forEach.call(node.childNodes, child => {
+          if (child.nodeType === Node.ELEMENT_NODE) {
+            func(child);
+          }
+        });
+      });
+    });
+  });
+
+  func();
+  observer.observe(document.body, { childList: true, subtree: true });
 }
 
 async function checkStartEngineMarker() {
@@ -135,53 +145,103 @@ async function checkStartEngineMarker() {
   return true;
 }
 
-function exposeVersion() {
-  // set version in special container
-  const el = document.getElementById('x-acestream-awe-version');
+function exposeVersion(node) {
+  const BRIDGE_ID = 'x-acestream-awe-version';
+  let el = node;
   if (!el) {
+    el = document.getElementById(BRIDGE_ID);
+    if (!el) {
+      return false;
+    }
+  } else if (el.id !== BRIDGE_ID) {
     return false;
   }
 
-  if (isDomainAllowed(window.location.host)) {
-    el.setAttribute('data-vendor', getVendor());
-    //ASTODO: test this
-    el.setAttribute('data-version', process.env.VM_VER);
-  }
+  function sendResponse(target, requestId) {
+    try {
+      const vendor = getVendor();
+      const version = process.env.VM_VER;
+      target.setAttribute('data-vendor', vendor);
+      target.setAttribute('data-version', version);
 
-  return true;
-}
-
-async function exposeInstalledScripts() {
-  // expose installed scripts to a limited set of domains
-  const el = document.getElementById('x-acestream-awe-installed-scripts');
-  if (!el) {
-    return false;
-  }
-
-  if (isDomainAllowed(window.location.host)) {
-    //ASTODO: test this
-    const response = await sendCmd('GetInstalledScripts');
-    if (response) {
-      el.setAttribute('data-scripts', JSON.stringify(response));
+      const payload = { response: { vendor, version } };
+      if (requestId) {
+        payload.requestId = requestId;
+      }
+      const event = new CustomEvent('response', { detail: payload });
+      target.dispatchEvent(event);
+    } catch (e) {
+      if (process.env.DEBUG) console.error(e);
     }
   }
 
+  if (isDomainAllowed(window.location.hostname)) {
+    sendResponse(el);
+    el.addEventListener('request', e => {
+      sendResponse(el, e.detail.requestId);
+    }, false);
+  }
+
   return true;
 }
 
-function onDOMContentLoaded() {
-  watchDOM(checkStartEngineMarker, 60, 500);
-
-  if (isDomainAllowed(window.location.host)) {
-    watchDOM(exposeVersion, 240, 500);
-    watchDOM(exposeInstalledScripts, 60, 500);
+async function exposeInstalledScripts(node) {
+  const BRIDGE_ID = 'x-acestream-awe-installed-scripts';
+  let el = node;
+  if (!el) {
+    el = document.getElementById(BRIDGE_ID);
+    if (!el) {
+      return false;
+    }
+  } else if (el.id !== BRIDGE_ID) {
+    return false;
   }
 
-  if (IS_TOP) {
+  async function sendResponse(target, requestId) {
     //ASTODO: test this
-    // check news for this site
-    sendCmd('CheckNews', { url: window.location.href });
+    const response = await sendCmd('GetInstalledScripts');
+    if (response) {
+      target.setAttribute('data-scripts', JSON.stringify(response));
+
+      const payload = { response };
+      if (requestId) {
+        payload.requestId = requestId;
+      }
+      const event = new CustomEvent('response', { detail: payload });
+      target.dispatchEvent(event);
+    };
+  }
+
+  if (isDomainAllowed(window.location.hostname)) {
+    await sendResponse(el);
+    el.addEventListener('request', async (e) => {
+      await sendResponse(el, e.detail.requestId);
+    }, false);
+  }
+
+  return true;
+}
+
+function onDomReady(callback) {
+  if (document.readyState === 'complete'
+    || document.readyState === 'loaded'
+    || document.readyState === 'interactive') {
+    setTimeout(callback, 0);
+  } else {
+    document.addEventListener('DOMContentLoaded', callback, false);
   }
 }
 
-document.addEventListener('DOMContentLoaded', onDOMContentLoaded, false);
+onDomReady(() => {
+  watchDOM(checkStartEngineMarker);
+
+  if (isDomainAllowed(window.location.hostname)) {
+    watchDOM(exposeVersion);
+    watchDOM(exposeInstalledScripts);
+  }
+
+  if (IS_TOP) {
+    // check news for this site
+    sendCmd('CheckNews', { url: window.location.href });
+  }
+});
