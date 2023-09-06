@@ -96,8 +96,9 @@ addHandlers({
         bridge.send('GetScriptVer', { meta: { name, namespace } })
       ),
       //ASTODO: check the implementation in old code
-      startEngine: callback => {
-        postCommandWithCallback('StartEngine', callback);
+      startEngine: () => {
+        //ASTODO: test this. Previously `startEngine` accepted `callback` parameter. Should we continue to use it for backward compatibility?
+        return bridge.send('StartEngine');
       },
     };
   },
@@ -115,4 +116,6 @@ function onCodeSet(fn) {
   if (el) {
     el::remove();
   }
+  bridge.post('Run', item.id);
+  wrapper::fn(gm, logging.error);
 }

@@ -1,8 +1,90 @@
-import { verbose, request, assertTestMode } from '#/common';
-import { getVendor } from '#/common/ua';
-import { getPrivacyOptions } from '#/common/privacy';
+import { verbose, request, assertTestMode } from '@/common';
+import { getVendor } from '@/common/vendor';
+import { getPrivacyOptions } from '@/common/privacy';
 import { getEngineStatus } from './engine-api';
 import { getInstalledScripts, eventEmitter } from './db';
+import { addPublicCommands } from './message';
+
+addPublicCommands({
+  CheckNews({ url }) {
+    verbose(`ASDEBUG: check news: url=${url}`);
+    /*
+    verbose(`bg: check news: url=${url}`);
+
+    if (!url) {
+      return Promise.reject('missing url');
+    }
+
+    const newsList = news.getNewsForUrl(url);
+    for (let i = 0; i < newsList.length; i += 1) {
+      let targetUrl;
+      const newsId = newsList[i].id;
+      const buttons = [];
+      const notificationId = `awe-notification-${Math.ceil(Math.random() * 1000000)}`;
+
+      if (newsList[i].btnUrl) {
+        targetUrl = newsList[i].btnUrl;
+
+        if (NOTIFICATIONS_BUTTONS_SUPPORTED) {
+          buttons.push({ title: newsList[i].btnTitle || i18n('notifShowMore') });
+          buttons.push({ title: i18n('notifDontShowAnymore') });
+        }
+      }
+
+      const options = {
+        type: 'basic',
+        title: newsList[i].title || '',
+        iconUrl: '/public/images/icon128.png',
+        message: newsList[i].text,
+      };
+
+      if (NOTIFICATIONS_BUTTONS_SUPPORTED) {
+        options.buttons = buttons;
+      }
+
+      browser.notifications.create(
+        notificationId,
+        options,
+      ).then(newNotificationId => {
+        verbose(`notification created: id=${newNotificationId}`);
+        registeredNotifications_[newNotificationId] = {
+          onClicked: () => {
+            // Use has clicked notification itself.
+            if (targetUrl) {
+              browser.tabs.create({ url: targetUrl });
+            }
+            news.onInstallButtonClicked(newsId);
+            browser.notifications.clear(newNotificationId);
+          },
+          onButtonClicked: index => {
+            if (index === 0) {
+              // User has pressed 'Install' button
+              if (targetUrl) {
+                browser.tabs.create({ url: targetUrl });
+              }
+              news.onInstallButtonClicked(newsId);
+            } else if (index === 1) {
+              // User has pressed 'No, thanks' button
+              news.onSkipButtonClicked(newsId);
+            }
+            browser.notifications.clear(newNotificationId);
+          },
+        };
+      });
+
+      news.registerImpression(newsId);
+
+      if (!NOTIFICATIONS_BUTTONS_SUPPORTED) {
+        window.setTimeout(() => {
+          browser.notifications.clear(notificationId);
+        }, 15000);
+      }
+    }
+
+    return Promise.resolve();
+    */
+  }
+});
 
 eventEmitter.on('scriptSaved', data => {
   verbose('news:scriptSaved: data', data);

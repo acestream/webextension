@@ -2,20 +2,6 @@
 // so we'll test for window.chrome.app which is only defined in Chrome
 // and for browser.runtime.getBrowserInfo in Firefox 51+
 
-export const isFirefox = /firefox\//i.test(userAgent);
-export const isChrome = /chrome\//i.test(userAgent);
-export const isAndroid = /android /i.test(userAgent);
-
-export function getVendor() {
-  if (isFirefox) {
-    return 'firefox';
-  }
-  if (isChrome) {
-    return 'chrome';
-  }
-  return 'unknown';
-}
-
 /** @type {VMUserAgent} */
 const ua = {};
 const kUaFullVersion = 'uaFullVersion'; // for new Chrome which simplifies UA version as #.0.0.0

@@ -190,48 +190,66 @@ export const GM_API = {
     GM_log: logging.log,
 
     //ASTODO: see injected/web/index.js for old implementation
-    AWE_engineStatus: {
-      value(callback) {
-        postCommandWithCallback('GetEngineStatus', callback);
-      },
+    //ASTODO: test all methods
+    async AWE_engineStatus(callback) {
+      const promise = bridge.send('GetEngineStatus');
+      if(callback) {
+        callback(await promise);
+      } else {
+        return promise;
+      }
     },
-    AWE_startJsPlayer: {
-      value() {
-        throw new Error('not implemented');
-      },
+    async AWE_startJsPlayer() {
+      throw new SafeError('not implemented');
     },
-    AWE_getAvailablePlayers: {
-      value(params, callback) {
-        postCommandWithCallback('GetAvailablePlayers', callback, { params });
-      },
+    async AWE_getAvailablePlayers(params, callback) {
+      const promise = bridge.send('GetAvailablePlayers', params);
+      if(callback) {
+        callback(await promise);
+      } else {
+        return promise;
+      }
     },
-    AWE_openInPlayer: {
-      value(params, playerId, callback) {
-        postCommandWithCallback('OpenInPlayer', callback, { params, playerId });
-      },
+    async AWE_openInPlayer(params, playerId, callback) {
+      const promise = await bridge.send('OpenInPlayer', { params, playerId });
+      if(callback) {
+        callback(await promise);
+      } else {
+        return promise;
+      }
     },
-    AWE_getDeviceId: {
-      value(callback) {
-        postCommandWithCallback('GetDeviceId', callback);
-      },
+    async AWE_getDeviceId(callback) {
+      const promise = bridge.send('GetDeviceId');
+      if(callback) {
+        callback(await promise);
+      } else {
+        return promise;
+      }
     },
-    AWE_registerContextMenuCommand: {
-      // eslint-disable-next-line no-unused-vars
-      value(caption, commandFunc, accessKey, filterFunc) {
-        postCommandWithCallback('RegisterContextMenuCommand', () => {
-          store.contextMenuHandlers.push(commandFunc);
-        });
-      },
+    //ASTODO: reimplement this
+    // async AWE_registerContextMenuCommand: {
+    //   // eslint-disable-next-line no-unused-vars
+    //   value(caption, commandFunc, accessKey, filterFunc) {
+    //     return bridge.send('RegisterContextMenuCommand', () => {
+    //       store.contextMenuHandlers.push(commandFunc);
+    //     });
+    //   },
+    // },
+    async AWE_getLocale(callback) {
+      const promise = bridge.send('GetLocale');
+      if(callback) {
+        callback(await promise);
+      } else {
+        return promise;
+      }
     },
-    AWE_getLocale: {
-      value(callback) {
-        postCommandWithCallback('GetLocale', callback);
-      },
-    },
-    AWE_getConfig: {
-      value(name, callback) {
-        postCommandWithCallback('GetConfig', callback, { name });
-      },
+    async AWE_getConfig(name, callback) {
+      const promise = bridge.send('GetConfig', name);
+      if(callback) {
+        callback(await promise);
+      } else {
+        return promise;
+      }
     },
   },
 };

@@ -58,7 +58,7 @@
 </template>
 
 <script>
-import { getPrivacyOptions, setPrivacyOptions } from '#/common/privacy';
+import { getPrivacyOptions, setPrivacyOptions } from '@/common/privacy';
 
 const data = {
   ready: false,

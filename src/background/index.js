@@ -18,6 +18,8 @@ import './utils/script';
 import './utils/tab-redirector';
 import './utils/tester';
 import './utils/update';
+import './utils/news';
+import './utils/engine-api';
 
 hookOptions((changes) => {
   if ('autoUpdate' in changes) {

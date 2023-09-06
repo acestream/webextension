@@ -1,13 +1,12 @@
 import test from 'tape';
 import request from 'request';
-import * as news from '#/background/utils/news';
-import { delay, setRequestHandler, enableVerbose } from '#/common';
+import * as news from '@/background/utils/news';
+import { delay, setRequestHandler } from '@/common';
 
 const URL_ACE_CAST = 'http://awe.acestream.me/scripts/acestream/Ace_Cast?install=auto';
 const URL_P2P_SEARCH = 'http://awe.acestream.me/scripts/acestream/P2P_Search?install=auto';
 const URL_MAGIC_PLAYER = 'http://awe.acestream.me/scripts/acestream/Magic_Player?install=auto';
 
-enableVerbose(false);
 news.setConfig({
   checkInterval: 0,
   notificationBaseInterval: 2000,

@@ -1,4 +1,4 @@
-import { request, noop } from '#/common';
+import { request, noop } from '@/common';
 
 export function asImpression(counterId) {
   const url = `https://mstat.acestream.net/imp?a=${counterId}&b=${Math.random()}`;

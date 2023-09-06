@@ -325,13 +325,9 @@ export async function makeRaw(response, noJoin) {
 }
 
 export function verbose(...params) {
-  if (config.verbose) {
+  if (process.env.DEV) {
     console.info(...params);
   }
-}
-
-export function enableVerbose(value) {
-  config.verbose = !!value;
 }
 
 export function isDomainAllowed(host) {
@@ -346,5 +342,11 @@ export function isDomainAllowed(host) {
     return allowedDomains.includes(targetHost);
   } catch (e) {
     verbose(`isDomainAllowed: error: ${e}`);
+  }
+}
+
+export function assertTestMode() {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(`Test mode expected: current=${process.env.NODE_ENV}`);
   }
 }

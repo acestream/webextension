@@ -1,8 +1,43 @@
-import { verbose, delay, request } from '#/common';
+import { verbose, delay, request } from '@/common';
+import { addPublicCommands } from './message';
 
 // TODO: register initiator before each play (engine can restart)
 let gDeviceId = null;
 const gInitiatorId = null;
+
+addPublicCommands({
+  GetEngineStatus() {
+    verbose('GetEngineStatus');
+    return getEngineStatus();
+  },
+  GetAvailablePlayers(params) {
+    return new Promise(resolve => {
+      getAvailablePlayers(params, response => resolve(response));
+    });
+  },
+  OpenInPlayer({ params, playerId }) {
+    return new Promise(resolve => {
+      openInPlayer(params, playerId, response => resolve(response));
+    });
+  },
+  GetDeviceId() {
+    return new Promise(resolve => {
+      getDeviceId(response => resolve(response));
+    });
+  },
+  GetLocale() {
+    return Promise.resolve(browser.i18n.getUILanguage());
+  },
+  GetConfig(name) {
+    const values = {
+      'remote-control-url': 'http://127.0.0.1:6878/remote-control',
+      _a: null,
+      mode: 0,
+    };
+
+    return Promise.resolve(values[name]);
+  },
+});
 
 function checkEngine(retryCount, retryInterval) {
   let url = 'http://127.0.0.1:6878/webui/api/service?method=get_version';
@@ -205,6 +240,7 @@ export function getAvailablePlayers(details, callback) {
     params.infohash = details.infohash;
   } else {
     callback();
+    return;
   }
 
   sendRequest({
