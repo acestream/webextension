@@ -334,7 +334,8 @@ export default {
     findUrls() {
       const query = encodeURIComponent(store.domain);
       return {
-        [`${i18n('menuFindScripts')} (GF)`]: `https://greasyfork.org/scripts/by-site/${query}`,
+        [`${i18n('menuFindScripts')}`]: `https://awe.acestream.me/`, //NOTE: out market doesn't support searching by site yet
+        GF: `https://greasyfork.org/scripts/by-site/${query}`,
         OUJS: `https://openuserjs.org/?q=${query}`,
       };
     },
