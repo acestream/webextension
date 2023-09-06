@@ -60,38 +60,36 @@
 <script>
 import { getPrivacyOptions, setPrivacyOptions } from '@/common/privacy';
 
-const data = {
-  ready: false,
-  optInConfirmed: false,
-  optInAccepted: false,
-};
-
-getPrivacyOptions().then(result => {
-  data.optInConfirmed = result.confirmed;
-  data.optInAccepted = result.accepted;
-  data.ready = true;
-});
-
-function confirm(accepted) {
-  data.optInConfirmed = true;
-  data.optInAccepted = accepted;
-  setPrivacyOptions(accepted);
-}
-
 export default {
   data() {
-    return data;
+    return {
+      ready: false,
+      optInConfirmed: false,
+      optInAccepted: false,
+    };
   },
   methods: {
     acceptOptIn() {
-      confirm(true);
+      this.save(true);
     },
     rejectOptIn() {
-      confirm(false);
+      this.save(false);
     },
     onChange(event) {
-      confirm(event.target.checked);
+      this.save(event.target.checked);
     },
+    save(accepted) {
+      this.optInConfirmed = true;
+      this.optInAccepted = accepted;
+      setPrivacyOptions(accepted);
+    }
+  },
+  mounted() {
+    getPrivacyOptions().then(result => {
+      this.optInConfirmed = result.confirmed;
+      this.optInAccepted = result.accepted;
+      this.ready = true;
+    });
   },
 };
 </script>

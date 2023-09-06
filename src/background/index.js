@@ -2,6 +2,7 @@ import '@/common/browser';
 import { getActiveTab, makePause, sendCmd } from '@/common';
 import { TIMEOUT_24HOURS, TIMEOUT_MAX } from '@/common/consts';
 import { deepCopy } from '@/common/object';
+import { getPrivacyOptions } from '@/common/privacy';
 import { getDomain } from 'tldjs/tld';
 import * as sync from './sync';
 import { addOwnCommands, addPublicCommands, commands } from './utils';
@@ -128,4 +129,13 @@ initialize(() => {
   sync.initialize();
   checkRemove();
   setInterval(checkRemove, TIMEOUT_24HOURS);
+
+  if (IS_FIREFOX) {
+    // Check privacy opt-in
+    getPrivacyOptions().then(result => {
+      if (!result.confirmed) {
+        browser.tabs.create({ url: '/options/index.html#privacySettings' });
+      }
+    });
+  }
 });
