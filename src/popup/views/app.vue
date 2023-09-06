@@ -170,7 +170,7 @@
        v-if="store.currentTab?.incognito"
        v-text="i18n('msgIncognitoChanges')"/>
     <footer>
-      <a href="https://violentmonkey.github.io/" target="_blank" :tabIndex="tabIndex" v-text="i18n('visitWebsite')" />
+      <a href="https://awe.acestream.me/" target="_blank" :tabIndex="tabIndex" v-text="i18n('visitWebsite')" />
     </footer>
     <div class="message" v-show="message">
       <div v-text="message"></div>
