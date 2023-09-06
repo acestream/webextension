@@ -95,9 +95,7 @@ addHandlers({
       isInstalled: (name, namespace) => (
         bridge.send('GetScriptVer', { meta: { name, namespace } })
       ),
-      //ASTODO: check the implementation in old code
       startEngine: () => {
-        //ASTODO: test this. Previously `startEngine` accepted `callback` parameter. Should we continue to use it for backward compatibility?
         return bridge.send('StartEngine');
       },
     };

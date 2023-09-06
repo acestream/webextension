@@ -65,8 +65,6 @@ addPublicCommands({
               }
               onInstallButtonClicked(newsId);
             }
-            //ASTODO: do we need this?
-            //browser.notifications.clear(newNotificationId);
           }
         });
       });
@@ -84,7 +82,6 @@ addPublicCommands({
   }
 });
 
-//ASTODO: check events
 eventEmitter.on('scriptSaved', data => {
   verbose('news:scriptSaved: data', data);
   updateInstalledScripts();

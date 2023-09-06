@@ -14,7 +14,6 @@ import { Run } from './cmd-run';
 
 const { [IDS]: ids } = bridge;
 
-//ASTODO: check whether this is loaded inside iframes
 const IS_TOP = window.top === window;
 
 // Make sure to call obj::method() in code that may run after CONTENT userscripts
@@ -132,7 +131,6 @@ async function checkStartEngineMarker() {
     return false;
   }
 
-  //ASTODO: test this
   // notify the marker owner that we have catched it
   const response = await sendCmd('StartEngine');
   verbose('Ace Script: start engine: response', response);
@@ -208,7 +206,6 @@ async function exposeInstalledScripts(node) {
   }
 
   async function sendResponse(target, requestId) {
-    //ASTODO: test this
     const response = await sendCmd('GetInstalledScripts');
     if (response) {
       target.setAttribute('data-scripts', JSON.stringify(response));

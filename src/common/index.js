@@ -198,7 +198,6 @@ export function getScriptRunAt(script) {
 }
 
 /** URL that shows the name of the script and opens in devtools sources or in our editor */
-//ASTODO: should we add "acestream.js" here?
 export function getScriptPrettyUrl(script, displayName) {
   return `${
     extensionRoot

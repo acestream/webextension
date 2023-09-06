@@ -235,7 +235,6 @@ export function getScripts() {
 }
 
 export function getInstalledScripts() {
-  //ASTODO: return promise?
   return new Promise(resolve => {
     const installed = [];
     const scripts = getScripts();
@@ -250,7 +249,6 @@ export function getInstalledScripts() {
 }
 
 export function getScriptByIds(ids) {
-  //ASTODO: return promise?
   const scripts = ids.map(id => getScript({ id }));
   return scripts.filter(Boolean);
 }
@@ -489,7 +487,6 @@ export async function removeScripts(ids) {
     const id = getPropsId(script);
     if (ids.includes(id)) {
 
-      //ASTODO: check how this works
       const scriptId = script?.props.scriptId;
       if (scriptId) {
         eventEmitter.fire('scriptRemoved', scriptId);

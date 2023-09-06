@@ -189,8 +189,6 @@ export const GM_API = {
     // using the native console.log so the output has a clickable link to the caller's source
     GM_log: logging.log,
 
-    //ASTODO: see injected/web/index.js for old implementation
-    //ASTODO: test all methods
     async AWE_engineStatus(callback) {
       const promise = bridge.send('GetEngineStatus');
       if(callback) {

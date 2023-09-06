@@ -30,10 +30,11 @@ browser.notifications.onClosed.addListener((id) => {
   delete openers[id];
 });
 
-//ASTODO: check in FF
-browser.notifications.onButtonClicked.addListener((id, buttonIndex) => {
-  notifyOpener(id, true, buttonIndex);
-});
+if(!IS_FIREFOX) {
+  browser.notifications.onButtonClicked.addListener((id, buttonIndex) => {
+    notifyOpener(id, true, buttonIndex);
+  });
+}
 
 function notifyOpener(id, isClick, buttonIndex) {
   const op = openers[id];
