@@ -336,6 +336,7 @@ export function isDomainAllowed(host) {
       'acestream.org',
       'acestream.net',
       'acestream.me',
+      'acestream.media',
     ];
     const targetHost = host.split('.').slice(-2).join('.');
 
