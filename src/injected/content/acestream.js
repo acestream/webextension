@@ -1,4 +1,4 @@
-import bridge, { addBackgroundHandlers, addHandlers } from './bridge';
+import { addHandlers } from './bridge';
 import { sendCmd } from './util';
 
 addHandlers({
