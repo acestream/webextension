@@ -7,7 +7,6 @@ const gInitiatorId = null;
 
 addPublicCommands({
   GetEngineStatus() {
-    verbose('GetEngineStatus');
     return getEngineStatus();
   },
   GetAvailablePlayers(params) {
@@ -36,6 +35,30 @@ addPublicCommands({
     };
 
     return Promise.resolve(values[name]);
+  },
+  StartEngine() {
+    verbose('bg: start engine');
+    return new Promise(resolve => {
+      try {
+        browser.runtime.sendNativeMessage(
+          'org.acestream.engine',
+          { method: 'start_engine' },
+          response => {
+            const err = browser.runtime.lastError;
+            if (err) {
+              verbose(`bg: start engine failed: err=${err}`);
+              resolve(null);
+            } else {
+              verbose('bg: start engine response', response);
+              resolve(response);
+            }
+          },
+        );
+      } catch(error) {
+        console.error(`Failed to started engine: ${error}`);
+        resolve(null);
+      }
+    });
   },
 });
 

@@ -41,6 +41,9 @@ addPublicCommands({
       ? script.meta.version
       : null;
   },
+  GetInstalledScripts() {
+    return getInstalledScripts();
+  }
 });
 
 addOwnCommands({

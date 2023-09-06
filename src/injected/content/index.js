@@ -168,10 +168,20 @@ function exposeVersion(node) {
       if (requestId) {
         payload.requestId = requestId;
       }
-      const event = new CustomEvent('response', { detail: payload });
+
+      let payloadToSend;
+      if(IS_FIREFOX) {
+        // In FF we cannot pass objects directly from content script to page script. Such objects
+        // must be expicitly cloned with special "cloneInto" function.
+        payloadToSend = cloneInto(payload, window);
+      } else {
+        payloadToSend = payload;
+      }
+
+      const event = new CustomEvent('response', { detail: payloadToSend });
       target.dispatchEvent(event);
     } catch (e) {
-      if (process.env.DEBUG) console.error(e);
+      if (process.env.DEV) console.error(e);
     }
   }
 
@@ -207,7 +217,17 @@ async function exposeInstalledScripts(node) {
       if (requestId) {
         payload.requestId = requestId;
       }
-      const event = new CustomEvent('response', { detail: payload });
+
+      let payloadToSend;
+      if(IS_FIREFOX) {
+        // In FF we cannot pass objects directly from content script to page script. Such objects
+        // must be expicitly cloned with special "cloneInto" function.
+        payloadToSend = cloneInto(payload, window);
+      } else {
+        payloadToSend = payload;
+      }
+
+      const event = new CustomEvent('response', { detail: payloadToSend });
       target.dispatchEvent(event);
     };
   }

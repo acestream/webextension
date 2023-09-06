@@ -13,6 +13,9 @@
     const responseCallbacks = {};
 
     function makeRequestId(tag) {
+        if(!tag) {
+            tag = 'default';
+        }
         return tag + '-' + Math.random();
     }
 
