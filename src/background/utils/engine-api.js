@@ -173,6 +173,8 @@ export function getEngineStatus(callback) {
           'org.acestream.engine',
           { method: 'get_version' },
           nativeResponse => {
+            // check lastError to suppress errors on console
+            browser.runtime.lastError; // eslint-disable-line no-unused-expressions
             if (typeof nativeResponse === 'undefined') {
               verbose(`Ace Script: engine messaging host failed: ${browser.runtime.lastError}`);
               _sendResponse(false, 0);

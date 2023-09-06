@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test</title>
+    <script src="ace-script-utils.js"></script>
+</head>
+<body>
+
+    <button onclick="getVersion();">Get version</button>
+    <button onclick="getInstalledScripts();">Get scripts</button>
+
+    <script>
+        function getVersion() {
+            AceScriptUtils.getVersion(function(response) {
+                console.log('version', response);
+            });
+        }
+
+        function getInstalledScripts() {
+            AceScriptUtils.getInstalledScripts(function(response) {
+                console.log('scripts', response);
+            });
+        }
+
+        AceScriptUtils.init();
+
+        console.log('version 1', AceScriptUtils.getVersion());
+        setTimeout(function() {
+            console.log('version 2', AceScriptUtils.getVersion());
+        }, 1000);
+
+        AceScriptUtils.addVersionCallback(function(response) {
+            console.log('got version', response);
+        });
+
+        AceScriptUtils.addInstalledScriptsCallback(function(response) {
+            console.log('got scripts', response);
+        });
+    </script>
+</body>
+</html>
