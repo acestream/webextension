@@ -192,63 +192,88 @@ export function getEngineStatus(callback) {
         _sendResponse(checkEngineResponse.running, checkEngineResponse.versionCode);
       } else {
         // engine is not running, check it's version by native messaging
-        browser.runtime.sendNativeMessage(
-          'org.acestream.engine',
-          { method: 'get_version' },
-          nativeResponse => {
-            // check lastError to suppress errors on console
-            browser.runtime.lastError; // eslint-disable-line no-unused-expressions
-            if (typeof nativeResponse === 'undefined') {
-              verbose(`Ace Script: engine messaging host failed: ${browser.runtime.lastError}`);
-              _sendResponse(false, 0);
-            } else {
-              verbose(`Ace Script: got response from engine messaging host: ${JSON.stringify(nativeResponse)}`);
+        try {
+          browser.runtime.sendNativeMessage(
+            'org.acestream.engine',
+            { method: 'get_version' },
+            nativeResponse => {
+              // check lastError to suppress errors on console
+              browser.runtime.lastError; // eslint-disable-line no-unused-expressions
+              if (typeof nativeResponse === 'undefined') {
+                verbose(`Ace Script: engine messaging host failed: ${browser.runtime.lastError}`);
+                _sendResponse(false, 0);
+              } else {
+                verbose(`Ace Script: got response from engine messaging host: ${JSON.stringify(nativeResponse)}`);
 
-              // start engine
-              browser.runtime.sendNativeMessage('org.acestream.engine', { method: 'start_engine' }, nativeResponse2 => {
-                if (typeof nativeResponse2 === 'undefined') {
-                  verbose('Ace Script: failed to start engine');
-                  _sendResponse(false, 0);
-                } else {
-                  // wait until engine is started
-                  const retryCount = 20;
-                  const retryInterval = 1000;
-                  checkEngine(retryCount, retryInterval).then(checkEngineResponse2 => {
-                    verbose(`Ace Script: engine status after starting: ${JSON.stringify(checkEngineResponse2)}`);
-                    _sendResponse(checkEngineResponse2.running, checkEngineResponse2.versionCode);
-                  });
-                }
-              });
-            }
-          },
-        );
+                // start engine
+                nativeStartEngine()
+                  .then((running, version) => _sendResponse(running, version));
+              }
+            },
+          );
+        } catch (error) {
+          verbose(`Ace Script: failed to get engine version: ${error}`);
+          _sendResponse(false, 0);
+        }
       }
     });
   });
 }
 
-export function startJsPlayer(callback) {
-  browser.runtime.sendNativeMessage(
-    'org.acestream.engine',
-    { method: 'get_version' },
-    response1 => {
-      if (typeof response1 === 'undefined') {
-        verbose('Ace Script:startJsPlayer: engine messaging host failed');
-        callback(false);
-      } else {
-        verbose(`Ace Script:startJsPlayer: got response from engine messaging host: ${JSON.stringify(response1)}`);
-        // start js player
-        browser.runtime.sendNativeMessage('org.acestream.engine', { method: 'start_js_player' }, response2 => {
-          if (typeof response2 === 'undefined') {
-            verbose('Ace Script:startJsPlayer: failed to start js player');
-            callback(false);
+async function nativeStartEngine() {
+  return new Promise(resolve => {
+    try {
+      browser.runtime.sendNativeMessage(
+        'org.acestream.engine',
+        { method: 'start_engine' },
+        response => {
+          if (typeof response === 'undefined') {
+            verbose('Ace Script: failed to start engine');
+            resolve(false, 0);
           } else {
-            callback(response2);
+            // wait until engine is started
+            const retryCount = 20;
+            const retryInterval = 1000;
+            checkEngine(retryCount, retryInterval).then(status => {
+              verbose(`Ace Script: engine status after starting: ${JSON.stringify(status)}`);
+              resolve(status.running, status.versionCode);
+            });
           }
         });
-      }
-    },
-  );
+    } catch (error) {
+      verbose(`Ace Script: failed to start engine: ${error}`);
+      resolve(false, 0);
+    }
+  });
+}
+
+export function startJsPlayer(callback) {
+  try {
+    browser.runtime.sendNativeMessage(
+      'org.acestream.engine',
+      { method: 'get_version' },
+      response1 => {
+        if (typeof response1 === 'undefined') {
+          verbose('Ace Script:startJsPlayer: engine messaging host failed');
+          callback(false);
+        } else {
+          verbose(`Ace Script:startJsPlayer: got response from engine messaging host: ${JSON.stringify(response1)}`);
+          // start js player
+          browser.runtime.sendNativeMessage('org.acestream.engine', { method: 'start_js_player' }, response2 => {
+            if (typeof response2 === 'undefined') {
+              verbose('Ace Script:startJsPlayer: failed to start js player');
+              callback(false);
+            } else {
+              callback(response2);
+            }
+          });
+        }
+      },
+    );
+  } catch (error) {
+    verbose(`Ace Script:startJsPlayer: failed to start js player: ${error}`);
+    callback(false);
+  }
 }
 
 export function getAvailablePlayers(details, callback) {
