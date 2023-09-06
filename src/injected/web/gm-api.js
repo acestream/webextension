@@ -1,6 +1,7 @@
 import { dumpScriptValue, isEmpty } from '../util';
 import bridge from './bridge';
 import store from './store';
+import { addContextMenuHandler } from './context-menu';
 import { onTabCreate } from './tabs';
 import { onRequestCreate, onRequestInitError } from './requests';
 import { onNotificationCreate } from './notifications';
@@ -224,15 +225,11 @@ export const GM_API = {
         return promise;
       }
     },
-    //ASTODO: reimplement this
-    // async AWE_registerContextMenuCommand: {
-    //   // eslint-disable-next-line no-unused-vars
-    //   value(caption, commandFunc, accessKey, filterFunc) {
-    //     return bridge.send('RegisterContextMenuCommand', () => {
-    //       store.contextMenuHandlers.push(commandFunc);
-    //     });
-    //   },
-    // },
+    // eslint-disable-next-line no-unused-vars
+    async AWE_registerContextMenuCommand(caption, commandFunc, accessKey, filterFunc) {
+      addContextMenuHandler(commandFunc);
+      return bridge.send('RegisterContextMenuCommand');
+    },
     async AWE_getLocale(callback) {
       const promise = bridge.send('GetLocale');
       if(callback) {

@@ -1,6 +1,7 @@
 import bridge, { addHandlers } from './bridge';
 import store from './store';
 import { makeGmApiWrapper } from './gm-api-wrapper';
+import './context-menu';
 import './gm-values';
 import './notifications';
 import './requests';

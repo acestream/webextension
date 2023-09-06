@@ -21,6 +21,7 @@ import './utils/tester';
 import './utils/update';
 import './utils/news';
 import './utils/engine-api';
+import './utils/context-menu';
 
 hookOptions((changes) => {
   if ('autoUpdate' in changes) {

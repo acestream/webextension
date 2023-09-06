@@ -1,5 +1,7 @@
-import { addHandlers } from './bridge';
+import bridge, { addBackgroundHandlers, addHandlers } from './bridge';
 import { sendCmd } from './util';
+
+const IS_TOP = window.top === window;
 
 addHandlers({
   async GetEngineStatus() {
@@ -20,4 +22,15 @@ addHandlers({
   async GetConfig(name) {
     return sendCmd('GetConfig', name);
   },
+  async RegisterContextMenuCommand() {
+    return sendCmd('RegisterContextMenuCommand');
+  },
 });
+
+if(IS_TOP) {
+  addBackgroundHandlers({
+    WatchOnlineMenuClicked(data) {
+      bridge.post('WatchOnlineMenuClicked', data);
+    },
+  });
+}
