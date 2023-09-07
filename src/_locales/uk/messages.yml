@@ -749,6 +749,12 @@ msgUpdating:
 noValues:
   description: Label shown when there is no value for current script.
   message: Немає значень для збереження
+notifDontShowAnymore:
+  description: Label for the second notification button
+  message: 'Ні, дякую'
+notifShowMore:
+  description: Label for the first notification button
+  message: Дізнатися більше
 optionEditorWindow:
   description: Label for the option in settings
   message: Відкривати редактор зі спливаючого вікна в новому вікні

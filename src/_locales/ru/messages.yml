@@ -739,6 +739,12 @@ msgUpdating:
 noValues:
   description: Label shown when there is no value for current script.
   message: Значения не сохраняются
+notifDontShowAnymore:
+  description: Label for the second notification button
+  message: 'Нет, спасибо'
+notifShowMore:
+  description: Label for the first notification button
+  message: Узнать больше
 optionEditorWindow:
   description: Label for the option in settings
   message: Из всплывающего окна открывать редактор в новом окне

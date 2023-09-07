@@ -744,6 +744,12 @@ msgUpdating:
 noValues:
   description: Label shown when there is no value for current script.
   message: No value is stored
+notifDontShowAnymore:
+  description: Label for the second notification button
+  message: 'No, thanks'
+notifShowMore:
+  description: Label for the first notification button
+  message: Show more
 optionEditorWindow:
   description: Label for the option in settings
   message: Open editor from popup in a new window
