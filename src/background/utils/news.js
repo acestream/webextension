@@ -2,7 +2,7 @@ import { verbose, request, assertTestMode, i18n } from '@/common';
 import { getVendor } from '@/common/vendor';
 import { getPrivacyOptions } from '@/common/privacy';
 import { getEngineStatus } from './engine-api';
-import { getInstalledScripts, eventEmitter } from './db';
+import { getInstalledScripts, eventEmitter, updateScriptInfo } from './db';
 import { addPublicCommands } from './message';
 import { preInitialize } from './init';
 import { addOpener } from './notifications';
@@ -21,14 +21,13 @@ addPublicCommands({
 
     const newsList = getNewsForUrl(url);
     for (let i = 0; i < newsList.length; i += 1) {
-      let targetUrl;
+      const targetUrl = newsList[i].btnUrl;
+      const scriptIdToEnable = newsList[i].scriptIdToEnable;
       const newsId = newsList[i].id;
       const buttons = [];
       const notificationId = `awe-notification-${Math.ceil(Math.random() * 1000000)}`;
 
-      if (newsList[i].btnUrl) {
-        targetUrl = newsList[i].btnUrl;
-
+      if (targetUrl || scriptIdToEnable) {
         if (NOTIFICATIONS_BUTTONS_SUPPORTED) {
           buttons.push({ title: newsList[i].btnTitle || i18n('notifShowMore') });
           buttons.push({ title: i18n('notifDontShowAnymore') });
@@ -62,6 +61,8 @@ addPublicCommands({
               // user clicked notification itself or "install" button
               if (targetUrl) {
                 browser.tabs.create({ url: targetUrl });
+              } else if(scriptIdToEnable) {
+                enableScript(scriptIdToEnable);
               }
               onInstallButtonClicked(newsId);
             }
@@ -82,6 +83,16 @@ addPublicCommands({
   }
 });
 
+function enableScript(scriptId) {
+  updateScriptInfo(scriptId, {
+      config: {
+        enabled: 1,
+      },
+    })
+    .then(() => console.log('script enabled'))
+    .catch(error => console.log(`failed to enable script: ${error}`));
+}
+
 eventEmitter.on('scriptSaved', data => {
   verbose('news:scriptSaved: data', data);
   updateInstalledScripts();
@@ -101,7 +112,9 @@ eventEmitter.on('scriptUpdated', data => {
 const store = {
   config: {
     checkInterval: 14400000,
-    notificationBaseInterval: 3600000,
+    // for testing
+    notificationBaseInterval: 60000,
+    // notificationBaseInterval: 3600000,
     notificationIntervalAdjust: NOTIFICATIONS_BUTTONS_SUPPORTED ? 0 : 3600000,
     notificationMaxImpressions: NOTIFICATIONS_BUTTONS_SUPPORTED ? 0 : 10,
     notificationMaxSkip: 2,
@@ -118,10 +131,10 @@ const store = {
 };
 
 function updateInstalledScripts() {
-  return getInstalledScripts().then(installed => {
+  return getInstalledScripts(true).then(installed => {
     store.installedScripts = {};
-    installed.forEach(id => {
-      store.installedScripts[id] = 1;
+    installed.forEach(script => {
+      store.installedScripts[script.props.scriptId] = script;
     });
     verbose('news:updateInstalledScripts', store.installedScripts);
   });
@@ -353,26 +366,43 @@ export function getNewsForUrl(url) {
         }
       }
 
-      let notifyUser = true;
+      let scriptInstalled = false;
+      let scriptEnabled = false;
+      let targetScriptId;
+      let targetScriptName;
       if (store.news[id].excludeScripts && store.news[id].excludeScripts.length) {
         // check all installed scripts
         verbose('getNewsForUrl: installedScripts', store.installedScripts);
         for (let i = 0; i < store.news[id].excludeScripts.length; i += 1) {
-          if (store.installedScripts[store.news[id].excludeScripts[i]] === 1) {
-            verbose(`getNewsForUrl: skip user notify, got installed script: id=${id} script=${store.news[id].excludeScripts[i]}`);
-            notifyUser = false;
+          targetScriptId = store.news[id].excludeScripts[i];
+          const script = store.installedScripts[targetScriptId];
+          targetScriptName = script.meta.name;
+          if (script) {
+            scriptInstalled = true;
+            scriptEnabled = script.config.enabled;
+            verbose(`getNewsForUrl: got installed script: id=${id} script=${targetScriptId} enabled=${scriptEnabled}`);
             break;
           }
         }
       }
 
-      if (notifyUser) {
+      if (!scriptInstalled) {
         result.push({
           id,
           title: store.news[id].title,
           text: store.news[id].text,
           btnUrl: store.news[id].btnUrl,
           btnTitle: store.news[id].btnTitle,
+        });
+      } else if (!scriptEnabled) {
+        result.push({
+          id,
+          title: i18n('notifEnableTitle'),
+          text: i18n('notifEnableText', [ targetScriptName ]),
+          //TODO: implement one-click script enabling
+          // scriptIdToEnable: targetScriptId,
+          btnUrl: '/options/index.html#scripts',
+          btnTitle: i18n('notifEnableScript'),
         });
       }
     }

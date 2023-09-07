@@ -234,13 +234,13 @@ export function getScripts() {
   return [...aliveScripts];
 }
 
-export function getInstalledScripts() {
+export function getInstalledScripts(fullInfo=false) {
   return new Promise(resolve => {
     const installed = [];
     const scripts = getScripts();
     if (scripts) {
       scripts.forEach(script => {
-        installed.push(script.props.scriptId);
+        installed.push(fullInfo ? script : script.props.scriptId);
       });
     }
 

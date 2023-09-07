@@ -752,6 +752,15 @@ noValues:
 notifDontShowAnymore:
   description: Label for the second notification button
   message: 'Ні, дякую'
+notifEnableScript:
+  description: Label for the button to enable userscript
+  message: Enable
+notifEnableText:
+  description: Title of notification about disabled script
+  message: Чи бажаєте ви увімкнути скрипт $1?
+notifEnableTitle:
+  description: Title of notification about disabled script
+  message: Знайдений відключений скрипт
 notifShowMore:
   description: Label for the first notification button
   message: Дізнатися більше
