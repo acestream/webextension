@@ -1,7 +1,7 @@
 {
   "name": "ace-script",
   "description": "Ace Script",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "scripts": {
     "prepare": "husky install",
     "dev": "gulp dev",
