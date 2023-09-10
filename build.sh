@@ -28,7 +28,7 @@ elif [ "$TARGET" == "dev" ]; then
     PACKAGE_NAME="acewebextension_dev"
 elif [ "$TARGET" == "chrome" ]; then
     echo "build chrome"
-    YARN_TARGET="build:chrome"
+    YARN_TARGET="build"
     PACKAGE_NAME="acewebextension"
 else
     echo "Usage: build.sh <firefox|firefox_unlisted|chrome|dev>"
