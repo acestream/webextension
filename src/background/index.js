@@ -3,6 +3,7 @@ import { getActiveTab, makePause, sendCmd } from '@/common';
 import { TIMEOUT_24HOURS, TIMEOUT_MAX } from '@/common/consts';
 import { deepCopy } from '@/common/object';
 import { getPrivacyOptions } from '@/common/privacy';
+import { isFirstRun, setFirstRun, openWelcomePage } from '@/common/first-run';
 import { getDomain } from 'tldjs/tld';
 import * as sync from './sync';
 import { addOwnCommands, addPublicCommands, commands } from './utils';
@@ -122,7 +123,7 @@ function autoUpdate() {
   autoUpdate.timer = setTimeout(autoUpdate, Math.min(TIMEOUT_MAX, interval - elapsed));
 }
 
-initialize(() => {
+initialize(async () => {
   global.handleCommandMessage = handleCommandMessage;
   global.deepCopy = deepCopy;
   browser.runtime.onMessage.addListener(handleCommandMessage);
@@ -130,6 +131,13 @@ initialize(() => {
   sync.initialize();
   checkRemove();
   setInterval(checkRemove, TIMEOUT_24HOURS);
+
+  // Handle first run
+  if(await isFirstRun()) {
+    await setFirstRun();
+    openWelcomePage();
+    //TODO: send analytics event "install"
+  }
 
   if (IS_FIREFOX) {
     // Check privacy opt-in
