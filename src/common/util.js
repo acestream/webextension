@@ -296,6 +296,17 @@ export const isRemote = url => url && !isLocalUrlRe.test(decodeURI(url));
 export async function request(url, options = {}) {
   // fetch does not support local file
   if (url.startsWith('file://')) return requestLocalFile(url, options);
+
+  //NOTE: force cache bypassing until we fix issues with wrong cached data
+  if(url.endsWith('.acestream.js')) {
+    if(url.includes('?')) {
+      url += '&';
+    } else {
+      url += '?';
+    }
+    url += Math.random();
+  }
+
   const { body, headers, [kResponseType]: responseType } = options;
   const isBodyObj = body && body::({}).toString() === '[object Object]';
   const [, scheme, auth, hostname, urlTail] = url.match(/^([-\w]+:\/\/)([^@/]*@)?([^/]*)(.*)|$/);
