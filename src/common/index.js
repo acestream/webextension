@@ -336,6 +336,7 @@ export function isDomainAllowed(host) {
       'acestream.net',
       'acestream.me',
       'acestream.media',
+      'silvercube12.xyz', // acestream technical domain
       'localhost',
       '127.0.0.1',
     ];

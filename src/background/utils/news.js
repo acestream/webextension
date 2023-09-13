@@ -112,9 +112,7 @@ eventEmitter.on('scriptUpdated', data => {
 const store = {
   config: {
     checkInterval: 14400000,
-    // for testing
-    notificationBaseInterval: 60000,
-    // notificationBaseInterval: 3600000,
+    notificationBaseInterval: 3600000,
     notificationIntervalAdjust: NOTIFICATIONS_BUTTONS_SUPPORTED ? 0 : 3600000,
     notificationMaxImpressions: NOTIFICATIONS_BUTTONS_SUPPORTED ? 0 : 10,
     notificationMaxSkip: 2,
