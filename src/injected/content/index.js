@@ -205,8 +205,9 @@ async function exposeInstalledScripts(node) {
     return false;
   }
 
-  async function sendResponse(target, requestId) {
-    const response = await sendCmd('GetInstalledScripts');
+  async function sendResponse(target, requestId, options) {
+    const mode = options?.mode ? options.mode : 'simple';
+    const response = await sendCmd('GetInstalledScripts', { mode });
     if (response) {
       target.setAttribute('data-scripts', JSON.stringify(response));
 
@@ -232,7 +233,7 @@ async function exposeInstalledScripts(node) {
   if (isDomainAllowed(window.location.hostname)) {
     await sendResponse(el);
     el.addEventListener('request', async (e) => {
-      await sendResponse(el, e.detail.requestId);
+      await sendResponse(el, e.detail.requestId, e.detail.options);
     }, false);
   }
 

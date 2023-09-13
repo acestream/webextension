@@ -89,11 +89,11 @@
         }
     }
 
-    function getInstalledScripts(callback) {
+    function getInstalledScripts(callback, options) {
         if (typeof callback === 'function') {
             var requestId = makeRequestId();
             responseCallbacks[requestId] = callback;
-            requestInstalledScripts(requestId);
+            requestInstalledScripts(requestId, options);
         } else if (storage.installedScripts && storage.installedScripts.length) {
             return storage.installedScripts;
         } else {
@@ -114,16 +114,16 @@
         }
     }
 
-    function requestInstalledScripts(requestId) {
+    function requestInstalledScripts(requestId, options) {
         var bridge = document.getElementById(BRIDGE_ID_INSTALLED_SCRIPTS);
         if(bridge) {
-            dispatchRequest(bridge, requestId);
+            dispatchRequest(bridge, requestId, options);
         }
     }
 
-    function dispatchRequest(bridge, requestId) {
+    function dispatchRequest(bridge, requestId, options) {
         bridge.dispatchEvent(
-                new CustomEvent('request', { detail: { requestId: requestId } }));
+                new CustomEvent('request', { detail: { requestId: requestId, options: options } }));
     }
 
     function addVersionCallback(callback) {

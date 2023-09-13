@@ -41,8 +41,8 @@ addPublicCommands({
       ? script.meta.version
       : null;
   },
-  GetInstalledScripts() {
-    return getInstalledScripts();
+  GetInstalledScripts(opts) {
+    return getInstalledScripts(opts);
   }
 });
 
@@ -234,14 +234,32 @@ export function getScripts() {
   return [...aliveScripts];
 }
 
-export function getInstalledScripts(fullInfo=false) {
+/**
+ * Get a list of installed scripts.
+ * Return format depends on "mode" parameter:
+ * - simple: return just script id (list of string)
+ * - brief: return list of objects { id: scriptId, enabled: scriptEnabled }
+ * - full: return list of "script" objects
+ */
+export function getInstalledScripts({ mode = 'simple'} = {}) {
   return new Promise(resolve => {
     const installed = [];
     const scripts = getScripts();
     if (scripts) {
-      scripts.forEach(script => {
-        installed.push(fullInfo ? script : script.props.scriptId);
-      });
+      for(const script of scripts) {
+        let data;
+        if(mode == 'full') {
+          data = script;
+        } else if(mode == 'brief') {
+          data = {
+            id: script.props.scriptId,
+            enabled: script.config.enabled,
+          };
+        } else {
+          data = script.props.scriptId;
+        }
+        installed.push(data);
+      }
     }
 
     resolve(installed);

@@ -131,7 +131,7 @@ const store = {
 };
 
 function updateInstalledScripts() {
-  return getInstalledScripts(true).then(installed => {
+  return getInstalledScripts({ mode: 'full' }).then(installed => {
     store.installedScripts = {};
     installed.forEach(script => {
       store.installedScripts[script.props.scriptId] = script;

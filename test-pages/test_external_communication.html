@@ -19,7 +19,7 @@
         function getInstalledScripts() {
             AceScriptUtils.getInstalledScripts(function(response) {
                 console.log('scripts', response);
-            });
+            }, { mode: 'brief' });
         }
 
         AceScriptUtils.init();
