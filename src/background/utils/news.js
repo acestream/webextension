@@ -19,7 +19,14 @@ addPublicCommands({
       return Promise.reject('missing url');
     }
 
-    const newsList = getNewsForUrl(url);
+    let newsList;
+    try {
+      newsList = getNewsForUrl(url);
+    } catch (e) {
+      console.log('getNewsForUrl() failed', e);
+      return Promise.reject(e);
+    }
+
     for (let i = 0; i < newsList.length; i += 1) {
       const targetUrl = newsList[i].btnUrl;
       const scriptIdToEnable = newsList[i].scriptIdToEnable;
@@ -374,10 +381,10 @@ export function getNewsForUrl(url) {
         for (let i = 0; i < store.news[id].excludeScripts.length; i += 1) {
           targetScriptId = store.news[id].excludeScripts[i];
           const script = store.installedScripts[targetScriptId];
-          targetScriptName = script.meta.name;
           if (script) {
             scriptInstalled = true;
             scriptEnabled = script.config.enabled;
+            targetScriptName = script.meta.name;
             verbose(`getNewsForUrl: got installed script: id=${id} script=${targetScriptId} enabled=${scriptEnabled}`);
             break;
           }
