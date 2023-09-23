@@ -3,35 +3,23 @@
 FIREFOX_OUTPUT_DIR=firefox
 CHROME_OUTPUT_DIR=chrome
 BUILD_DIR=dist
+PACKAGE_NAME="acewebextension"
 TARGET=$1
 
 if [[ "$OSTYPE" == "msys" ]]; then
-    CHROME="C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
     ROOT=$(pwd -W)
 else
-    #TODO: set real path
-    CHROME="/path/to/chrome"
     ROOT=$(pwd)
 fi
 
 if [ "$TARGET" == "firefox" ]; then
-    echo "build firefox"
-    YARN_TARGET="build:firefox"
-    PACKAGE_NAME="acewebextension_unsigned"
-elif [ "$TARGET" == "firefox_unlisted" ]; then
-    echo "build firefox unlisted"
-    YARN_TARGET="build:firefox_unlisted"
-    PACKAGE_NAME="acewebextension_unlisted_unsigned"
-elif [ "$TARGET" == "dev" ]; then
-    echo "build dev"
-    YARN_TARGET="build:dev"
-    PACKAGE_NAME="acewebextension_dev"
-elif [ "$TARGET" == "chrome" ]; then
-    echo "build chrome"
+    echo "Build for Firefox"
     YARN_TARGET="build"
-    PACKAGE_NAME="acewebextension"
+elif [ "$TARGET" == "chrome" ]; then
+    echo "Build for Chrome"
+    YARN_TARGET="build"
 else
-    echo "Usage: build.sh <firefox|firefox_unlisted|chrome|dev>"
+    echo "Usage: build.sh <firefox|chrome>"
     exit
 fi
 
@@ -47,7 +35,7 @@ mkdir $BUILD_DIR
 yarn $YARN_TARGET
 
 if [ "$TARGET" == "chrome" ]; then
-    echo "Pack extension for chrome..."
+    echo "Pack extension for Chrome ..."
 
     KEY_PATH=$ROOT/keys/$TARGET.pem
     if [ ! -f $KEY_PATH ]; then
@@ -63,20 +51,14 @@ if [ "$TARGET" == "chrome" ]; then
     echo "Create zip package ..."
     zip -qr9DX "../$CHROME_OUTPUT_DIR/$PACKAGE_NAME.zip" *
 
-    echo "Remove key file before packaging ..."
+    echo "Remove key file after packaging"
     rm key.pem
-
-    cd ..
-
-    echo "Create CRX ($PACKAGE_NAME) ..."
-    "$CHROME" --pack-extension=$ROOT/$BUILD_DIR --pack-extension-key=$KEY_PATH
-    mv $BUILD_DIR.crx $CHROME_OUTPUT_DIR/$PACKAGE_NAME.crx
 else
-    # make xpi
-    echo "Build XPI ($PACKAGE_NAME) ..."
+    echo "Pack extension for Firefox ..."
     cd $BUILD_DIR
-    zip -qr9DX "../$FIREFOX_OUTPUT_DIR/$PACKAGE_NAME.xpi" *
-    cd ..
+
+    echo "Create zip package ..."
+    zip -qr9DX "../$FIREFOX_OUTPUT_DIR/$PACKAGE_NAME.zip" *
 fi
 
 # finish

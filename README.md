@@ -18,7 +18,7 @@ $ ./build.sh chrome
 
 Build was tested with:
 * Ubuntu Ubuntu 18.04.3 LTS
-* yarn 1.19.2
-* node 11.15.0
+* yarn 1.21.1
+* node 16.17.1
 
 The result will be placed to 'firefox/' or 'chrome/' folder.
