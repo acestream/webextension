@@ -20,7 +20,7 @@ import './utils/script';
 import './utils/tab-redirector';
 import './utils/tester';
 import './utils/update';
-import './utils/news';
+import { initialize as initializeNews } from './utils/news';
 import './utils/engine-api';
 import './utils/context-menu';
 
@@ -138,6 +138,8 @@ initialize(async () => {
     openWelcomePage();
     //TODO: send analytics event "install"
   }
+
+  await initializeNews();
 
   if (IS_FIREFOX) {
     // Check privacy opt-in

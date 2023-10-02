@@ -1,6 +1,16 @@
 export async function isFirstRun() {
   const result = await browser.storage.local.get('firstRunAt');
-  return !result?.firstRunAt;
+
+  if(!result?.firstRunAt) {
+    const news = await browser.storage.local.get('news');
+    if (news && news.news) {
+      return false;
+    } else {
+      return true;
+    }
+  } else {
+    return false;
+  }
 }
 
 export async function setFirstRun() {

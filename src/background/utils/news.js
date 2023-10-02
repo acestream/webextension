@@ -4,12 +4,9 @@ import { getPrivacyOptions } from '@/common/privacy';
 import { getEngineStatus } from './engine-api';
 import { getInstalledScripts, eventEmitter, updateScriptInfo } from './db';
 import { addPublicCommands } from './message';
-import { preInitialize } from './init';
 import { addOpener } from './notifications';
 
 const NOTIFICATIONS_BUTTONS_SUPPORTED = !IS_FIREFOX;
-
-preInitialize.push(async () => initialize());
 
 addPublicCommands({
   CheckNews({ url }) {
