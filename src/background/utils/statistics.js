@@ -1,7 +1,5 @@
 import { getVendor } from '@/common/vendor'; // eslint-disable-line no-restricted-imports
-import { sha256 } from 'js-sha256';
 import { getOption } from './options';
-import { getInstalledScripts } from "./db";
 
 const EVENT_INSTALLED = 'app_installed';
 const EVENT_ACTIVE = 'app_active';
