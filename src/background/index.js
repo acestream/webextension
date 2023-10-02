@@ -23,6 +23,7 @@ import './utils/update';
 import { initialize as initializeNews } from './utils/news';
 import './utils/engine-api';
 import './utils/context-menu';
+import { logInstall, logActive } from './utils/statistics';
 
 hookOptions((changes) => {
   if ('autoUpdate' in changes) {
@@ -131,12 +132,13 @@ initialize(async () => {
   sync.initialize();
   checkRemove();
   setInterval(checkRemove, TIMEOUT_24HOURS);
+  setInterval(logActive, TIMEOUT_24HOURS);
 
   // Handle first run
   if(await isFirstRun()) {
     await setFirstRun();
     openWelcomePage();
-    //TODO: send analytics event "install"
+    await logInstall();
   }
 
   await initializeNews();

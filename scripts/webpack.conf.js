@@ -79,6 +79,8 @@ const defsObj = {
   ...pickEnvs([
     'DEBUG',
     'VM_VER',
+    'GA_MEASUREMENT_ID',
+    'GA_API_SECRET',
     'SYNC_GOOGLE_CLIENT_ID',
     'SYNC_GOOGLE_CLIENT_SECRET',
     'SYNC_GOOGLE_DESKTOP_ID',

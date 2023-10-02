@@ -68,6 +68,7 @@
     "@violentmonkey/shortcut": "^1.2.6",
     "@zip.js/zip.js": "2.4.4",
     "codemirror": "^5.65.10",
+    "js-sha256": "^0.10.1",
     "tldjs": "^2.3.1",
     "vue": "^3.2.45",
     "vueleton": "^2.0.2"
